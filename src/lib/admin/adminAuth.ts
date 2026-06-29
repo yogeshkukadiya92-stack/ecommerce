@@ -121,6 +121,13 @@ export const adminRoles: AdminRole[] = [
 
 const mockAdmins = [
   {
+    adminId: "admin-yogesh-owner",
+    email: "Yogeshkukadiya92@gmail.com",
+    fullName: "Yogesh Kukadiya",
+    password: "TCH123",
+    roles: [adminRoles[0]]
+  },
+  {
     adminId: "admin-yogesh",
     email: "admin@fitsupplement.local",
     fullName: "FitSupplement Admin",
@@ -190,7 +197,7 @@ export function loginAdmin(email: string, password: string) {
     });
 
     return {
-      message: "Use admin@fitsupplement.local / admin123 for the mock admin login.",
+      message: "Use Yogeshkukadiya92@gmail.com / TCH123 or admin@fitsupplement.local / admin123 for the mock admin login.",
       ok: false as const
     };
   }
