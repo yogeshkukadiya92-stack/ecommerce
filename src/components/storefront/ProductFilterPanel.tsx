@@ -38,10 +38,10 @@ export function ProductFilterPanel({
   options
 }: ProductFilterPanelProps) {
   return (
-    <aside className="rounded-card border border-black/10 bg-white p-4 shadow-sm">
+    <aside className="rounded-card border border-black/10 bg-white p-4 shadow-sm lg:sticky lg:top-36">
       <div className="flex items-center justify-between gap-4">
         <h2 className="text-base font-black text-ink">Filters</h2>
-        <span className="text-xs font-bold text-slate">Client-side</span>
+        <span className="rounded-md bg-mint px-2 py-1 text-xs font-black text-forest">Live</span>
       </div>
       <div className="mt-5 grid gap-6">
         <CheckboxGroup
@@ -81,7 +81,7 @@ export function ProductFilterPanel({
           values={options.types}
         />
         <div>
-          <p className="mb-3 text-sm font-black text-ink">Numeric filters</p>
+          <p className="mb-3 text-sm font-black text-ink">Price and nutrition</p>
           <div className="grid gap-3">
             <Input
               label="Min price"
@@ -128,10 +128,10 @@ export function ProductFilterPanel({
           </div>
         </div>
         <div>
-          <p className="mb-3 text-sm font-black text-ink">Product flags</p>
+          <p className="mb-3 text-sm font-black text-ink">Product standards</p>
           <div className="grid gap-2">
             {booleanFilters.map((filter) => (
-              <label key={filter.key} className="flex items-center gap-2 text-sm font-semibold text-slate">
+              <label key={filter.key} className="flex items-center gap-2 rounded-md px-2 py-1 text-sm font-semibold text-slate hover:bg-mist">
                 <input
                   checked={Boolean(filters[filter.key])}
                   className="h-4 w-4 accent-forest"
@@ -166,9 +166,9 @@ function CheckboxGroup({
   return (
     <div>
       <p className="mb-3 text-sm font-black text-ink">{label}</p>
-      <div className="grid max-h-44 gap-2 overflow-y-auto pr-1">
+      <div className="grid max-h-44 gap-1.5 overflow-y-auto pr-1">
         {values.map((value) => (
-          <label key={value} className="flex items-center gap-2 text-sm font-semibold text-slate">
+          <label key={value} className="flex items-center gap-2 rounded-md px-2 py-1 text-sm font-semibold text-slate hover:bg-mist">
             <input
               checked={selected.includes(value)}
               className="h-4 w-4 accent-forest"

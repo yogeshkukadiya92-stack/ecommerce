@@ -173,13 +173,13 @@ export function ProductListingShell({
   return (
     <main className="container-page pb-16 pt-8">
       <Breadcrumbs items={breadcrumbs} />
-      <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end">
+      <div className="mt-5 grid gap-5 rounded-card border border-black/10 bg-white p-5 shadow-sm lg:grid-cols-[1fr_auto] lg:items-end lg:p-6">
         <div>
           <h1 className="text-3xl font-black tracking-tight text-ink sm:text-4xl">{title}</h1>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-slate">{description}</p>
           <div className="mt-4 flex flex-wrap gap-2">
             {["Authentic products", "Batch verified", "Secure checkout", "Fast delivery", "Easy returns"].map((item) => (
-              <span className="rounded-md bg-white px-3 py-2 text-xs font-black text-forest shadow-sm" key={item}>
+              <span className="rounded-md bg-mist px-3 py-2 text-xs font-black text-forest" key={item}>
                 {item}
               </span>
             ))}
@@ -188,7 +188,7 @@ export function ProductListingShell({
         <form className="relative" onSubmit={handleSearchSubmit}>
           <input
             aria-label="Search products"
-            className="focus-ring h-12 w-full rounded-md border border-black/10 bg-white px-4 text-sm font-semibold text-ink shadow-sm placeholder:text-slate lg:w-96"
+            className="focus-ring h-12 w-full rounded-md border border-black/10 bg-mist px-4 text-sm font-semibold text-ink placeholder:text-slate lg:w-96"
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search whey, creatine, vegan..."
             value={query}
@@ -196,7 +196,7 @@ export function ProductListingShell({
           <div className="mt-2 flex flex-wrap gap-2">
             {suggestions.map((suggestion) => (
               <button
-                className="rounded-md bg-white px-2 py-1 text-xs font-bold text-slate shadow-sm hover:text-ink"
+                className="rounded-md border border-black/10 bg-white px-2 py-1 text-xs font-bold text-slate hover:text-ink"
                 key={suggestion}
                 onClick={() => {
                   setQuery(suggestion);
@@ -229,7 +229,7 @@ export function ProductListingShell({
         </form>
       </div>
 
-      <div className="sticky top-[124px] z-30 mt-6 grid grid-cols-2 gap-2 border-y border-black/10 bg-mist py-3 lg:hidden">
+      <div className="sticky top-[124px] z-30 mt-5 grid grid-cols-2 gap-2 border-y border-black/10 bg-mist/95 py-3 backdrop-blur lg:hidden">
         <button
           className="focus-ring flex h-11 items-center justify-center gap-2 rounded-md bg-ink text-sm font-black text-white"
           onClick={() => setIsFilterOpen(true)}
@@ -250,7 +250,7 @@ export function ProductListingShell({
         </select>
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-[280px_1fr]">
+      <div className="mt-7 grid gap-6 lg:grid-cols-[292px_1fr]">
         <div className="hidden lg:block">
           <ProductFilterPanel
             filters={filters}
@@ -261,7 +261,7 @@ export function ProductListingShell({
           />
         </div>
         <section>
-          <div className="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+          <div className="mb-4 flex flex-col justify-between gap-3 rounded-card border border-black/10 bg-white p-3 shadow-sm sm:flex-row sm:items-center">
             <p className="text-sm font-bold text-slate">
               {filteredProducts.length} product{filteredProducts.length === 1 ? "" : "s"}
               {isPending ? " updating..." : ""}
@@ -305,7 +305,7 @@ export function ProductListingShell({
               ) : null}
             </>
           ) : (
-            <div className="grid gap-6">
+          <div className="grid gap-6">
               <EmptyState
                 action={
                   <div className="flex flex-wrap justify-center gap-2">
@@ -341,7 +341,7 @@ export function ProductListingShell({
       ) : null}
 
       {isFilterOpen ? (
-        <div aria-modal="true" className="fixed inset-0 z-50 bg-ink/40 lg:hidden" role="dialog">
+        <div aria-modal="true" className="fixed inset-0 z-50 bg-ink/40 backdrop-blur-sm lg:hidden" role="dialog">
           <div className="ml-auto h-full w-[90vw] max-w-sm overflow-y-auto bg-mist p-4 shadow-2xl">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-black text-ink">Filters</h2>
@@ -362,7 +362,7 @@ export function ProductListingShell({
               options={options}
             />
             <button
-              className="focus-ring mt-4 h-12 w-full rounded-md bg-ink text-sm font-black text-white"
+              className="focus-ring sticky bottom-0 mt-4 h-12 w-full rounded-md bg-ink text-sm font-black text-white shadow-card"
               onClick={() => setIsFilterOpen(false)}
               type="button"
             >

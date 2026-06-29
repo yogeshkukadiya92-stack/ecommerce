@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Beaker, GitCompare, Heart, ShoppingCart } from "lucide-react";
+import { Beaker, GitCompare, Heart, ShieldCheck, ShoppingCart } from "lucide-react";
 import { useState } from "react";
 import type { Product } from "@/types";
 import type { StorefrontProduct } from "@/mock/storefront";
@@ -50,7 +50,7 @@ export function ProductCard({ product }: { product: ProductCardProduct }) {
   }
 
   return (
-    <article className="group flex h-full min-w-0 flex-col rounded-card border border-black/10 bg-white p-2 shadow-sm transition hover:-translate-y-0.5 hover:shadow-card">
+    <article className="group flex h-full min-w-0 flex-col rounded-card border border-black/10 bg-white p-2 shadow-sm transition hover:-translate-y-1 hover:border-forest/30 hover:shadow-card">
       <div className="relative overflow-hidden rounded-md bg-mist">
         {image ? (
           <Image
@@ -66,14 +66,14 @@ export function ProductCard({ product }: { product: ProductCardProduct }) {
           <div className="aspect-square" />
         )}
         <button
-          className="focus-ring absolute right-3 top-3 rounded-md bg-white p-2 text-slate shadow-sm hover:text-coral"
+          className="focus-ring absolute right-3 top-3 rounded-md bg-white/95 p-2 text-slate shadow-sm hover:text-coral"
           type="button"
         >
           <Heart className="h-4 w-4" />
           <span className="sr-only">Add to wishlist</span>
         </button>
         <button
-          className="focus-ring absolute bottom-3 right-3 rounded-md bg-white p-2 text-slate shadow-sm hover:text-forest"
+          className="focus-ring absolute bottom-3 right-3 rounded-md bg-white/95 p-2 text-slate shadow-sm hover:text-forest"
           onClick={() => setIsCompared((current) => !current)}
           type="button"
         >
@@ -86,7 +86,7 @@ export function ProductCard({ product }: { product: ProductCardProduct }) {
           </div>
         ) : null}
       </div>
-      <div className="flex min-w-0 flex-1 flex-col p-2">
+      <div className="flex min-w-0 flex-1 flex-col p-2.5">
         <div className="mt-2 flex flex-wrap gap-1">
           {product.goalTags.slice(0, 2).map((tag) => (
             <Badge key={tag} tone="success">
@@ -101,18 +101,18 @@ export function ProductCard({ product }: { product: ProductCardProduct }) {
           </p>
         ) : null}
         <Link href={`/products/${product.slug}`}>
-          <h3 className="mt-2 line-clamp-2 min-h-12 text-base font-black leading-6 text-ink">
+          <h3 className="mt-2 line-clamp-2 min-h-11 text-[15px] font-black leading-5 text-ink sm:text-base sm:leading-6">
             {product.name}
           </h3>
         </Link>
-        <p className="mt-1 line-clamp-2 min-h-10 text-sm leading-5 text-slate">
+        <p className="mt-1 line-clamp-2 min-h-10 text-xs leading-5 text-slate sm:text-sm">
           {product.shortDescription}
         </p>
         <div className="mt-3">
           <RatingStars rating={merchandising?.rating ?? 4.7} reviewCount={merchandising?.reviewCount ?? 128} />
         </div>
         {variant ? (
-          <div className="mt-3">
+          <div className="mt-3 rounded-md border border-black/10 bg-white px-3 py-2">
             <PriceDisplay mrp={variant.mrp} sellingPrice={variant.sellingPrice} />
           </div>
         ) : null}
@@ -134,14 +134,19 @@ export function ProductCard({ product }: { product: ProductCardProduct }) {
             </div>
           </div>
         ) : null}
-        {product.labReportUrl ? (
-          <div className="mt-3 flex items-center gap-2 text-xs font-bold text-forest">
-            <Beaker className="h-3.5 w-3.5" /> Lab report available
-          </div>
-        ) : null}
+        <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold text-forest">
+          <span className="inline-flex items-center gap-1">
+            <ShieldCheck className="h-3.5 w-3.5" /> Authentic
+          </span>
+          {product.labReportUrl ? (
+            <span className="inline-flex items-center gap-1">
+              <Beaker className="h-3.5 w-3.5" /> Lab report
+            </span>
+          ) : null}
+        </div>
         {isCompared ? <p className="mt-2 text-xs font-bold text-forest">Added to compare</p> : null}
         <button
-          className="focus-ring mt-auto flex h-11 w-full items-center justify-center gap-2 rounded-md bg-ink text-sm font-black text-white transition hover:bg-forest"
+          className="focus-ring mt-auto flex h-11 w-full items-center justify-center gap-2 rounded-md bg-ink text-sm font-black text-white shadow-sm transition hover:bg-forest"
           onClick={handleQuickAdd}
           type="button"
         >

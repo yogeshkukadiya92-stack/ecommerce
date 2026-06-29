@@ -130,10 +130,11 @@ export function CartClient() {
 
   return (
     <main className="container-page py-8 lg:py-12">
-      <div className="flex flex-wrap items-end justify-between gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-4 rounded-card border border-black/10 bg-white p-5 shadow-sm">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.14em] text-forest">Cart</p>
           <h1 className="mt-2 text-3xl font-black tracking-tight text-ink">Your supplement stack</h1>
+          <p className="mt-2 text-sm leading-6 text-slate">Review flavors, purchase type, coupons, and delivery savings before checkout.</p>
         </div>
         <button className="focus-ring rounded-md border border-black/10 bg-white px-4 py-2 text-sm font-black" onClick={cart.clearCart} type="button">
           Clear cart
@@ -189,6 +190,7 @@ export function CartClient() {
 
           <section className="rounded-card border border-black/10 bg-white p-5 shadow-sm">
             <h2 className="text-xl font-black text-ink">Recommended add-ons</h2>
+            <p className="mt-1 text-sm text-slate">Complete the stack with useful accessories and daily essentials.</p>
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
               {addOns.map((addOn) => {
                 const product = "productId" in addOn ? storefrontProducts.find((item) => item.id === addOn.productId) : undefined;
@@ -209,6 +211,7 @@ export function CartClient() {
 
           <section className="rounded-card border border-black/10 bg-white p-5 shadow-sm">
             <h2 className="text-xl font-black text-ink">Bundle deals</h2>
+            <p className="mt-1 text-sm text-slate">Add curated combinations in one tap and keep variant details in the cart.</p>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {bundleDeals.map((bundle) => (
                 <div className="rounded-md border border-black/10 p-4" key={bundle.id}>

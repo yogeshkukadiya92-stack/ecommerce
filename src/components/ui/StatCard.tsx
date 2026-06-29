@@ -10,11 +10,11 @@ export function StatCard({
   tone?: "neutral" | "forest" | "coral";
 }) {
   return (
-    <div className="rounded-lg border border-black/10 bg-white p-5 shadow-sm">
-      <p className="text-sm font-medium text-graphite">{label}</p>
+    <div className="rounded-card border border-black/10 bg-white p-5 shadow-sm">
+      <p className="text-xs font-black uppercase tracking-[0.12em] text-slate">{label}</p>
       <p
         className={cn(
-          "mt-3 text-3xl font-bold",
+          "mt-3 text-3xl font-black tracking-tight",
           tone === "forest" && "text-forest",
           tone === "coral" && "text-coral",
           tone === "neutral" && "text-ink"

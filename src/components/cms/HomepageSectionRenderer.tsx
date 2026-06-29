@@ -39,11 +39,11 @@ function RenderedSection({ preview, section }: { preview: boolean; section: Home
       return (
         <section className={sectionShell(section.backgroundStyle)}>
           {previewBadge}
-          <div className="container-page grid items-center gap-10 py-12 lg:grid-cols-[1.05fr_0.95fr] lg:py-16">
+          <div className="container-page grid items-center gap-10 py-10 lg:grid-cols-[1.02fr_0.98fr] lg:py-14">
             <div className="max-w-2xl">
-              <h1 className="text-4xl font-black tracking-tight text-ink sm:text-5xl lg:text-6xl">{section.title}</h1>
-              <p className="mt-5 text-lg leading-8 text-slate">{section.subtitle}</p>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <h1 className="text-4xl font-black tracking-tight text-ink sm:text-5xl lg:text-6xl lg:leading-[0.95]">{section.title}</h1>
+              <p className="mt-5 max-w-xl text-base leading-7 text-slate sm:text-lg">{section.subtitle}</p>
+              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <Button href={section.ctaLink ?? "/products"} size="lg" variant="dark">
                   {section.ctaLabel ?? "Shop now"}
                 </Button>
@@ -51,16 +51,21 @@ function RenderedSection({ preview, section }: { preview: boolean; section: Home
                   Shop best sellers
                 </Button>
               </div>
-              <div className="mt-8 grid gap-3 sm:grid-cols-3">
+              <div className="mt-7 flex flex-wrap gap-2 text-xs font-black text-forest">
+                {["Verified supply", "Secure checkout", "Expiry-visible batches"].map((item) => (
+                  <span className="rounded-md border border-black/10 bg-white px-3 py-2 shadow-sm" key={item}>{item}</span>
+                ))}
+              </div>
+              <div className="mt-6 grid gap-3 sm:grid-cols-3">
                 {["Average rating", "Dispatch target", "Batch tracked"].map((metric, index) => (
-                  <div className="rounded-card border border-black/10 bg-white/80 p-3" key={metric}>
+                  <div className="rounded-card border border-black/10 bg-white/90 p-4 shadow-sm" key={metric}>
                     <p className="text-2xl font-black text-ink">{["4.8", "24h", "100%"][index]}</p>
                     <p className="text-xs font-semibold text-slate">{metric}</p>
                   </div>
                 ))}
               </div>
             </div>
-            <div className="overflow-hidden rounded-card border border-black/10 bg-white p-4 shadow-soft">
+            <div className="overflow-hidden rounded-card border border-black/10 bg-white p-3 shadow-soft">
               <Image
                 alt={section.title}
                 className="aspect-[4/3] w-full rounded-md object-cover"
@@ -69,6 +74,13 @@ function RenderedSection({ preview, section }: { preview: boolean; section: Home
                 src={section.desktopImageUrl ?? featuredProducts[0].images[0]?.url}
                 width={840}
               />
+              <div className="grid gap-2 px-1 pb-1 pt-3 sm:grid-cols-3">
+                {["Whey", "Creatine", "Wellness"].map((item) => (
+                  <Link className="rounded-md bg-mist px-3 py-2 text-center text-xs font-black text-ink hover:bg-mint" href="/products" key={item}>
+                    {item}
+                  </Link>
+                ))}
+              </div>
             </div>
           </div>
         </section>
@@ -236,7 +248,7 @@ function RenderedSection({ preview, section }: { preview: boolean; section: Home
           <div className="grid gap-6 rounded-card bg-white p-6 shadow-sm lg:grid-cols-[1fr_360px] lg:items-center">
             <div>
               <SectionTitle description={section.subtitle} title={section.title} />
-              <p className="text-sm text-slate">{section.videoUrl ? "Watch the latest product and fitness guide." : "Video guide coming soon."}</p>
+              <p className="text-sm text-slate">{section.videoUrl ? "Watch the latest product and fitness guide." : "Product education, usage tips, and label guidance in one place."}</p>
             </div>
             <div className="grid aspect-video place-items-center rounded-md bg-ink text-white">
               <Play className="h-10 w-10" />

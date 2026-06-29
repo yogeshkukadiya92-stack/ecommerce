@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Menu, ShoppingCart, User, X } from "lucide-react";
+import { Menu, Search, ShoppingCart, Sparkles, User, X } from "lucide-react";
 import { useState } from "react";
 import { categories } from "@/mock";
 import type { HeaderCmsConfig } from "@/types/cms";
@@ -22,8 +22,11 @@ export function MobileHeader({ config }: { config?: HeaderCmsConfig }) {
         >
           <Menu className="h-5 w-5" />
         </button>
-        <Link className="text-base font-black tracking-tight text-ink" href="/">
-          {config?.logoText ?? "FitSupplement"}
+        <Link className="flex min-w-0 items-center gap-2 text-base font-black tracking-tight text-ink" href="/">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-ink text-lime">
+            <Sparkles className="h-4 w-4" />
+          </span>
+          <span className="truncate">{config?.logoText ?? "FitSupplement"}</span>
         </Link>
         <div className="flex items-center gap-1">
           {config?.enableAccount === false ? null : (
@@ -44,10 +47,10 @@ export function MobileHeader({ config }: { config?: HeaderCmsConfig }) {
         </div>
       )}
       {open ? (
-        <div className="fixed inset-0 z-50 bg-ink/30">
-          <div className="h-full w-[86vw] max-w-sm bg-white p-4 shadow-2xl">
+        <div className="fixed inset-0 z-50 bg-ink/40 backdrop-blur-sm">
+          <div className="h-full w-[88vw] max-w-sm overflow-y-auto bg-white p-4 shadow-2xl">
             <div className="flex items-center justify-between">
-              <span className="text-lg font-black text-ink">Menu</span>
+              <span className="text-lg font-black text-ink">Shop menu</span>
               <button
                 aria-label="Close menu"
                 className="focus-ring rounded-md p-2 text-ink"
@@ -57,6 +60,9 @@ export function MobileHeader({ config }: { config?: HeaderCmsConfig }) {
                 <X className="h-5 w-5" />
               </button>
             </div>
+            <Link className="mt-5 flex items-center gap-2 rounded-md bg-mist px-4 py-3 text-sm font-black text-ink" href="/search">
+              <Search className="h-4 w-4 text-forest" /> Search products
+            </Link>
             <nav className="mt-6 grid gap-2">
               <Link className="rounded-md bg-ink px-4 py-3 text-sm font-bold text-white" href="/products">
                 Shop all supplements

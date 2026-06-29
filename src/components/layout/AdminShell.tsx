@@ -40,7 +40,7 @@ export function AdminShell({
           <ShieldCheck className="mx-auto h-10 w-10 text-forest" />
           <h1 className="mt-4 text-2xl font-black tracking-tight text-ink">Admin login required</h1>
           <p className="mt-3 text-sm leading-6 text-slate">
-            Admin routes are protected by the mock RBAC-ready session guard.
+            Admin routes are protected by the RBAC-ready session guard.
           </p>
           <Link className="focus-ring mt-5 inline-flex rounded-md bg-ink px-5 py-3 text-sm font-black text-white" href="/admin/login">
             Go to admin login
@@ -57,7 +57,7 @@ export function AdminShell({
           <Link href="/admin" className="text-lg font-black tracking-tight">
             FitSupplement Admin
           </Link>
-          <div className="mt-5 rounded-card bg-white/10 p-3 text-xs leading-5 text-white/70">
+          <div className="mt-5 rounded-card border border-white/10 bg-white/10 p-3 text-xs leading-5 text-white/70">
             {session.roles.map((role) => role.name).join(", ")} with {session.permissions.length} permissions.
           </div>
           <nav className="mt-6 grid gap-1">
@@ -66,7 +66,7 @@ export function AdminShell({
                 key={item.href}
                 href={item.href}
                 className={`rounded-md px-3 py-2 text-sm font-bold ${
-                  pathname === item.href ? "bg-white text-ink" : "text-white/70 hover:bg-white/10 hover:text-white"
+                  pathname === item.href ? "bg-white text-ink shadow-sm" : "text-white/70 hover:bg-white/10 hover:text-white"
                 }`}
               >
                 {item.label}

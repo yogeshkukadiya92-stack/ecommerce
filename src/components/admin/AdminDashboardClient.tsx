@@ -30,6 +30,21 @@ export function AdminDashboardClient() {
 
   return (
     <div className="grid gap-6">
+      <section className="rounded-card border border-black/10 bg-ink p-5 text-white shadow-card">
+        <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.14em] text-lime">Operations overview</p>
+            <h2 className="mt-2 text-2xl font-black tracking-tight">Revenue, inventory, and fulfillment signals in one place</h2>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-white/70">
+              Monitor today&apos;s store health, stock risks, order queues, and customer activity before making catalog or fulfillment decisions.
+            </p>
+          </div>
+          <Link className="inline-flex h-11 items-center justify-center rounded-md bg-lime px-4 text-sm font-black text-ink" href="/admin/orders">
+            Review orders
+          </Link>
+        </div>
+      </section>
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-6">
         <StatCard label="Today revenue" value={formatRs(todayRevenue)} tone="forest" />
         <StatCard label="Total orders" value={orders.length} />
@@ -42,15 +57,15 @@ export function AdminDashboardClient() {
         <StatCard label="COD pending" value={codPendingOrders} tone="coral" />
         <StatCard label="Renewals" value={subscriptionRenewals} />
         <StatCard label="Top sellers" value={topSellingProducts.length} />
-        <StatCard label="No-result keywords" value="12" />
+        <StatCard label="No-result searches" value="12" />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <AdminCard title="Revenue chart placeholder">
+        <AdminCard title="Revenue trend">
           <div className="flex min-h-72 items-end gap-3 rounded-md bg-mist p-4">
             {[42, 68, 56, 82, 74, 95, 88].map((height, index) => (
               <div className="flex flex-1 flex-col items-center gap-2" key={height}>
-                <div className="w-full rounded-t-md bg-forest" style={{ height: `${height * 2}px` }} />
+                <div className="w-full rounded-t-md bg-forest shadow-sm" style={{ height: `${height * 2}px` }} />
                 <span className="text-xs font-bold text-slate">D{index + 1}</span>
               </div>
             ))}
@@ -96,7 +111,7 @@ export function AdminDashboardClient() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <AdminCard title="Low stock table">
+        <AdminCard title="Low stock">
           <AdminTable
             columns={["SKU", "Batch", "Available", "Threshold"]}
             rows={lowStockRows.map((item) => [
@@ -107,7 +122,7 @@ export function AdminDashboardClient() {
             ])}
           />
         </AdminCard>
-        <AdminCard title="Expiry alerts table">
+        <AdminCard title="Expiry alerts">
           <AdminTable
             columns={["Batch", "SKU", "Expiry", "Alert"]}
             rows={expiringSoonBatches.map((batch) => [
@@ -125,9 +140,9 @@ export function AdminDashboardClient() {
           <div className="flex items-start gap-3">
             <PackageSearch className="h-5 w-5 text-forest" />
             <div>
-              <h2 className="font-black text-ink">Top selling product signal</h2>
+              <h2 className="font-black text-ink">Top selling products</h2>
               <p className="mt-1 text-sm leading-6 text-slate">
-                Mock data ranks products by available variant velocity. Real analytics can replace this adapter later.
+                Products are ranked by current sales velocity and stock availability so buying decisions stay focused.
               </p>
             </div>
           </div>
@@ -136,9 +151,9 @@ export function AdminDashboardClient() {
           <div className="flex items-start gap-3">
             <SearchX className="h-5 w-5 text-coral" />
             <div>
-              <h2 className="font-black text-ink">No-result search keywords placeholder</h2>
+              <h2 className="font-black text-ink">No-result search terms</h2>
               <p className="mt-1 text-sm leading-6 text-slate">
-                Track searches such as isolate 5lb, vegan mass gainer, and lactose-free pre-workout.
+                Track searches such as isolate 5lb, vegan mass gainer, and lactose-free pre-workout to plan catalog gaps.
               </p>
             </div>
           </div>

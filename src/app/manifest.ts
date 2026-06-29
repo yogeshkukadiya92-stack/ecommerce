@@ -10,13 +10,13 @@ export default function manifest(): MetadataRoute.Manifest {
       {
         purpose: "any",
         sizes: "any",
-        src: "/icons/icon.svg",
+        src: "/icon.svg",
         type: "image/svg+xml"
       },
       {
         purpose: "maskable",
         sizes: "any",
-        src: "/icons/icon.svg",
+        src: "/icon.svg",
         type: "image/svg+xml"
       }
     ],

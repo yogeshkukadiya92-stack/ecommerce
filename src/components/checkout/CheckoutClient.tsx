@@ -377,14 +377,19 @@ export function CheckoutClient() {
 
   return (
     <main className="container-page py-8 lg:py-12">
-      <div>
+      <div className="rounded-card border border-black/10 bg-white p-5 shadow-sm">
         <p className="text-xs font-black uppercase tracking-[0.14em] text-forest">Checkout</p>
         <h1 className="mt-2 text-3xl font-black tracking-tight text-ink">Secure checkout</h1>
+        <div className="mt-4 flex flex-wrap gap-2 text-xs font-black text-forest">
+          {["Encrypted payment", "Address validation", "COD supported"].map((item) => (
+            <span className="rounded-md bg-mist px-3 py-2" key={item}>{item}</span>
+          ))}
+        </div>
       </div>
 
       <section className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px]">
         <div className="grid gap-5">
-          <Panel title="Checkout mode">
+          <Panel title="1. Checkout mode">
             <div className="grid gap-3 sm:grid-cols-2">
               {(["guest", "login"] as CheckoutMode[]).map((mode) => (
                 <button
@@ -402,7 +407,7 @@ export function CheckoutClient() {
             </div>
           </Panel>
 
-          <Panel title="Address">
+          <Panel title="2. Delivery address">
             {savedAddress ? (
               <button className="focus-ring mb-4 rounded-md border border-black/10 bg-mist px-4 py-3 text-left text-sm font-bold text-ink" onClick={useSavedAddress} type="button">
                 Use saved address: {savedAddress.line1}, {savedAddress.city} {savedAddress.postalCode}
@@ -424,7 +429,7 @@ export function CheckoutClient() {
             </p>
           </Panel>
 
-          <Panel title="Delivery method">
+          <Panel title="3. Delivery method">
             <div className="grid gap-3 sm:grid-cols-2">
               {deliveryMethods.map((method) => (
                 <button
@@ -440,7 +445,7 @@ export function CheckoutClient() {
             </div>
           </Panel>
 
-          <Panel title="Payment method">
+          <Panel title="4. Payment method">
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
               {paymentMethods.map((method) => (
                 <button
@@ -500,7 +505,7 @@ export function CheckoutClient() {
           </Panel>
 
           {notice ? <p className="rounded-md bg-mint p-3 text-sm font-bold text-forest">{notice}</p> : null}
-          <button className="focus-ring h-12 rounded-md bg-lime text-sm font-black text-ink hover:bg-mint" disabled={isPlacingOrder} onClick={handlePlaceOrder} type="button">
+          <button className="focus-ring h-12 rounded-md bg-lime text-sm font-black text-ink shadow-sm hover:bg-mint" disabled={isPlacingOrder} onClick={handlePlaceOrder} type="button">
             {isPlacingOrder ? "Placing order..." : `Place order - ${formatRs(totals.grandTotal)}`}
           </button>
         </div>

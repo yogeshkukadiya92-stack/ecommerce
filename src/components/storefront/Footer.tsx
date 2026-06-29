@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Instagram, Mail, MapPin, Phone } from "lucide-react";
+import { CreditCard, Instagram, Mail, MapPin, Phone, RotateCcw, ShieldCheck, Truck } from "lucide-react";
 import type { FooterCmsConfig } from "@/types/cms";
 import { NewsletterBox } from "./NewsletterBox";
 
@@ -36,6 +36,22 @@ export function Footer({ config }: { config?: FooterCmsConfig }) {
 
   return (
     <footer className="border-t border-black/10 bg-ink text-white">
+      <div className="container-page grid gap-3 border-b border-white/10 py-6 sm:grid-cols-4">
+        {[
+          { icon: ShieldCheck, label: "Authenticity checked" },
+          { icon: CreditCard, label: "Secure checkout" },
+          { icon: Truck, label: "Tracked delivery" },
+          { icon: RotateCcw, label: "Easy support" }
+        ].map((item) => {
+          const Icon = item.icon;
+          return (
+            <div className="flex items-center gap-3 rounded-md bg-white/5 px-3 py-3 text-sm font-black text-white" key={item.label}>
+              <Icon className="h-4 w-4 text-lime" />
+              {item.label}
+            </div>
+          );
+        })}
+      </div>
       <div className="container-page grid gap-8 py-10 lg:grid-cols-[1.1fr_1.4fr]">
         <div>
           <h2 className="text-2xl font-black">FitSupplement Store</h2>
@@ -52,7 +68,7 @@ export function Footer({ config }: { config?: FooterCmsConfig }) {
         <div className="grid gap-8 sm:grid-cols-3">
           {footerColumns.map((group) => (
             <div key={group.title}>
-              <h3 className="text-sm font-black">{group.title}</h3>
+              <h3 className="text-sm font-black uppercase tracking-[0.14em] text-white/90">{group.title}</h3>
               <nav className="mt-4 grid gap-3 text-sm text-white/70">
                 {group.links.map((link) => (
                   <Link key={"id" in link ? link.id : link.href} href={"url" in link ? link.url : link.href} className="hover:text-white">

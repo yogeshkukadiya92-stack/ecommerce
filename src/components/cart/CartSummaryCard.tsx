@@ -16,8 +16,11 @@ export function CartSummaryCard({
 
   return (
     <aside className="rounded-card border border-black/10 bg-white p-5 shadow-card">
-      <h2 className="text-xl font-black tracking-tight text-ink">Order summary</h2>
-      <div className="mt-4 rounded-md bg-mist p-3">
+      <div className="flex items-start justify-between gap-4">
+        <h2 className="text-xl font-black tracking-tight text-ink">Order summary</h2>
+        <span className="rounded-md bg-mint px-2 py-1 text-xs font-black text-forest">Secure</span>
+      </div>
+      <div className="mt-4 rounded-md border border-black/10 bg-mist p-3">
         <div className="h-2 overflow-hidden rounded-full bg-cloud">
           <div className="h-full rounded-full bg-lime" style={{ width: `${progress}%` }} />
         </div>
@@ -45,6 +48,9 @@ export function CartSummaryCard({
         ) : null}
         <p className="mt-2 text-xs font-semibold text-slate">
           Earn {totals.loyaltyEarnedPoints} loyalty points on this order.
+        </p>
+        <p className="mt-3 rounded-md bg-mist px-3 py-2 text-xs font-bold text-slate">
+          Payments are encrypted. COD stays separate from online gateway flow.
         </p>
       </div>
       {action ? <div className="mt-5">{action}</div> : null}

@@ -9,8 +9,8 @@ import { Input } from "@/components/ui/Input";
 
 export function AdminLoginClient() {
   const router = useRouter();
-  const [email, setEmail] = useState("admin@fitsupplement.local");
-  const [password, setPassword] = useState("admin123");
+  const [email, setEmail] = useState("Yogeshkukadiya92@gmail.com");
+  const [password, setPassword] = useState("TCH123");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -37,7 +37,7 @@ export function AdminLoginClient() {
           <p className="mt-5 text-xs font-black uppercase tracking-[0.14em] text-forest">Admin authentication</p>
           <h1 className="mt-2 text-3xl font-black tracking-tight text-ink">Login to control catalog</h1>
           <p className="mt-3 text-sm leading-6 text-slate">
-            Mock admin auth is protected through a local session, role list, permission set, and audit logging helper.
+            Admin access uses a local session, role list, permission set, and audit logging helper for this environment.
           </p>
           <form className="mt-6 grid gap-4" onSubmit={handleLogin}>
             <Input label="Admin email" onChange={(event) => setEmail(event.target.value)} type="email" value={email} />

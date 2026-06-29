@@ -93,7 +93,7 @@ export function ProductDetailClient({
         alt: `${product.name} video`,
         label: "Video",
         type: "video" as const,
-        value: detail.videoUrl ?? "Product routine guide"
+        value: detail.videoUrl?.includes("placeholder") ? "Product routine guide" : detail.videoUrl ?? "Product routine guide"
       }
     ],
     [detail.videoUrl, product.images, product.name]
@@ -178,7 +178,7 @@ export function ProductDetailClient({
               </button>
             ))}
           </div>
-          <div className="order-1 overflow-hidden rounded-card border border-black/10 bg-white p-4 shadow-sm lg:order-2">
+          <div className="order-1 overflow-hidden rounded-card border border-black/10 bg-white p-3 shadow-soft lg:order-2">
             {selectedGalleryItem.type === "image" && selectedGalleryItem.url ? (
               <Image
                 alt={selectedGalleryItem.alt}
@@ -213,7 +213,7 @@ export function ProductDetailClient({
             <span className="text-xs font-bold text-slate">SKU {selectedVariant.sku}</span>
           </div>
 
-          <div className="mt-5 rounded-md bg-mist p-4" data-testid="pdp-price">
+          <div className="mt-5 rounded-md border border-black/10 bg-mist p-4" data-testid="pdp-price">
             <PriceDisplay mrp={selectedVariant.mrp} sellingPrice={selectedVariant.sellingPrice} />
             <p className="mt-2 text-xs font-semibold text-slate">
               Inclusive of taxes. Shipping calculated at checkout.
@@ -269,7 +269,7 @@ export function ProductDetailClient({
                 {selectedVariant.stock > 0 ? `${selectedVariant.stock} in stock` : "Out of stock"}
               </p>
               <p className="mt-1 text-xs text-slate">
-                Batch {detail.authenticity.batchNumberExample} · Expiry {detail.authenticity.expiryExample}
+                Batch {detail.authenticity.batchNumberExample} | Expiry {detail.authenticity.expiryExample}
               </p>
             </div>
             <div className="rounded-md border border-black/10 p-3">
@@ -333,7 +333,7 @@ export function ProductDetailClient({
           <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
             <button
               aria-label={`Add ${product.name} ${selectedVariant.flavor} ${selectedVariant.size} to cart`}
-              className="focus-ring h-12 rounded-md bg-ink text-sm font-black text-white hover:bg-forest"
+              className="focus-ring h-12 rounded-md bg-ink text-sm font-black text-white shadow-sm hover:bg-forest"
               onClick={handleAddToCart}
               type="button"
             >
@@ -341,7 +341,7 @@ export function ProductDetailClient({
             </button>
             <button
               aria-label={`Buy ${product.name} ${selectedVariant.flavor} ${selectedVariant.size} now`}
-              className="focus-ring h-12 rounded-md bg-lime text-sm font-black text-ink hover:bg-mint"
+              className="focus-ring h-12 rounded-md bg-lime text-sm font-black text-ink shadow-sm hover:bg-mint"
               onClick={handleAddToCart}
               type="button"
             >
@@ -358,7 +358,7 @@ export function ProductDetailClient({
         </aside>
       </section>
 
-      <section className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
+      <section className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
         <Highlight label="Protein" value={`${product.merchandising.proteinPerServing} g`} />
         <Highlight label="Calories" value={nutritionValue(product, "Calories") ?? "Varies"} />
         <Highlight label="Servings" value={String(product.merchandising.servingsCount)} />
@@ -422,8 +422,8 @@ export function ProductDetailClient({
               </p>
               <p>Batch number example: {detail.authenticity.batchNumberExample}</p>
               <p>Expiry visible: {detail.authenticity.expiryExample}</p>
-              <p>{detail.authenticity.qrVerification}</p>
-              <p>{detail.authenticity.serialVerification}</p>
+              <p>QR verification supports batch-level authenticity checks.</p>
+              <p>Serial verification helps confirm label and batch details.</p>
               {product.labReportUrl ? (
                 <Link
                   className="focus-ring inline-flex h-11 items-center justify-center gap-2 rounded-md bg-ink px-4 text-sm font-black text-white"
@@ -483,9 +483,13 @@ export function ProductDetailClient({
       <ProductRail products={relatedProducts} title="Related products" />
 
       <div
-        className="fixed inset-x-0 bottom-16 z-40 border-t border-black/10 bg-white p-3 shadow-2xl lg:hidden"
+        className="fixed inset-x-0 bottom-16 z-40 border-t border-black/10 bg-white/95 p-3 shadow-2xl backdrop-blur lg:hidden"
         data-testid="mobile-sticky-cta"
       >
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <span className="min-w-0 truncate text-xs font-bold text-slate">{selectedVariant.flavor} / {selectedVariant.size}</span>
+          <span className="text-sm font-black text-ink">{formatRs(selectedVariant.sellingPrice)}</span>
+        </div>
         <div className="grid grid-cols-[1fr_1fr] gap-2">
           <button
             aria-label={`Add ${product.name} ${selectedVariant.flavor} ${selectedVariant.size} to cart from sticky bar`}
@@ -533,7 +537,7 @@ function GalleryPanel({
             ))
           : null}
         {item.type === "ingredients" ? <span>{product.ingredients.join(", ")}</span> : null}
-        {item.type === "panel" ? <span>{product.labelImageUrls[0] ? "Label image available for review." : "Label image will be updated soon."}</span> : null}
+        {item.type === "panel" ? <span>{product.labelImageUrls[0] ? "Label image available for review." : "Label details are available in the authenticity section."}</span> : null}
         {item.type === "video" ? <span>{item.value}</span> : null}
       </div>
     </div>
@@ -690,7 +694,7 @@ function ReviewsSection({ product }: { product: StorefrontProduct }) {
   const maxCount = Math.max(1, ...summary.breakdown.map((item) => item.count));
 
   return (
-    <section className="mt-10 rounded-card border border-black/10 bg-white p-5 shadow-sm">
+    <section className="mt-10 rounded-card border border-black/10 bg-white p-5 shadow-card">
       <div className="grid gap-6 lg:grid-cols-[300px_1fr]">
         <div>
           <h2 className="text-2xl font-black tracking-tight text-ink">Customer reviews</h2>
@@ -712,7 +716,7 @@ function ReviewsSection({ product }: { product: StorefrontProduct }) {
               </div>
             ))}
           </div>
-          <div className="mt-5 grid gap-2 rounded-md bg-mist p-3 text-xs font-bold text-slate">
+          <div className="mt-5 grid gap-2 rounded-md border border-black/10 bg-mist p-3 text-xs font-bold text-slate">
             <span>Taste: {summary.tasteAverage.toFixed(1)} / 5</span>
             <span>Mixability: {summary.mixabilityAverage.toFixed(1)} / 5</span>
             <span>Value: {summary.valueAverage.toFixed(1)} / 5</span>
@@ -724,7 +728,7 @@ function ReviewsSection({ product }: { product: StorefrontProduct }) {
           </div>
         </div>
         <div className="grid gap-4">
-          <div className="rounded-md border border-black/10 p-4">
+          <div className="rounded-md border border-black/10 bg-mist/50 p-4">
             <h3 className="font-black text-ink">Write a review after purchase</h3>
             <div className="mt-3 grid gap-3 sm:grid-cols-4">
               <SelectMini label="Rating" options={["5", "4", "3", "2", "1"]} />
@@ -740,7 +744,7 @@ function ReviewsSection({ product }: { product: StorefrontProduct }) {
               className="focus-ring mt-3 min-h-24 w-full rounded-md border border-black/10 p-3 text-sm"
               placeholder="Share taste, mixability, value, and label clarity."
             />
-            <div className="mt-3 rounded-md border border-dashed border-black/20 bg-mist p-3 text-xs font-bold text-slate">
+            <div className="mt-3 rounded-md border border-dashed border-black/20 bg-white p-3 text-xs font-bold text-slate">
               Add photo or video review
             </div>
             <button
@@ -753,7 +757,7 @@ function ReviewsSection({ product }: { product: StorefrontProduct }) {
             {reviewMessage ? <p className="mt-3 rounded-md bg-mint p-2 text-xs font-bold text-forest">{reviewMessage}</p> : null}
           </div>
           {approvedReviews.map((review) => (
-            <article className="rounded-md border border-black/10 p-4" key={`${review.customerName}-${review.title}`}>
+            <article className="rounded-md border border-black/10 bg-white p-4 shadow-sm" key={`${review.customerName}-${review.title}`}>
               <div className="flex flex-wrap items-center gap-2">
                 <RatingStars rating={review.rating} />
                 {review.isVerifiedPurchase ? <Badge tone="success">Verified purchase</Badge> : null}
