@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
-import { Bell, LogOut, Menu, Search, ShieldCheck } from "lucide-react";
+import { Bell, ExternalLink, LogOut, Menu, Search, ShieldCheck } from "lucide-react";
 import { ADMIN_NAVIGATION } from "@/constants/navigation";
 import { logoutAdmin } from "@/lib/admin/adminAuth";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
@@ -91,6 +91,16 @@ export function AdminShell({
                 <span className="hidden items-center gap-2 rounded-md bg-mint px-3 py-2 text-xs font-black text-forest sm:flex">
                   <ShieldCheck className="h-4 w-4" /> {session.fullName}
                 </span>
+                <Link
+                  aria-label="Open storefront website"
+                  className="focus-ring inline-flex items-center gap-2 rounded-md border border-black/10 bg-white px-3 py-2 text-xs font-black text-ink"
+                  href="/"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  <span className="hidden sm:inline">Website</span>
+                </Link>
                 <button className="focus-ring rounded-md border border-black/10 bg-white p-2 text-slate" type="button">
                   <Bell className="h-4 w-4" />
                 </button>
@@ -115,12 +125,22 @@ export function AdminShell({
                 </p>
                 <h1 className="mt-2 text-3xl font-black tracking-tight text-ink">{title}</h1>
               </div>
-              <Link
-                href="/api/admin/overview"
-                className="focus-ring rounded-md border border-black/10 bg-white px-4 py-2 text-sm font-bold text-ink shadow-sm"
-              >
-                API overview
-              </Link>
+              <div className="flex flex-wrap gap-2">
+                <Link
+                  href="/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="focus-ring inline-flex items-center gap-2 rounded-md bg-forest px-4 py-2 text-sm font-bold text-white shadow-sm"
+                >
+                  <ExternalLink className="h-4 w-4" /> Open website
+                </Link>
+                <Link
+                  href="/api/admin/overview"
+                  className="focus-ring rounded-md border border-black/10 bg-white px-4 py-2 text-sm font-bold text-ink shadow-sm"
+                >
+                  API overview
+                </Link>
+              </div>
             </div>
             {children}
           </main>
