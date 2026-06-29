@@ -203,7 +203,7 @@ export function ProductDetailClient({
           <p className="mt-4 text-xs font-black uppercase tracking-[0.14em] text-forest">
             {product.merchandising.brandName}
           </p>
-          <h1 className="mt-2 text-3xl font-black tracking-tight text-ink">{product.name}</h1>
+          <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-ink">{product.name}</h1>
           <p className="mt-3 text-sm leading-6 text-slate">{product.shortDescription}</p>
           <div className="mt-4 flex items-center gap-3">
             <RatingStars
@@ -333,7 +333,7 @@ export function ProductDetailClient({
           <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
             <button
               aria-label={`Add ${product.name} ${selectedVariant.flavor} ${selectedVariant.size} to cart`}
-              className="focus-ring h-12 rounded-md bg-ink text-sm font-black text-white shadow-sm hover:bg-forest"
+              className="focus-ring h-12 rounded-md bg-ink text-sm font-semibold text-white shadow-sm hover:bg-forest"
               onClick={handleAddToCart}
               type="button"
             >
@@ -341,7 +341,7 @@ export function ProductDetailClient({
             </button>
             <button
               aria-label={`Buy ${product.name} ${selectedVariant.flavor} ${selectedVariant.size} now`}
-              className="focus-ring h-12 rounded-md bg-lime text-sm font-black text-ink shadow-sm hover:bg-mint"
+              className="focus-ring h-12 rounded-md bg-lime text-sm font-semibold text-ink shadow-sm hover:bg-mint"
               onClick={handleAddToCart}
               type="button"
             >
@@ -488,12 +488,12 @@ export function ProductDetailClient({
       >
         <div className="mb-2 flex items-center justify-between gap-3">
           <span className="min-w-0 truncate text-xs font-bold text-slate">{selectedVariant.flavor} / {selectedVariant.size}</span>
-          <span className="text-sm font-black text-ink">{formatRs(selectedVariant.sellingPrice)}</span>
+          <span className="text-sm font-extrabold text-ink">{formatRs(selectedVariant.sellingPrice)}</span>
         </div>
         <div className="grid grid-cols-[1fr_1fr] gap-2">
           <button
             aria-label={`Add ${product.name} ${selectedVariant.flavor} ${selectedVariant.size} to cart from sticky bar`}
-            className="focus-ring flex h-12 items-center justify-center gap-2 rounded-md bg-ink text-sm font-black text-white"
+            className="focus-ring flex h-12 items-center justify-center gap-2 rounded-md bg-ink text-sm font-semibold text-white"
             onClick={handleAddToCart}
             type="button"
           >
@@ -501,7 +501,7 @@ export function ProductDetailClient({
           </button>
           <button
             aria-label={`Buy ${product.name} ${selectedVariant.flavor} ${selectedVariant.size} now from sticky bar`}
-            className="focus-ring h-12 rounded-md bg-lime text-sm font-black text-ink"
+            className="focus-ring h-12 rounded-md bg-lime text-sm font-semibold text-ink"
             onClick={handleAddToCart}
             type="button"
           >
@@ -638,7 +638,7 @@ function Highlight({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-card border border-black/10 bg-white p-4 shadow-sm">
       <p className="text-xs font-black uppercase tracking-[0.14em] text-slate">{label}</p>
-      <p className="mt-2 text-xl font-black text-ink">{value}</p>
+      <p className="mt-2 text-xl font-extrabold tracking-tight text-ink">{value}</p>
     </div>
   );
 }
@@ -646,7 +646,7 @@ function Highlight({ label, value }: { label: string; value: string }) {
 function DetailCard({ children, title }: { children: React.ReactNode; title: string }) {
   return (
     <section className="rounded-card border border-black/10 bg-white p-5 shadow-sm">
-      <h2 className="mb-4 text-xl font-black tracking-tight text-ink">{title}</h2>
+      <h2 className="mb-4 text-xl font-extrabold tracking-tight text-ink">{title}</h2>
       {children}
     </section>
   );
@@ -676,7 +676,7 @@ function ProductRail({ products, title }: { products: StorefrontProduct[]; title
 
   return (
     <section className="mt-10">
-      <h2 className="mb-5 text-2xl font-black tracking-tight text-ink">{title}</h2>
+      <h2 className="mb-5 text-2xl font-extrabold tracking-tight text-ink">{title}</h2>
       <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {products.slice(0, 4).map((product) => (
           <ProductCard key={product.id} product={product} />
@@ -697,8 +697,8 @@ function ReviewsSection({ product }: { product: StorefrontProduct }) {
     <section className="mt-10 rounded-card border border-black/10 bg-white p-5 shadow-card">
       <div className="grid gap-6 lg:grid-cols-[300px_1fr]">
         <div>
-          <h2 className="text-2xl font-black tracking-tight text-ink">Customer reviews</h2>
-          <p className="mt-3 text-5xl font-black text-ink">
+          <h2 className="text-2xl font-extrabold tracking-tight text-ink">Customer reviews</h2>
+          <p className="mt-3 text-5xl font-extrabold tracking-tight text-ink">
             {(summary.average || product.merchandising.rating).toFixed(1)}
           </p>
           <RatingStars rating={summary.average || product.merchandising.rating} reviewCount={summary.total} />

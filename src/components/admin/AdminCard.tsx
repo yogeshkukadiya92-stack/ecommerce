@@ -12,7 +12,7 @@ export function AdminCard({
 }) {
   return (
     <section className={cn("min-w-0 rounded-card border border-black/10 bg-white p-5 shadow-sm", className)}>
-      {title ? <h2 className="mb-4 text-base font-black tracking-tight text-ink">{title}</h2> : null}
+      {title ? <h2 className="mb-4 text-base font-extrabold tracking-tight text-ink">{title}</h2> : null}
       {children}
     </section>
   );

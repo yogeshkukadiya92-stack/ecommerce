@@ -379,7 +379,7 @@ export function CheckoutClient() {
     <main className="container-page py-8 lg:py-12">
       <div className="rounded-card border border-black/10 bg-white p-5 shadow-sm">
         <p className="text-xs font-black uppercase tracking-[0.14em] text-forest">Checkout</p>
-        <h1 className="mt-2 text-3xl font-black tracking-tight text-ink">Secure checkout</h1>
+        <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-ink">Secure checkout</h1>
         <div className="mt-4 flex flex-wrap gap-2 text-xs font-black text-forest">
           {["Encrypted payment", "Address validation", "COD supported"].map((item) => (
             <span className="rounded-md bg-mist px-3 py-2" key={item}>{item}</span>
@@ -505,7 +505,7 @@ export function CheckoutClient() {
           </Panel>
 
           {notice ? <p className="rounded-md bg-mint p-3 text-sm font-bold text-forest">{notice}</p> : null}
-          <button className="focus-ring h-12 rounded-md bg-lime text-sm font-black text-ink shadow-sm hover:bg-mint" disabled={isPlacingOrder} onClick={handlePlaceOrder} type="button">
+          <button className="focus-ring h-12 rounded-md bg-lime text-sm font-semibold text-ink shadow-sm hover:bg-mint" disabled={isPlacingOrder} onClick={handlePlaceOrder} type="button">
             {isPlacingOrder ? "Placing order..." : `Place order - ${formatRs(totals.grandTotal)}`}
           </button>
         </div>
@@ -521,7 +521,7 @@ export function CheckoutClient() {
 function Panel({ children, title }: { children: ReactNode; title: string }) {
   return (
     <section className="rounded-card border border-black/10 bg-white p-5 shadow-sm">
-      <h2 className="mb-4 text-xl font-black tracking-tight text-ink">{title}</h2>
+      <h2 className="mb-4 text-xl font-extrabold tracking-tight text-ink">{title}</h2>
       {children}
     </section>
   );

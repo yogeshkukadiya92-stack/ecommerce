@@ -54,7 +54,7 @@ export function AdminShell({
     <div className="min-h-screen bg-mist">
       <div className="grid min-h-screen w-full lg:grid-cols-[280px_1fr]">
         <aside className="hidden border-r border-black/10 bg-ink p-5 text-white lg:block">
-          <Link href="/admin" className="text-lg font-black tracking-tight">
+          <Link href="/admin" className="text-lg font-extrabold tracking-tight">
             FitSupplement Admin
           </Link>
           <div className="mt-5 rounded-card border border-white/10 bg-white/10 p-3 text-xs leading-5 text-white/70">
@@ -123,20 +123,20 @@ export function AdminShell({
                 <p className="text-xs font-black uppercase tracking-[0.14em] text-forest">
                   Admin control center
                 </p>
-                <h1 className="mt-2 text-3xl font-black tracking-tight text-ink">{title}</h1>
+                <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-ink">{title}</h1>
               </div>
               <div className="flex flex-wrap gap-2">
                 <Link
                   href="/"
                   target="_blank"
                   rel="noreferrer"
-                  className="focus-ring inline-flex items-center gap-2 rounded-md bg-forest px-4 py-2 text-sm font-bold text-white shadow-sm"
+                  className="focus-ring inline-flex items-center gap-2 rounded-md bg-forest px-4 py-2 text-sm font-semibold text-white shadow-sm"
                 >
                   <ExternalLink className="h-4 w-4" /> Open website
                 </Link>
                 <Link
                   href="/api/admin/overview"
-                  className="focus-ring rounded-md border border-black/10 bg-white px-4 py-2 text-sm font-bold text-ink shadow-sm"
+                  className="focus-ring rounded-md border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-ink shadow-sm"
                 >
                   API overview
                 </Link>

@@ -23,6 +23,13 @@ const config: Config = {
       fontFamily: {
         sans: ["var(--font-sans)", "Arial", "Helvetica", "sans-serif"]
       },
+      fontWeight: {
+        black: "800",
+        extrabold: "800"
+      },
+      letterSpacing: {
+        tight: "-0.015em"
+      },
       boxShadow: {
         soft: "0 18px 60px rgba(17, 19, 21, 0.08)",
         card: "0 12px 30px rgba(17, 19, 21, 0.06)"

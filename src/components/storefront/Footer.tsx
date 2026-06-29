@@ -54,7 +54,7 @@ export function Footer({ config }: { config?: FooterCmsConfig }) {
       </div>
       <div className="container-page grid gap-8 py-10 lg:grid-cols-[1.1fr_1.4fr]">
         <div>
-          <h2 className="text-2xl font-black">FitSupplement Store</h2>
+          <h2 className="text-2xl font-extrabold tracking-tight">FitSupplement Store</h2>
           <p className="mt-3 max-w-md text-sm leading-6 text-white/70">
             {config?.description ??
               "Premium sports nutrition and wellness essentials with transparent labels, batch-aware inventory, and trustworthy shopping flows."}

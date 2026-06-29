@@ -20,7 +20,7 @@ export function Button({
   return (
     <Link
       className={cn(
-        "focus-ring inline-flex items-center justify-center rounded-md font-bold transition",
+        "focus-ring inline-flex items-center justify-center rounded-md font-semibold transition",
         size === "sm" && "min-h-9 px-3 py-2 text-xs",
         size === "md" && "min-h-11 px-5 py-3 text-sm",
         size === "lg" && "min-h-12 px-6 py-3 text-base",

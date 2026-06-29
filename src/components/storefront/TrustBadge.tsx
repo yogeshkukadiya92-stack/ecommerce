@@ -15,7 +15,7 @@ export function TrustBadge({
         <Icon className="h-5 w-5" />
       </div>
       <div>
-        <p className="text-base font-black text-ink">{title}</p>
+        <p className="text-base font-extrabold text-ink">{title}</p>
         <p className="mt-1 text-xs leading-5 text-slate">{description}</p>
       </div>
     </div>

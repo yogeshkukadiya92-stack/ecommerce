@@ -33,13 +33,13 @@ export function AdminDashboardClient() {
       <section className="rounded-card border border-black/10 bg-ink p-5 text-white shadow-card">
         <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.14em] text-lime">Operations overview</p>
-            <h2 className="mt-2 text-2xl font-black tracking-tight">Revenue, inventory, and fulfillment signals in one place</h2>
+            <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-lime">Operations overview</p>
+            <h2 className="mt-2 text-2xl font-extrabold tracking-tight">Revenue, inventory, and fulfillment signals in one place</h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-white/70">
               Monitor today&apos;s store health, stock risks, order queues, and customer activity before making catalog or fulfillment decisions.
             </p>
           </div>
-          <Link className="inline-flex h-11 items-center justify-center rounded-md bg-lime px-4 text-sm font-black text-ink" href="/admin/orders">
+          <Link className="inline-flex h-11 items-center justify-center rounded-md bg-lime px-4 text-sm font-semibold text-ink" href="/admin/orders">
             Review orders
           </Link>
         </div>

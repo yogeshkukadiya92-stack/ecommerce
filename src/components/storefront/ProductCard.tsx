@@ -96,12 +96,12 @@ export function ProductCard({ product }: { product: ProductCardProduct }) {
           {variant ? <Badge tone={stockTone}>{variant.stock > 0 ? "In stock" : "Out"}</Badge> : null}
         </div>
         {merchandising ? (
-          <p className="mt-3 text-xs font-black uppercase tracking-[0.12em] text-forest">
+          <p className="mt-3 text-xs font-extrabold uppercase tracking-[0.1em] text-forest">
             {merchandising.brandName}
           </p>
         ) : null}
         <Link href={`/products/${product.slug}`}>
-          <h3 className="mt-2 line-clamp-2 min-h-11 text-[15px] font-black leading-5 text-ink sm:text-base sm:leading-6">
+          <h3 className="mt-2 line-clamp-2 min-h-11 text-[15px] font-extrabold leading-5 text-ink sm:text-base sm:leading-6">
             {product.name}
           </h3>
         </Link>
@@ -120,15 +120,15 @@ export function ProductCard({ product }: { product: ProductCardProduct }) {
           <div className="mt-3 grid gap-2 rounded-md bg-mist p-3 text-xs font-semibold text-slate">
             <div className="flex items-center justify-between gap-2">
               <span>Per serving</span>
-              <span className="font-black text-ink">Rs {merchandising.pricePerServing}</span>
+              <span className="font-extrabold text-ink">Rs {merchandising.pricePerServing}</span>
             </div>
             <div className="flex items-center justify-between gap-2">
               <span>Protein</span>
-              <span className="font-black text-ink">{merchandising.proteinPerServing} g</span>
+              <span className="font-extrabold text-ink">{merchandising.proteinPerServing} g</span>
             </div>
             <div className="flex items-center justify-between gap-2">
               <span>Preview</span>
-              <span className="min-w-0 max-w-24 truncate text-right font-black text-ink sm:max-w-36">
+              <span className="min-w-0 max-w-24 truncate text-right font-extrabold text-ink sm:max-w-36">
                 {[merchandising.flavors[0], merchandising.sizes[0]].filter(Boolean).join(" / ")}
               </span>
             </div>
@@ -146,7 +146,7 @@ export function ProductCard({ product }: { product: ProductCardProduct }) {
         </div>
         {isCompared ? <p className="mt-2 text-xs font-bold text-forest">Added to compare</p> : null}
         <button
-          className="focus-ring mt-auto flex h-11 w-full items-center justify-center gap-2 rounded-md bg-ink text-sm font-black text-white shadow-sm transition hover:bg-forest"
+          className="focus-ring mt-auto flex h-11 w-full items-center justify-center gap-2 rounded-md bg-ink text-sm font-semibold text-white shadow-sm transition hover:bg-forest"
           onClick={handleQuickAdd}
           type="button"
         >

@@ -26,13 +26,13 @@ export function Header({ config }: { config?: HeaderCmsConfig }) {
       <MobileHeader config={config} />
       <div className="hidden bg-white lg:block">
         <div className="container-page grid h-20 grid-cols-[220px_1fr_auto] items-center gap-6">
-          <Link className="group flex items-center gap-3 text-xl font-black tracking-tight text-ink" href="/">
+          <Link className="group flex items-center gap-3 text-xl font-extrabold tracking-tight text-ink" href="/">
             <span className="grid h-10 w-10 place-items-center rounded-md bg-ink text-lime shadow-sm">
               <Sparkles className="h-5 w-5" />
             </span>
             <span className="leading-tight">
               {logoText}
-              <span className="block text-[10px] font-black uppercase tracking-[0.18em] text-forest">Sports nutrition</span>
+              <span className="block text-[10px] font-extrabold uppercase tracking-[0.16em] text-forest">Sports nutrition</span>
             </span>
           </Link>
           {config?.enableSearch === false ? <div /> : <SearchBar label="Search supplements desktop" />}
@@ -48,7 +48,7 @@ export function Header({ config }: { config?: HeaderCmsConfig }) {
               </Link>
             )}
             {config?.enableCart === false ? null : (
-              <Link className="focus-ring flex h-11 items-center gap-2 rounded-md bg-ink px-4 text-sm font-black text-white shadow-sm transition hover:bg-forest" href="/cart">
+              <Link className="focus-ring flex h-11 items-center gap-2 rounded-md bg-ink px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-forest" href="/cart">
                 <ShoppingCart className="h-4 w-4" /> Cart
               </Link>
             )}

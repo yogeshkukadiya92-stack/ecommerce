@@ -175,11 +175,11 @@ export function ProductListingShell({
       <Breadcrumbs items={breadcrumbs} />
       <div className="mt-5 grid gap-5 rounded-card border border-black/10 bg-white p-5 shadow-sm lg:grid-cols-[1fr_auto] lg:items-end lg:p-6">
         <div>
-          <h1 className="text-3xl font-black tracking-tight text-ink sm:text-4xl">{title}</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">{title}</h1>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-slate">{description}</p>
           <div className="mt-4 flex flex-wrap gap-2">
             {["Authentic products", "Batch verified", "Secure checkout", "Fast delivery", "Easy returns"].map((item) => (
-              <span className="rounded-md bg-mist px-3 py-2 text-xs font-black text-forest" key={item}>
+              <span className="rounded-md bg-mist px-3 py-2 text-xs font-extrabold text-forest" key={item}>
                 {item}
               </span>
             ))}
@@ -231,7 +231,7 @@ export function ProductListingShell({
 
       <div className="sticky top-[124px] z-30 mt-5 grid grid-cols-2 gap-2 border-y border-black/10 bg-mist/95 py-3 backdrop-blur lg:hidden">
         <button
-          className="focus-ring flex h-11 items-center justify-center gap-2 rounded-md bg-ink text-sm font-black text-white"
+          className="focus-ring flex h-11 items-center justify-center gap-2 rounded-md bg-ink text-sm font-semibold text-white"
           onClick={() => setIsFilterOpen(true)}
           type="button"
         >
@@ -295,7 +295,7 @@ export function ProductListingShell({
               {visibleProducts.length < filteredProducts.length ? (
                 <div className="mt-6 flex justify-center">
                   <button
-                    className="focus-ring h-12 rounded-md border border-black/10 bg-white px-5 text-sm font-black text-ink shadow-sm hover:border-forest"
+                    className="focus-ring h-12 rounded-md border border-black/10 bg-white px-5 text-sm font-semibold text-ink shadow-sm hover:border-forest"
                     onClick={() => setVisibleCount((current) => current + 12)}
                     type="button"
                   >
@@ -321,7 +321,7 @@ export function ProductListingShell({
                 title="No products found"
               />
               <div>
-                <h2 className="mb-4 text-xl font-black text-ink">Recommended instead</h2>
+                <h2 className="mb-4 text-xl font-extrabold tracking-tight text-ink">Recommended instead</h2>
                 <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
                   {recommendations.slice(0, 3).map((product) => (
                     <ProductCard key={product.id} product={product} />
@@ -335,7 +335,7 @@ export function ProductListingShell({
 
       {seoContent ? (
         <section className="mt-12 rounded-card border border-black/10 bg-white p-5 shadow-sm">
-          <h2 className="text-2xl font-black tracking-tight text-ink">{seoContent.heading}</h2>
+          <h2 className="text-2xl font-extrabold tracking-tight text-ink">{seoContent.heading}</h2>
           <p className="mt-3 max-w-4xl text-sm leading-6 text-slate">{seoContent.text}</p>
         </section>
       ) : null}
@@ -344,7 +344,7 @@ export function ProductListingShell({
         <div aria-modal="true" className="fixed inset-0 z-50 bg-ink/40 backdrop-blur-sm lg:hidden" role="dialog">
           <div className="ml-auto h-full w-[90vw] max-w-sm overflow-y-auto bg-mist p-4 shadow-2xl">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-black text-ink">Filters</h2>
+              <h2 className="text-lg font-extrabold text-ink">Filters</h2>
               <button
                 aria-label="Close filters"
                 className="focus-ring rounded-md bg-white p-2 text-ink"
@@ -362,7 +362,7 @@ export function ProductListingShell({
               options={options}
             />
             <button
-              className="focus-ring sticky bottom-0 mt-4 h-12 w-full rounded-md bg-ink text-sm font-black text-white shadow-card"
+              className="focus-ring sticky bottom-0 mt-4 h-12 w-full rounded-md bg-ink text-sm font-semibold text-white shadow-card"
               onClick={() => setIsFilterOpen(false)}
               type="button"
             >

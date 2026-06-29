@@ -133,7 +133,7 @@ export function CartClient() {
       <div className="flex flex-wrap items-end justify-between gap-4 rounded-card border border-black/10 bg-white p-5 shadow-sm">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.14em] text-forest">Cart</p>
-          <h1 className="mt-2 text-3xl font-black tracking-tight text-ink">Your supplement stack</h1>
+          <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-ink">Your supplement stack</h1>
           <p className="mt-2 text-sm leading-6 text-slate">Review flavors, purchase type, coupons, and delivery savings before checkout.</p>
         </div>
         <button className="focus-ring rounded-md border border-black/10 bg-white px-4 py-2 text-sm font-black" onClick={cart.clearCart} type="button">
@@ -160,11 +160,11 @@ export function CartClient() {
                   </Badge>
                 </div>
                 <Link href={`/products/${item.productSlug}`}>
-                  <h2 className="mt-2 text-lg font-black text-ink">{item.productName}</h2>
+                  <h2 className="mt-2 text-lg font-extrabold tracking-tight text-ink">{item.productName}</h2>
                 </Link>
                 <p className="mt-1 text-sm font-semibold text-slate">{item.variantLabel ?? item.sku}</p>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <span className="text-lg font-black text-ink">{formatRs(item.unitPrice)}</span>
+                  <span className="text-lg font-extrabold tracking-tight text-ink">{formatRs(item.unitPrice)}</span>
                   {item.mrp && item.mrp > item.unitPrice ? (
                     <span className="text-sm font-semibold text-slate line-through">{formatRs(item.mrp)}</span>
                   ) : null}
@@ -176,7 +176,7 @@ export function CartClient() {
                   <button className="focus-ring flex items-center justify-center" onClick={() => cart.updateQuantity(item.lineId, item.quantity - 1)} type="button">
                     <Minus className="h-4 w-4" />
                   </button>
-                  <output className="flex items-center justify-center text-sm font-black">{item.quantity}</output>
+                    <output className="flex items-center justify-center text-sm font-extrabold">{item.quantity}</output>
                   <button className="focus-ring flex items-center justify-center" onClick={() => cart.updateQuantity(item.lineId, item.quantity + 1)} type="button">
                     <Plus className="h-4 w-4" />
                   </button>
@@ -189,7 +189,7 @@ export function CartClient() {
           ))}
 
           <section className="rounded-card border border-black/10 bg-white p-5 shadow-sm">
-            <h2 className="text-xl font-black text-ink">Recommended add-ons</h2>
+            <h2 className="text-xl font-extrabold tracking-tight text-ink">Recommended add-ons</h2>
             <p className="mt-1 text-sm text-slate">Complete the stack with useful accessories and daily essentials.</p>
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
               {addOns.map((addOn) => {
@@ -210,7 +210,7 @@ export function CartClient() {
           </section>
 
           <section className="rounded-card border border-black/10 bg-white p-5 shadow-sm">
-            <h2 className="text-xl font-black text-ink">Bundle deals</h2>
+            <h2 className="text-xl font-extrabold tracking-tight text-ink">Bundle deals</h2>
             <p className="mt-1 text-sm text-slate">Add curated combinations in one tap and keep variant details in the cart.</p>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {bundleDeals.map((bundle) => (

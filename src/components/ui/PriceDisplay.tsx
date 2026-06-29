@@ -9,7 +9,7 @@ export function PriceDisplay({
 
   return (
     <div className="flex flex-wrap items-baseline gap-2">
-      <span className="text-xl font-black text-ink">
+      <span className="text-xl font-extrabold tracking-tight text-ink">
         Rs {sellingPrice.toLocaleString("en-IN")}
       </span>
       {mrp > sellingPrice ? (
@@ -17,7 +17,7 @@ export function PriceDisplay({
           <span className="text-sm font-semibold text-slate line-through">
             Rs {mrp.toLocaleString("en-IN")}
           </span>
-          <span className="text-xs font-black text-coral">{discount}% off</span>
+          <span className="text-xs font-extrabold text-coral">{discount}% off</span>
         </>
       ) : null}
     </div>

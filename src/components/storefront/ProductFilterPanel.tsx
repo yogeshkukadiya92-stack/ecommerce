@@ -40,8 +40,8 @@ export function ProductFilterPanel({
   return (
     <aside className="rounded-card border border-black/10 bg-white p-4 shadow-sm lg:sticky lg:top-36">
       <div className="flex items-center justify-between gap-4">
-        <h2 className="text-base font-black text-ink">Filters</h2>
-        <span className="rounded-md bg-mint px-2 py-1 text-xs font-black text-forest">Live</span>
+        <h2 className="text-base font-extrabold text-ink">Filters</h2>
+        <span className="rounded-md bg-mint px-2 py-1 text-xs font-extrabold text-forest">Live</span>
       </div>
       <div className="mt-5 grid gap-6">
         <CheckboxGroup
@@ -81,7 +81,7 @@ export function ProductFilterPanel({
           values={options.types}
         />
         <div>
-          <p className="mb-3 text-sm font-black text-ink">Price and nutrition</p>
+          <p className="mb-3 text-sm font-extrabold text-ink">Price and nutrition</p>
           <div className="grid gap-3">
             <Input
               label="Min price"
@@ -128,7 +128,7 @@ export function ProductFilterPanel({
           </div>
         </div>
         <div>
-          <p className="mb-3 text-sm font-black text-ink">Product standards</p>
+          <p className="mb-3 text-sm font-extrabold text-ink">Product standards</p>
           <div className="grid gap-2">
             {booleanFilters.map((filter) => (
               <label key={filter.key} className="flex items-center gap-2 rounded-md px-2 py-1 text-sm font-semibold text-slate hover:bg-mist">
@@ -165,7 +165,7 @@ function CheckboxGroup({
 
   return (
     <div>
-      <p className="mb-3 text-sm font-black text-ink">{label}</p>
+      <p className="mb-3 text-sm font-extrabold text-ink">{label}</p>
       <div className="grid max-h-44 gap-1.5 overflow-y-auto pr-1">
         {values.map((value) => (
           <label key={value} className="flex items-center gap-2 rounded-md px-2 py-1 text-sm font-semibold text-slate hover:bg-mist">

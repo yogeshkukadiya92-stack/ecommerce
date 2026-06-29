@@ -41,7 +41,7 @@ function RenderedSection({ preview, section }: { preview: boolean; section: Home
           {previewBadge}
           <div className="container-page grid items-center gap-10 py-10 lg:grid-cols-[1.02fr_0.98fr] lg:py-14">
             <div className="max-w-2xl">
-              <h1 className="text-4xl font-black tracking-tight text-ink sm:text-5xl lg:text-6xl lg:leading-[0.95]">{section.title}</h1>
+              <h1 className="text-4xl font-extrabold tracking-tight text-ink sm:text-5xl lg:text-6xl lg:leading-[1.02]">{section.title}</h1>
               <p className="mt-5 max-w-xl text-base leading-7 text-slate sm:text-lg">{section.subtitle}</p>
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <Button href={section.ctaLink ?? "/products"} size="lg" variant="dark">
@@ -51,7 +51,7 @@ function RenderedSection({ preview, section }: { preview: boolean; section: Home
                   Shop best sellers
                 </Button>
               </div>
-              <div className="mt-7 flex flex-wrap gap-2 text-xs font-black text-forest">
+              <div className="mt-7 flex flex-wrap gap-2 text-xs font-extrabold text-forest">
                 {["Verified supply", "Secure checkout", "Expiry-visible batches"].map((item) => (
                   <span className="rounded-md border border-black/10 bg-white px-3 py-2 shadow-sm" key={item}>{item}</span>
                 ))}
@@ -59,7 +59,7 @@ function RenderedSection({ preview, section }: { preview: boolean; section: Home
               <div className="mt-6 grid gap-3 sm:grid-cols-3">
                 {["Average rating", "Dispatch target", "Batch tracked"].map((metric, index) => (
                   <div className="rounded-card border border-black/10 bg-white/90 p-4 shadow-sm" key={metric}>
-                    <p className="text-2xl font-black text-ink">{["4.8", "24h", "100%"][index]}</p>
+                    <p className="text-2xl font-extrabold tracking-tight text-ink">{["4.8", "24h", "100%"][index]}</p>
                     <p className="text-xs font-semibold text-slate">{metric}</p>
                   </div>
                 ))}

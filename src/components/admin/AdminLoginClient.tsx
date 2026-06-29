@@ -34,8 +34,8 @@ export function AdminLoginClient() {
       <section className="grid w-full max-w-5xl gap-6 lg:grid-cols-[1fr_420px]">
         <div className="rounded-card border border-black/10 bg-white p-6 shadow-card">
           <ShieldCheck className="h-10 w-10 text-forest" />
-          <p className="mt-5 text-xs font-black uppercase tracking-[0.14em] text-forest">Admin authentication</p>
-          <h1 className="mt-2 text-3xl font-black tracking-tight text-ink">Login to control catalog</h1>
+          <p className="mt-5 text-xs font-extrabold uppercase tracking-[0.12em] text-forest">Admin authentication</p>
+          <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-ink">Login to control catalog</h1>
           <p className="mt-3 text-sm leading-6 text-slate">
             Admin access uses a local session, role list, permission set, and audit logging helper for this environment.
           </p>
@@ -44,17 +44,17 @@ export function AdminLoginClient() {
             <Input label="Password" onChange={(event) => setPassword(event.target.value)} type="password" value={password} />
             {error ? <p className="rounded-md bg-coral/10 p-3 text-sm font-bold text-coral">{error}</p> : null}
             {message ? <p className="rounded-md bg-mint p-3 text-sm font-bold text-forest">{message}</p> : null}
-            <button className="focus-ring h-12 rounded-md bg-ink text-sm font-black text-white" type="submit">
+            <button className="focus-ring h-12 rounded-md bg-ink text-sm font-semibold text-white" type="submit">
               Login
             </button>
           </form>
         </div>
         <aside className="rounded-card border border-black/10 bg-ink p-6 text-white shadow-card">
-          <h2 className="text-2xl font-black tracking-tight">Permission-ready roles</h2>
+          <h2 className="text-2xl font-extrabold tracking-tight">Permission-ready roles</h2>
           <div className="mt-5 grid gap-4">
             {adminRoles.map((role) => (
               <div className="rounded-md bg-white/10 p-4" key={role.id}>
-                <p className="font-black">{role.name}</p>
+                <p className="font-extrabold">{role.name}</p>
                 <p className="mt-1 text-sm leading-6 text-white/70">{role.description}</p>
                 <p className="mt-2 text-xs font-bold text-lime">{role.permissions.length} permissions</p>
               </div>

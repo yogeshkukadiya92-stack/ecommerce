@@ -17,7 +17,7 @@ export function CartSummaryCard({
   return (
     <aside className="rounded-card border border-black/10 bg-white p-5 shadow-card">
       <div className="flex items-start justify-between gap-4">
-        <h2 className="text-xl font-black tracking-tight text-ink">Order summary</h2>
+        <h2 className="text-xl font-extrabold tracking-tight text-ink">Order summary</h2>
         <span className="rounded-md bg-mint px-2 py-1 text-xs font-black text-forest">Secure</span>
       </div>
       <div className="mt-4 rounded-md border border-black/10 bg-mist p-3">
@@ -60,7 +60,7 @@ export function CartSummaryCard({
 
 function SummaryRow({ label, strong, value }: { label: string; strong?: boolean; value: string }) {
   return (
-    <div className={`flex items-center justify-between gap-4 ${strong ? "text-lg font-black" : "font-semibold"}`}>
+    <div className={`flex items-center justify-between gap-4 ${strong ? "text-lg font-extrabold" : "font-medium"}`}>
       <span className={strong ? "text-ink" : "text-slate"}>{label}</span>
       <span className="text-right text-ink">{value}</span>
     </div>

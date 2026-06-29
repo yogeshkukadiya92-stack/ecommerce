@@ -44,7 +44,7 @@ export function SearchBar({ compact = false, label = "Search supplements" }: Sea
       </button>
       <input
         aria-label={label}
-        className="min-w-0 flex-1 bg-transparent px-3 text-sm font-medium text-ink outline-none placeholder:text-slate"
+        className="min-w-0 flex-1 bg-transparent px-3 text-sm font-medium text-ink outline-none placeholder:text-slate/80"
         onChange={(event) => setQuery(event.target.value)}
         placeholder={compact ? "Search" : "Search whey, creatine, vitamins"}
         value={query}

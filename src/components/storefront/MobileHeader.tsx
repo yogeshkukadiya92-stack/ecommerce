@@ -22,7 +22,7 @@ export function MobileHeader({ config }: { config?: HeaderCmsConfig }) {
         >
           <Menu className="h-5 w-5" />
         </button>
-        <Link className="flex min-w-0 items-center gap-2 text-base font-black tracking-tight text-ink" href="/">
+        <Link className="flex min-w-0 items-center gap-2 text-base font-extrabold tracking-tight text-ink" href="/">
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-ink text-lime">
             <Sparkles className="h-4 w-4" />
           </span>
