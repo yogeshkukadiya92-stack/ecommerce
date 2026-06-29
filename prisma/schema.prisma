@@ -1,0 +1,711 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum ProductStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PACKED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  AUTHORIZED
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum ShipmentStatus {
+  PENDING
+  READY_TO_SHIP
+  IN_TRANSIT
+  DELIVERED
+  RETURNED
+}
+
+enum PaymentProvider {
+  RAZORPAY
+  STRIPE
+  CASHFREE
+}
+
+enum ShippingProvider {
+  SHIPROCKET
+  DELHIVERY
+  MANUAL
+}
+
+enum StockMovementType {
+  PURCHASE
+  SALE
+  RETURN
+  ADJUSTMENT
+  DAMAGE
+  EXPIRY
+  TRANSFER
+}
+
+enum PurchaseOrderStatus {
+  DRAFT
+  SENT
+  PARTIALLY_RECEIVED
+  RECEIVED
+  CANCELLED
+}
+
+enum CouponType {
+  PERCENTAGE
+  FIXED_AMOUNT
+  FREE_SHIPPING
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ProductQuestionStatus {
+  PENDING
+  ANSWERED
+  HIDDEN
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum LoyaltyPointType {
+  EARNED
+  REDEEMED
+  EXPIRED
+  ADJUSTED
+}
+
+enum ReferralStatus {
+  SENT
+  SIGNED_UP
+  CONVERTED
+  EXPIRED
+}
+
+model User {
+  id              String     @id @default(cuid())
+  email           String     @unique
+  phone           String?    @unique
+  passwordHash    String?
+  isEmailVerified Boolean    @default(false)
+  isPhoneVerified Boolean    @default(false)
+  status          UserStatus @default(ACTIVE)
+  customer        Customer?
+  adminUser       AdminUser?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+}
+
+model AdminUser {
+  id               String            @id @default(cuid())
+  userId           String            @unique
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name             String
+  avatarUrl        String?
+  roles            Role[]
+  answeredQuestions ProductQuestion[]
+  auditLogs        AuditLog[]
+  blogPosts        BlogPost[]
+  lastLoginAt      DateTime?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+}
+
+model Role {
+  id          String       @id @default(cuid())
+  name        String       @unique
+  description String?
+  permissions Permission[]
+  admins      AdminUser[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Permission {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  name        String
+  description String?
+  roles       Role[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Customer {
+  id            String         @id @default(cuid())
+  userId        String?        @unique
+  user          User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  firstName     String
+  lastName      String
+  email         String         @unique
+  phone         String?
+  dateOfBirth   DateTime?
+  addresses     Address[]
+  carts         Cart[]
+  orders        Order[]
+  reviews       Review[]
+  questions     ProductQuestion[]
+  wishlist      Wishlist?
+  loyaltyPoints LoyaltyPoint[]
+  referralsMade Referral[]     @relation("ReferralsMade")
+  referralsUsed Referral[]     @relation("ReferralsUsed")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model Address {
+  id                String   @id @default(cuid())
+  customerId        String
+  customer          Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  label             String
+  firstName         String
+  lastName          String
+  phone             String
+  line1             String
+  line2             String?
+  city              String
+  state             String
+  postalCode        String
+  country           String   @default("India")
+  isDefaultShipping Boolean  @default(false)
+  isDefaultBilling  Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Brand {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  name        String
+  description String
+  logoUrl     String?
+  isActive    Boolean   @default(true)
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Category {
+  id          String     @id @default(cuid())
+  slug        String     @unique
+  name        String
+  description String
+  parentId    String?
+  parent      Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryTree")
+  imageUrl    String?
+  isActive    Boolean    @default(true)
+  products    Product[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Collection {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  name        String
+  description String
+  isActive    Boolean   @default(true)
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Product {
+  id                String           @id @default(cuid())
+  slug              String           @unique
+  name              String
+  shortDescription  String
+  description       String
+  brandId           String
+  brand             Brand            @relation(fields: [brandId], references: [id])
+  categories        Category[]
+  collections       Collection[]
+  status            ProductStatus    @default(DRAFT)
+  goalTags          String[]
+  nutritionFacts    Json
+  ingredients       String[]
+  allergens         String[]
+  usageInstructions String
+  warningText       String
+  labelImageUrls    String[]
+  labReportUrl      String?
+  images            ProductImage[]
+  variants          ProductVariant[]
+  orderItems        OrderItem[]
+  reviews           Review[]
+  questions         ProductQuestion[]
+  wishlists         Wishlist[]
+  seoTitle          String?
+  seoDescription    String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+}
+
+model ProductVariant {
+  id                String              @id @default(cuid())
+  productId         String
+  product           Product             @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sku               String              @unique
+  flavor            String?
+  size              String?
+  weightInGrams     Int
+  mrp               Decimal             @db.Decimal(10, 2)
+  sellingPrice      Decimal             @db.Decimal(10, 2)
+  discountPercent   Decimal             @default(0) @db.Decimal(5, 2)
+  currency          String              @default("INR")
+  stock             Int                 @default(0)
+  defaultBatchId    String?
+  defaultBatch      Batch?              @relation("DefaultVariantBatch", fields: [defaultBatchId], references: [id])
+  expiryDate        DateTime?
+  isActive          Boolean             @default(true)
+  images            ProductImage[]
+  batches           Batch[]             @relation("VariantBatches")
+  inventoryItems    InventoryItem[]
+  stockMovements    StockMovement[]
+  purchaseItems     PurchaseOrderItem[]
+  cartItems         CartItem[]
+  orderItems        OrderItem[]
+  subscriptionPlans SubscriptionPlan[]
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+}
+
+model ProductImage {
+  id          String          @id @default(cuid())
+  productId   String
+  product     Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variantId   String?
+  variant     ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+  url         String
+  altText     String
+  position    Int             @default(0)
+  isPrimary   Boolean         @default(false)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model Warehouse {
+  id             String          @id @default(cuid())
+  code           String          @unique
+  name           String
+  address        String
+  city           String
+  state          String
+  postalCode     String
+  isActive       Boolean         @default(true)
+  inventoryItems InventoryItem[]
+  stockMovements StockMovement[]
+  purchaseOrders PurchaseOrder[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model Batch {
+  id                 String             @id @default(cuid())
+  batchNumber        String             @unique
+  productVariantId   String
+  productVariant     ProductVariant     @relation("VariantBatches", fields: [productVariantId], references: [id], onDelete: Cascade)
+  defaultForVariants ProductVariant[]    @relation("DefaultVariantBatch")
+  supplierId         String?
+  supplier           Supplier?          @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  manufacturedAt     DateTime?
+  expiryDate         DateTime
+  receivedAt         DateTime
+  inventoryItems     InventoryItem[]
+  stockMovements     StockMovement[]
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+}
+
+model InventoryItem {
+  id                String          @id @default(cuid())
+  productVariantId  String
+  productVariant    ProductVariant  @relation(fields: [productVariantId], references: [id], onDelete: Cascade)
+  warehouseId       String
+  warehouse         Warehouse       @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  batchId           String
+  batch             Batch           @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  batchNumber       String
+  expiryDate        DateTime
+  availableStock    Int             @default(0)
+  reservedStock     Int             @default(0)
+  damagedStock      Int             @default(0)
+  expiredStock      Int             @default(0)
+  lowStockThreshold Int             @default(5)
+  stockMovements    StockMovement[]
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@unique([productVariantId, warehouseId, batchId])
+}
+
+model StockMovement {
+  id                String            @id @default(cuid())
+  inventoryItemId   String
+  inventoryItem     InventoryItem     @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+  productVariantId  String
+  productVariant    ProductVariant    @relation(fields: [productVariantId], references: [id], onDelete: Cascade)
+  warehouseId       String
+  warehouse         Warehouse         @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  batchId           String?
+  batch             Batch?            @relation(fields: [batchId], references: [id], onDelete: SetNull)
+  type              StockMovementType
+  quantity          Int
+  reason            String?
+  referenceType     String?
+  referenceId       String?
+  createdByAdminId  String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+}
+
+model Supplier {
+  id             String          @id @default(cuid())
+  name           String
+  email          String?
+  phone          String?
+  gstNumber      String?
+  address        String?
+  isActive       Boolean         @default(true)
+  batches        Batch[]
+  purchaseOrders PurchaseOrder[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model PurchaseOrder {
+  id          String              @id @default(cuid())
+  supplierId  String
+  supplier    Supplier            @relation(fields: [supplierId], references: [id])
+  warehouseId String
+  warehouse   Warehouse           @relation(fields: [warehouseId], references: [id])
+  status      PurchaseOrderStatus @default(DRAFT)
+  expectedAt  DateTime?
+  totalAmount Decimal             @default(0) @db.Decimal(12, 2)
+  items       PurchaseOrderItem[]
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+}
+
+model PurchaseOrderItem {
+  id               String         @id @default(cuid())
+  purchaseOrderId  String
+  purchaseOrder    PurchaseOrder  @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  productVariantId String
+  productVariant   ProductVariant @relation(fields: [productVariantId], references: [id])
+  quantityOrdered  Int
+  quantityReceived Int            @default(0)
+  unitCost         Decimal        @db.Decimal(10, 2)
+  batchNumber      String?
+  expiryDate       DateTime?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+}
+
+model Cart {
+  id         String     @id @default(cuid())
+  customerId String?
+  customer   Customer?  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  sessionId  String?
+  items      CartItem[]
+  currency   String     @default("INR")
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+}
+
+model CartItem {
+  id               String         @id @default(cuid())
+  cartId           String
+  cart             Cart           @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productVariantId String
+  productVariant   ProductVariant @relation(fields: [productVariantId], references: [id])
+  quantity         Int
+  unitPrice        Decimal        @db.Decimal(10, 2)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@unique([cartId, productVariantId])
+}
+
+model Order {
+  id              String       @id @default(cuid())
+  orderNumber     String       @unique
+  customerId      String?
+  customer        Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  status          OrderStatus  @default(PENDING)
+  currency        String       @default("INR")
+  subtotal        Decimal      @db.Decimal(12, 2)
+  discountAmount  Decimal      @default(0) @db.Decimal(12, 2)
+  shippingAmount  Decimal      @default(0) @db.Decimal(12, 2)
+  taxAmount       Decimal      @default(0) @db.Decimal(12, 2)
+  totalAmount     Decimal      @db.Decimal(12, 2)
+  couponCode      String?
+  coupon          Coupon?      @relation(fields: [couponCode], references: [code], onDelete: SetNull)
+  shippingAddress Json
+  billingAddress  Json
+  items           OrderItem[]
+  payment         Payment?
+  shipment        Shipment?
+  loyaltyPoints   LoyaltyPoint[]
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+}
+
+model OrderItem {
+  id               String         @id @default(cuid())
+  orderId          String
+  order            Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId        String
+  product          Product        @relation(fields: [productId], references: [id])
+  productVariantId String
+  productVariant   ProductVariant @relation(fields: [productVariantId], references: [id])
+  productName      String
+  sku              String
+  quantity         Int
+  unitPrice        Decimal        @db.Decimal(10, 2)
+  discountAmount   Decimal        @default(0) @db.Decimal(10, 2)
+  taxAmount        Decimal        @default(0) @db.Decimal(10, 2)
+  totalAmount      Decimal        @db.Decimal(10, 2)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+}
+
+model Payment {
+  id                String          @id @default(cuid())
+  orderId           String          @unique
+  order             Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  provider          PaymentProvider
+  providerPaymentId String?
+  status            PaymentStatus   @default(PENDING)
+  amount            Decimal         @db.Decimal(12, 2)
+  currency          String          @default("INR")
+  paidAt            DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+}
+
+model Shipment {
+  id               String           @id @default(cuid())
+  orderId          String           @unique
+  order            Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  provider         ShippingProvider
+  trackingNumber   String?
+  status           ShipmentStatus   @default(PENDING)
+  shippedAt        DateTime?
+  deliveredAt      DateTime?
+  shippingLabelUrl String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+}
+
+model Coupon {
+  id                 String     @id @default(cuid())
+  code               String     @unique
+  type               CouponType
+  value              Decimal    @db.Decimal(10, 2)
+  minimumOrderAmount Decimal?   @db.Decimal(10, 2)
+  startsAt           DateTime
+  endsAt             DateTime?
+  usageLimit         Int?
+  perCustomerLimit   Int?
+  isActive           Boolean    @default(true)
+  orders             Order[]
+  referrals          Referral[]
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+}
+
+model Review {
+  id                 String       @id @default(cuid())
+  productId          String
+  product            Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  customerId         String
+  customer           Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  rating             Int
+  title              String
+  body               String
+  isVerifiedPurchase Boolean      @default(false)
+  status             ReviewStatus @default(PENDING)
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+}
+
+model ProductQuestion {
+  id                String                @id @default(cuid())
+  productId         String
+  product           Product               @relation(fields: [productId], references: [id], onDelete: Cascade)
+  customerId        String?
+  customer          Customer?             @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  question          String
+  answer            String?
+  answeredByAdminId String?
+  answeredByAdmin   AdminUser?            @relation(fields: [answeredByAdminId], references: [id], onDelete: SetNull)
+  status            ProductQuestionStatus @default(PENDING)
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+}
+
+model Wishlist {
+  id         String    @id @default(cuid())
+  customerId String    @unique
+  customer   Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  products   Product[]
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model BlogPost {
+  id              String        @id @default(cuid())
+  slug            String        @unique
+  title           String
+  excerpt         String
+  body            String
+  authorAdminId   String?
+  authorAdmin     AdminUser?    @relation(fields: [authorAdminId], references: [id], onDelete: SetNull)
+  status          ContentStatus @default(DRAFT)
+  publishedAt     DateTime?
+  seoTitle        String?
+  seoDescription  String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model CMSPage {
+  id             String        @id @default(cuid())
+  slug           String        @unique
+  title          String
+  body           String
+  status         ContentStatus @default(DRAFT)
+  seoTitle       String?
+  seoDescription String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model HomepageSection {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  title     String
+  type      String
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  config    Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Banner {
+  id             String   @id @default(cuid())
+  title          String
+  subtitle       String?
+  imageUrl       String
+  mobileImageUrl String?
+  ctaLabel       String?
+  ctaHref        String?
+  placement      String
+  startsAt       DateTime?
+  endsAt         DateTime?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Menu {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  name      String
+  items     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model FooterSection {
+  id        String   @id @default(cuid())
+  title     String
+  links     Json
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SubscriptionPlan {
+  id               String         @id @default(cuid())
+  productVariantId String
+  productVariant   ProductVariant @relation(fields: [productVariantId], references: [id], onDelete: Cascade)
+  name             String
+  interval         String
+  discountPercent  Decimal        @default(0) @db.Decimal(5, 2)
+  isActive         Boolean        @default(true)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+}
+
+model LoyaltyPoint {
+  id         String           @id @default(cuid())
+  customerId String
+  customer   Customer         @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  points     Int
+  type       LoyaltyPointType
+  reason     String
+  orderId    String?
+  order      Order?           @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+}
+
+model Referral {
+  id                    String         @id @default(cuid())
+  referrerCustomerId    String
+  referrerCustomer      Customer       @relation("ReferralsMade", fields: [referrerCustomerId], references: [id], onDelete: Cascade)
+  referredCustomerEmail String
+  referredCustomerId    String?
+  referredCustomer      Customer?      @relation("ReferralsUsed", fields: [referredCustomerId], references: [id], onDelete: SetNull)
+  status                ReferralStatus @default(SENT)
+  rewardCouponId        String?
+  rewardCoupon          Coupon?        @relation(fields: [rewardCouponId], references: [id], onDelete: SetNull)
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+}
+
+model AuditLog {
+  id           String     @id @default(cuid())
+  actorAdminId String?
+  actorAdmin   AdminUser? @relation(fields: [actorAdminId], references: [id], onDelete: SetNull)
+  action       String
+  entityType   String
+  entityId     String?
+  metadata     Json?
+  ipAddress    String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}

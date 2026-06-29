@@ -1,0 +1,81 @@
+import type { AdminAuditLogEntry } from "@/types/admin";
+
+export const seededAuditLogs: AdminAuditLogEntry[] = [
+  {
+    action: "admin.login",
+    actorEmail: "admin@fitsupplement.local",
+    actorId: "admin-yogesh",
+    actorName: "FitSupplement Admin",
+    at: "2026-06-29T08:30:00.000Z",
+    entityType: "AdminSession",
+    ipAddress: "103.24.xxx.xxx",
+    metadata: { result: "success" },
+    module: "security",
+    userAgent: "Chrome on Windows"
+  },
+  {
+    action: "admin.product.price_change",
+    actorEmail: "admin@fitsupplement.local",
+    actorId: "admin-yogesh",
+    actorName: "FitSupplement Admin",
+    at: "2026-06-29T08:45:00.000Z",
+    entityId: "var-whey-choco-1kg",
+    entityType: "ProductVariant",
+    ipAddress: "103.24.xxx.xxx",
+    module: "catalog",
+    oldValue: { sellingPrice: 3199 },
+    newValue: { sellingPrice: 2999 },
+    userAgent: "Chrome on Windows"
+  },
+  {
+    action: "admin.inventory.stock_adjustment",
+    actorEmail: "inventory@fitsupplement.local",
+    actorId: "admin-inventory",
+    actorName: "Inventory Manager",
+    at: "2026-06-28T16:20:00.000Z",
+    entityId: "batch-whey-a1",
+    entityType: "InventoryBatch",
+    ipAddress: "103.24.xxx.xxx",
+    metadata: { reason: "Damaged inbound carton" },
+    module: "inventory",
+    oldValue: { damagedQuantity: 0 },
+    newValue: { damagedQuantity: 2 },
+    userAgent: "Chrome on Windows"
+  },
+  {
+    action: "admin.cms.publish",
+    actorEmail: "content@fitsupplement.local",
+    actorId: "admin-content",
+    actorName: "Content Manager",
+    at: "2026-06-27T12:10:00.000Z",
+    entityId: "homepage",
+    entityType: "CMSPage",
+    ipAddress: "103.24.xxx.xxx",
+    module: "cms",
+    oldValue: { status: "draft" },
+    newValue: { status: "published" },
+    userAgent: "Chrome on Windows"
+  },
+  {
+    action: "admin.login.failed",
+    actorEmail: "unknown@fitsupplement.local",
+    actorId: "system",
+    actorName: "System",
+    at: "2026-06-26T20:02:00.000Z",
+    entityType: "AdminSession",
+    ipAddress: "103.24.xxx.xxx",
+    metadata: { reason: "Invalid password", rateLimitChecked: true },
+    module: "security",
+    userAgent: "Chrome on Windows"
+  }
+];
+
+export const securityChecklist = [
+  "Two-factor authentication placeholder",
+  "Password reset placeholder",
+  "Session timeout placeholder",
+  "Rate limiting placeholder",
+  "Input validation",
+  "Secure file upload validation placeholder",
+  "Sensitive data masking"
+] as const;
