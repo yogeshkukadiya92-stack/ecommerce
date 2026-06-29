@@ -75,7 +75,7 @@ export function loginCustomer(email: string, password: string) {
 
   if (!customer || customer.password !== password) {
     return {
-      message: "Use aarav.mehta@example.com / password123 or create a new mock account.",
+      message: "Invalid email or password. Please try again or create a new account.",
       ok: false as const
     };
   }
@@ -131,7 +131,7 @@ export function signupCustomer(input: { email: string; fullName: string; passwor
   writeSession(session);
 
   return {
-    message: "Account created. OTP verification placeholder is ready for later integration.",
+    message: "Account created successfully.",
     ok: true as const,
     session
   };

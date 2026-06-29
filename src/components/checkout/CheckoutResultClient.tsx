@@ -19,7 +19,7 @@ export function CheckoutSuccessClient() {
         <p className="mt-4 text-xs font-black uppercase tracking-[0.14em] text-forest">Order placed</p>
         <h1 className="mt-2 text-3xl font-black tracking-tight text-ink">Your order is confirmed</h1>
         <p className="mt-3 text-sm leading-6 text-slate">
-          {order ? `Order ${order.orderNumber} is ${order.status}.` : "Your mock order has been created."}
+          {order ? `Order ${order.orderNumber} is ${order.status}.` : "Your order has been created."}
         </p>
         {order ? (
           <div className="mt-5 rounded-md bg-mist p-4 text-left text-sm font-semibold text-slate">

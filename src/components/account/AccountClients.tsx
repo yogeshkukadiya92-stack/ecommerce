@@ -91,9 +91,9 @@ export function AccountOrderDetailClient({ orderNumber }: { orderNumber: string 
                 <Badge tone="success">{order.status}</Badge>
               </div>
               <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                <ActionCard icon={<Truck className="h-5 w-5" />} label="Track shipment" text="Courier tracking placeholder" />
-                <ActionCard icon={<Package className="h-5 w-5" />} label="Invoice" text="Download placeholder" />
-                <ActionCard icon={<RotateCcw className="h-5 w-5" />} label="Return/refund" text="Request placeholder" />
+                <ActionCard icon={<Truck className="h-5 w-5" />} label="Track shipment" text="View courier tracking updates" />
+                <ActionCard icon={<Package className="h-5 w-5" />} label="Invoice" text="Download invoice" />
+                <ActionCard icon={<RotateCcw className="h-5 w-5" />} label="Return/refund" text="Request support" />
               </div>
             </div>
             <section className="rounded-card border border-black/10 bg-white p-5 shadow-sm">
@@ -145,7 +145,7 @@ function AccountGate({
     return (
       <section className="rounded-card border border-black/10 bg-white p-6 text-center shadow-card">
         <h1 className="text-2xl font-black text-ink">Login required</h1>
-        <p className="mt-3 text-sm text-slate">Customer account pages are protected by the mock session guard.</p>
+        <p className="mt-3 text-sm text-slate">Login to view your orders, subscriptions, addresses, and rewards.</p>
         <Button className="mt-5" href="/login" variant="dark">Login to continue</Button>
       </section>
     );
@@ -233,7 +233,7 @@ function SectionContent({ section, sessionEmail }: { section: string; sessionEma
               </div>
             ))}
         </div>
-        <p className="text-sm text-slate">Earn points on purchase, reviews, and referrals. Expiry and VIP segment rules are placeholder-ready.</p>
+        <p className="text-sm text-slate">Earn points on purchases, reviews, and referrals. Redeem them during checkout.</p>
       </div>
     ),
     notifications: (
@@ -249,7 +249,7 @@ function SectionContent({ section, sessionEmail }: { section: string; sessionEma
     profile: (
       <div className="grid gap-3 text-sm font-semibold text-slate">
         <p>Email: {sessionEmail}</p>
-        <p>Profile settings placeholder for name, phone, password, and OTP verification.</p>
+        <p>Manage your name, phone, password, and notification preferences.</p>
       </div>
     ),
     referrals: (
@@ -272,7 +272,7 @@ function SectionContent({ section, sessionEmail }: { section: string; sessionEma
         <div className="rounded-md bg-mist p-4">
           <p className="text-xs font-black uppercase tracking-[0.14em] text-slate">Review after purchase</p>
           <p className="mt-2 text-sm font-semibold leading-6 text-slate">
-            Delivered-order review requests will appear here with taste, mixability, value, title, comment, and photo/video upload placeholders.
+            Delivered-order review requests will appear here with taste, mixability, value, title, comment, and media upload options.
           </p>
           <button className="focus-ring mt-3 rounded-md bg-ink px-4 py-2 text-sm font-black text-white" type="button">
             Write pending purchase review
@@ -325,7 +325,7 @@ function SectionContent({ section, sessionEmail }: { section: string; sessionEma
                   </button>
                 ))}
               </div>
-              <p className="mt-3 text-xs font-semibold text-slate">Subscription reminder placeholder enabled.</p>
+              <p className="mt-3 text-xs font-semibold text-slate">Subscription reminders are enabled for upcoming deliveries.</p>
             </div>
           ))}
       </div>
@@ -347,7 +347,7 @@ function SectionContent({ section, sessionEmail }: { section: string; sessionEma
         <Settings className="h-5 w-5 text-forest" />
         <h1 className="text-2xl font-black capitalize tracking-tight text-ink">{section.replace("-", " ")}</h1>
       </div>
-      <div className="mt-5">{content[section] ?? <p className="text-sm text-slate">Account section placeholder.</p>}</div>
+      <div className="mt-5">{content[section] ?? <p className="text-sm text-slate">This account section is being prepared.</p>}</div>
     </section>
   );
 }

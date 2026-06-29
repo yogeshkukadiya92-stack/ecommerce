@@ -57,6 +57,7 @@ export function ProductListingShell({
   const [isPending, startTransition] = useTransition();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [query, setQuery] = useState(searchParams.get("q") ?? "");
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [filters, setFilters] = useState<ProductFilterState>(() => parseFilters(searchParams));
   const deferredQuery = useDeferredValue(query);
   const options = useMemo(() => getFilterOptions(storefrontProducts), []);
@@ -72,6 +73,21 @@ export function ProductListingShell({
   useEffect(() => {
     setVisibleCount(12);
   }, [deferredQuery, filters]);
+
+  useEffect(() => {
+    const saved = window.localStorage.getItem("fitsupplement.recent-searches.v1");
+
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          setRecentSearches(parsed.filter((item) => typeof item === "string").slice(0, 6));
+        }
+      } catch {
+        setRecentSearches([]);
+      }
+    }
+  }, []);
 
   const suggestions = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -89,6 +105,14 @@ export function ProductListingShell({
   function commitUrl(nextFilters: ProductFilterState, nextQuery: string) {
     const params = serializeFilters(nextFilters, nextQuery);
     const url = params.size > 0 ? `${pathname}?${params.toString()}` : pathname;
+    const trimmedQuery = nextQuery.trim();
+
+    if (trimmedQuery) {
+      const nextRecent = [trimmedQuery, ...recentSearches.filter((item) => item.toLowerCase() !== trimmedQuery.toLowerCase())].slice(0, 6);
+      setRecentSearches(nextRecent);
+      window.localStorage.setItem("fitsupplement.recent-searches.v1", JSON.stringify(nextRecent));
+    }
+
     startTransition(() => router.replace(url, { scroll: false }));
   }
 
@@ -153,6 +177,13 @@ export function ProductListingShell({
         <div>
           <h1 className="text-3xl font-black tracking-tight text-ink sm:text-4xl">{title}</h1>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-slate">{description}</p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {["Authentic products", "Batch verified", "Secure checkout", "Fast delivery", "Easy returns"].map((item) => (
+              <span className="rounded-md bg-white px-3 py-2 text-xs font-black text-forest shadow-sm" key={item}>
+                {item}
+              </span>
+            ))}
+          </div>
         </div>
         <form className="relative" onSubmit={handleSearchSubmit}>
           <input
@@ -177,6 +208,24 @@ export function ProductListingShell({
               </button>
             ))}
           </div>
+          {recentSearches.length > 0 ? (
+            <div className="mt-2 flex flex-wrap gap-2">
+              <span className="py-1 text-xs font-black uppercase tracking-[0.12em] text-slate">Recent</span>
+              {recentSearches.map((recent) => (
+                <button
+                  className="rounded-md bg-mint px-2 py-1 text-xs font-bold text-forest"
+                  key={recent}
+                  onClick={() => {
+                    setQuery(recent);
+                    commitUrl(filters, recent);
+                  }}
+                  type="button"
+                >
+                  {recent}
+                </button>
+              ))}
+            </div>
+          ) : null}
         </form>
       </div>
 
@@ -259,11 +308,16 @@ export function ProductListingShell({
             <div className="grid gap-6">
               <EmptyState
                 action={
-                  <Button href="/products" variant="dark">
-                    Reset to all products
-                  </Button>
+                  <div className="flex flex-wrap justify-center gap-2">
+                    <Button href="/products" variant="dark">
+                      Reset to all products
+                    </Button>
+                    <Button href="/collections/best-sellers" variant="secondary">
+                      Browse best sellers
+                    </Button>
+                  </div>
                 }
-                description="Try a broader search, clear filters, or browse recommended products below."
+                description="Try a broader search, clear filters, or shop recommended protein, creatine, and wellness picks below."
                 title="No products found"
               />
               <div>

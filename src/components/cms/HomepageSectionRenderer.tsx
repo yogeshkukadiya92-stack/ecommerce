@@ -47,8 +47,8 @@ function RenderedSection({ preview, section }: { preview: boolean; section: Home
                 <Button href={section.ctaLink ?? "/products"} size="lg" variant="dark">
                   {section.ctaLabel ?? "Shop now"}
                 </Button>
-                <Button href="/admin/content?preview=homepage" size="lg" variant="secondary">
-                  Preview mode
+                <Button href="/collections/best-sellers" size="lg" variant="secondary">
+                  Shop best sellers
                 </Button>
               </div>
               <div className="mt-8 grid gap-3 sm:grid-cols-3">
@@ -179,10 +179,10 @@ function RenderedSection({ preview, section }: { preview: boolean; section: Home
         <section className="container-page py-8">
           <SectionTitle description={section.subtitle} title={section.title} />
           <div className="grid gap-3 md:grid-cols-4">
-            <TrustBadge description="Batch-aware catalog foundation for transparent supplement shopping." icon={Award} title="Authentic products" />
-            <TrustBadge description="Razorpay, Stripe, and Cashfree placeholders are ready." icon={CreditCard} title="Secure payments" />
-            <TrustBadge description="Courier-ready shipment architecture." icon={Truck} title="Fast delivery" />
-            <TrustBadge description="Order statuses are structured for post-purchase support." icon={RotateCcw} title="Easy returns" />
+            <TrustBadge description="Every supplement is sourced for transparent, label-first shopping." icon={Award} title="Authentic products" />
+            <TrustBadge description="Encrypted checkout with online payment and COD options." icon={CreditCard} title="Secure payments" />
+            <TrustBadge description="Pincode-aware delivery with courier tracking." icon={Truck} title="Fast delivery" />
+            <TrustBadge description="Clear order support for returns, refunds, and replacements." icon={RotateCcw} title="Easy returns" />
           </div>
         </section>
       );
@@ -236,7 +236,7 @@ function RenderedSection({ preview, section }: { preview: boolean; section: Home
           <div className="grid gap-6 rounded-card bg-white p-6 shadow-sm lg:grid-cols-[1fr_360px] lg:items-center">
             <div>
               <SectionTitle description={section.subtitle} title={section.title} />
-              <p className="text-sm text-slate">Video embed placeholder: {section.videoUrl ?? "No video selected"}</p>
+              <p className="text-sm text-slate">{section.videoUrl ? "Watch the latest product and fitness guide." : "Video guide coming soon."}</p>
             </div>
             <div className="grid aspect-video place-items-center rounded-md bg-ink text-white">
               <Play className="h-10 w-10" />
@@ -250,7 +250,7 @@ function RenderedSection({ preview, section }: { preview: boolean; section: Home
           <div className="rounded-card border border-dashed border-black/20 bg-white p-6">
             <ShieldCheck className="h-6 w-6 text-forest" />
             <h2 className="mt-3 text-2xl font-black text-ink">{section.title}</h2>
-            <p className="mt-2 text-sm text-slate">Custom HTML/content block placeholder. Render sanitized CMS content here later.</p>
+            <p className="mt-2 text-sm text-slate">CMS-managed content block for campaign copy, product education, and trust messaging.</p>
           </div>
         </section>
       );

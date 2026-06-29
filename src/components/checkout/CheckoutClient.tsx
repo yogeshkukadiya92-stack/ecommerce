@@ -36,7 +36,7 @@ const defaultAddress: CheckoutAddress = {
 
 const deliveryMethods: Array<{ description: string; label: string; value: DeliveryMethod }> = [
   { description: "2-5 business days. Free above threshold.", label: "Standard delivery", value: "standard" },
-  { description: "Priority dispatch placeholder.", label: "Express delivery", value: "express" }
+  { description: "Priority dispatch for faster delivery windows.", label: "Express delivery", value: "express" }
 ];
 
 const paymentMethods: Array<{ label: string; value: PaymentMethod }> = [
@@ -395,7 +395,7 @@ export function CheckoutClient() {
                 >
                   <span className="font-black text-ink">{mode === "guest" ? "Guest checkout" : "Login checkout"}</span>
                   <span className="mt-1 block text-xs font-semibold text-slate">
-                    {mode === "guest" ? "Continue without an account." : session ? `Using ${session.email}` : "Login route is ready."}
+                    {mode === "guest" ? "Continue without an account." : session ? `Using ${session.email}` : "Login to use saved details."}
                   </span>
                 </button>
               ))}
@@ -420,7 +420,7 @@ export function CheckoutClient() {
               <Input label="Country" onChange={(event) => updateAddress("country", event.target.value)} value={address.country} />
             </div>
             <p className="mt-3 text-xs font-semibold text-slate">
-              Pincode serviceability placeholder: valid 6-digit Indian pincodes show as serviceable in this mock flow.
+              Enter a valid 6-digit pincode to confirm delivery availability before placing the order.
             </p>
           </Panel>
 
@@ -455,7 +455,7 @@ export function CheckoutClient() {
             </div>
             {paymentMethod === "cod" ? (
               <p className="mt-3 rounded-md bg-mist p-3 text-xs font-bold text-slate">
-                COD confirmation placeholder: final COD verification can later be connected to OTP or courier rules.
+                COD orders may require phone confirmation before dispatch.
               </p>
             ) : (
               <p className="mt-3 rounded-md bg-mist p-3 text-xs font-bold text-slate">
@@ -495,16 +495,13 @@ export function CheckoutClient() {
               </button>
             </div>
             <p className="mt-2 text-xs font-semibold text-slate">
-              1 point = Rs 1 in this mock program. You will earn {totals.loyaltyEarnedPoints} points after this order.
+              1 point = Rs 1. You will earn {totals.loyaltyEarnedPoints} points after this order.
             </p>
           </Panel>
 
           {notice ? <p className="rounded-md bg-mint p-3 text-sm font-bold text-forest">{notice}</p> : null}
           <button className="focus-ring h-12 rounded-md bg-lime text-sm font-black text-ink hover:bg-mint" disabled={isPlacingOrder} onClick={handlePlaceOrder} type="button">
             {isPlacingOrder ? "Placing order..." : `Place order - ${formatRs(totals.grandTotal)}`}
-          </button>
-          <button className="focus-ring rounded-md border border-black/10 bg-white px-4 py-3 text-sm font-black text-coral" onClick={() => router.push("/checkout/failure?reason=manual-test")} type="button">
-            Simulate payment failure
           </button>
         </div>
 

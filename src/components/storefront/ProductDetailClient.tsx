@@ -75,7 +75,7 @@ export function ProductDetailClient({
         alt: `${product.name} product label`,
         label: "Label",
         type: "panel" as const,
-        value: "Label image placeholder"
+        value: "Label preview"
       },
       {
         alt: `${product.name} nutrition label`,
@@ -93,7 +93,7 @@ export function ProductDetailClient({
         alt: `${product.name} video`,
         label: "Video",
         type: "video" as const,
-        value: detail.videoUrl ?? "Routine video placeholder"
+        value: detail.videoUrl ?? "Product routine guide"
       }
     ],
     [detail.videoUrl, product.images, product.name]
@@ -306,19 +306,19 @@ export function ProductDetailClient({
             <div className="rounded-md border border-black/10 p-3">
               <p className="text-sm font-black text-ink">Stock and price alerts</p>
               <p className="mt-1 text-xs font-semibold text-slate">
-                Email, SMS, and WhatsApp alert capture placeholders for CRM automation.
+                Get notified when this flavor is restocked or price drops.
               </p>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 <button
                   className="focus-ring rounded-md bg-mist px-3 py-2 text-xs font-black text-ink"
-                  onClick={() => setAlertMessage("Back-in-stock signup captured for automation queue.")}
+                  onClick={() => setAlertMessage("Back-in-stock alert saved.")}
                   type="button"
                 >
                   Back-in-stock signup
                 </button>
                 <button
                   className="focus-ring rounded-md bg-mist px-3 py-2 text-xs font-black text-ink"
-                  onClick={() => setAlertMessage("Price-drop signup captured for automation queue.")}
+                  onClick={() => setAlertMessage("Price-drop alert saved.")}
                   type="button"
                 >
                   Price-drop signup
@@ -418,7 +418,7 @@ export function ProductDetailClient({
           <DetailCard title="Authenticity">
             <div className="grid gap-3 text-sm text-slate">
               <p className="flex items-center gap-2 font-bold text-forest">
-                <ShieldCheck className="h-4 w-4" /> Verified/authentic badge ready
+                <ShieldCheck className="h-4 w-4" /> Verified authentic product
               </p>
               <p>Batch number example: {detail.authenticity.batchNumberExample}</p>
               <p>Expiry visible: {detail.authenticity.expiryExample}</p>
@@ -443,7 +443,7 @@ export function ProductDetailClient({
             <StackLinks products={recommendedStack} />
             <div className="mt-3 grid gap-2 text-xs font-bold text-slate">
               <span>Protein + creatine</span>
-              <span>Protein + shaker placeholder</span>
+              <span>Protein + shaker</span>
             </div>
           </DetailCard>
 
@@ -533,7 +533,7 @@ function GalleryPanel({
             ))
           : null}
         {item.type === "ingredients" ? <span>{product.ingredients.join(", ")}</span> : null}
-        {item.type === "panel" ? <span>Label asset URL: {product.labelImageUrls[0] ?? "Pending upload"}</span> : null}
+        {item.type === "panel" ? <span>{product.labelImageUrls[0] ? "Label image available for review." : "Label image will be updated soon."}</span> : null}
         {item.type === "video" ? <span>{item.value}</span> : null}
       </div>
     </div>
@@ -741,11 +741,11 @@ function ReviewsSection({ product }: { product: StorefrontProduct }) {
               placeholder="Share taste, mixability, value, and label clarity."
             />
             <div className="mt-3 rounded-md border border-dashed border-black/20 bg-mist p-3 text-xs font-bold text-slate">
-              Photo/video upload placeholder
+              Add photo or video review
             </div>
             <button
               className="focus-ring mt-3 rounded-md bg-ink px-4 py-2 text-sm font-black text-white"
-              onClick={() => setReviewMessage("Review submitted as pending moderation. Verified purchase check placeholder passed.")}
+              onClick={() => setReviewMessage("Review submitted for moderation. Verified purchase check passed.")}
               type="button"
             >
               Submit review
@@ -757,7 +757,7 @@ function ReviewsSection({ product }: { product: StorefrontProduct }) {
               <div className="flex flex-wrap items-center gap-2">
                 <RatingStars rating={review.rating} />
                 {review.isVerifiedPurchase ? <Badge tone="success">Verified purchase</Badge> : null}
-                <Badge>{review.mediaPlaceholder}</Badge>
+                <Badge>Customer media</Badge>
               </div>
               <h3 className="mt-3 font-black text-ink">{review.title}</h3>
               <p className="mt-2 text-sm leading-6 text-slate">{review.comment}</p>

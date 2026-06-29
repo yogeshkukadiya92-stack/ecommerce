@@ -23,10 +23,10 @@ export default function ProductsPage() {
           { href: "/", label: "Home" },
           { href: "/products", label: "Products" }
         ]}
-        description="Browse the full FitSupplement catalog with client-side filters, sorting, search suggestions, and mobile-friendly product cards."
+        description="Browse the full FitSupplement catalog with rich filters, fast sorting, search suggestions, and mobile-friendly product cards."
         seoContent={{
           heading: "Supplement shopping made label-first",
-          text: "Compare protein powders, creatine, mass gainers, vitamins, and wellness products by price, serving details, allergens, subscription availability, and lab-report readiness."
+          text: "Compare protein powders, creatine, mass gainers, vitamins, and wellness products by price, serving details, allergens, subscription availability, and lab-report access."
         }}
         title="Shop supplements"
       />

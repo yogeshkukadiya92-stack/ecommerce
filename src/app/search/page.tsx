@@ -24,7 +24,7 @@ export default function SearchPage() {
         description="Search the catalog with suggestions, popular terms, filters, and no-result recommendations."
         seoContent={{
           heading: "Search supplement products clearly",
-          text: "Search results use clean query parameters and can later connect to advanced ranking, no-result term tracking, and recommended product mappings."
+          text: "Search across protein powders, creatine, vitamins, accessories, flavors, goals, and label-first supplement details with clear filters and recommendations."
         }}
         title="Search results"
       />

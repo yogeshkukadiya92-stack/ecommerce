@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Beaker, Heart, ShoppingCart } from "lucide-react";
+import { Beaker, GitCompare, Heart, ShoppingCart } from "lucide-react";
 import { useState } from "react";
 import type { Product } from "@/types";
 import type { StorefrontProduct } from "@/mock/storefront";
@@ -23,6 +23,7 @@ export function ProductCard({ product }: { product: ProductCardProduct }) {
   const image = product.images[0];
   const merchandising = hasMerchandising(product) ? product.merchandising : undefined;
   const stockTone = variant?.stock && variant.stock > 15 ? "success" : "sale";
+  const [isCompared, setIsCompared] = useState(false);
 
   function handleQuickAdd() {
     if (!variant) {
@@ -70,6 +71,14 @@ export function ProductCard({ product }: { product: ProductCardProduct }) {
         >
           <Heart className="h-4 w-4" />
           <span className="sr-only">Add to wishlist</span>
+        </button>
+        <button
+          className="focus-ring absolute bottom-3 right-3 rounded-md bg-white p-2 text-slate shadow-sm hover:text-forest"
+          onClick={() => setIsCompared((current) => !current)}
+          type="button"
+        >
+          <GitCompare className="h-4 w-4" />
+          <span className="sr-only">Compare product</span>
         </button>
         {variant?.discountPercent ? (
           <div className="absolute left-3 top-3">
@@ -130,6 +139,7 @@ export function ProductCard({ product }: { product: ProductCardProduct }) {
             <Beaker className="h-3.5 w-3.5" /> Lab report available
           </div>
         ) : null}
+        {isCompared ? <p className="mt-2 text-xs font-bold text-forest">Added to compare</p> : null}
         <button
           className="focus-ring mt-auto flex h-11 w-full items-center justify-center gap-2 rounded-md bg-ink text-sm font-black text-white transition hover:bg-forest"
           onClick={handleQuickAdd}

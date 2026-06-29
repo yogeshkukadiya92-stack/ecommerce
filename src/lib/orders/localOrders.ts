@@ -1,4 +1,5 @@
 import { orders as seedOrders } from "@/mock/orders";
+import { customers } from "@/mock/customers";
 import type { CartLineItem } from "@/types/cart";
 import type { CheckoutOrder, PlaceOrderInput } from "@/types/checkout";
 import { processMockCheckoutPayment } from "@/lib/services/payment";
@@ -16,7 +17,7 @@ function seedCheckoutOrders(): CheckoutOrder[] {
       addressLine2: order.billingAddress.line2,
       city: order.billingAddress.city,
       country: order.billingAddress.country,
-      email: "aarav.mehta@example.com",
+      email: customers.find((customer) => customer.id === order.customerId)?.email ?? "",
       fullName: `${order.billingAddress.firstName} ${order.billingAddress.lastName}`,
       phone: order.billingAddress.phone,
       pincode: order.billingAddress.postalCode,
@@ -44,7 +45,7 @@ function seedCheckoutOrders(): CheckoutOrder[] {
     orderNumber: order.orderNumber,
     payment: {
       method: "upi",
-      provider: "mock",
+      provider: order.payment?.provider ?? "razorpay",
       status: order.payment?.status === "paid" ? "paid" : "pending",
       transactionId: order.payment?.providerPaymentId
     },
@@ -53,7 +54,7 @@ function seedCheckoutOrders(): CheckoutOrder[] {
       addressLine2: order.shippingAddress.line2,
       city: order.shippingAddress.city,
       country: order.shippingAddress.country,
-      email: "aarav.mehta@example.com",
+      email: customers.find((customer) => customer.id === order.customerId)?.email ?? "",
       fullName: `${order.shippingAddress.firstName} ${order.shippingAddress.lastName}`,
       phone: order.shippingAddress.phone,
       pincode: order.shippingAddress.postalCode,
@@ -125,7 +126,7 @@ export async function createMockCheckoutOrder(input: PlaceOrderInput) {
     orderNumber,
     payment: {
       method: input.paymentMethod,
-      provider: "mock",
+      provider: "cod",
       status: payment.status,
       transactionId: payment.transactionId
     },
@@ -135,7 +136,7 @@ export async function createMockCheckoutOrder(input: PlaceOrderInput) {
     statusHistory: [
       {
         at: createdAt,
-        note: "Order created from mock checkout.",
+        note: "Order created from checkout.",
         status: "pending"
       },
       {

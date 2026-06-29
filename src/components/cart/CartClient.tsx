@@ -31,7 +31,7 @@ type CartAddOn =
 const addOns: CartAddOn[] = [
   {
     cta: "Add shaker",
-    description: "Leak-resistant 700 ml shaker placeholder.",
+    description: "Leak-resistant 700 ml shaker for smooth mixing.",
     imageUrl: "https://images.unsplash.com/photo-1576678927484-cc907957088c?auto=format&fit=crop&w=500&q=80",
     payload: {
       addedAt: "",

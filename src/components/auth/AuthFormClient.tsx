@@ -14,9 +14,9 @@ export function AuthFormClient({ mode }: { mode: AuthMode }) {
   const router = useRouter();
   const { session } = useCustomerSession();
   const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState(mode === "login" ? "aarav.mehta@example.com" : "");
+  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState(mode === "login" ? "password123" : "");
+  const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -65,7 +65,7 @@ export function AuthFormClient({ mode }: { mode: AuthMode }) {
             {mode === "login" ? "Welcome back" : "Start your FitSupplement account"}
           </h1>
           <p className="mt-3 text-sm leading-6 text-slate">
-            Email/password auth is active in local mock storage. Mobile OTP verification is structured as a later provider step.
+            Sign in to view orders, saved addresses, subscriptions, loyalty points, and faster checkout.
           </p>
 
           {session ? (
@@ -81,7 +81,7 @@ export function AuthFormClient({ mode }: { mode: AuthMode }) {
             {mode === "signup" ? (
               <>
                 <Input label="Full name" onChange={(event) => setFullName(event.target.value)} required value={fullName} />
-                <Input helperText="OTP-ready phone field for later SMS provider integration." label="Mobile number" onChange={(event) => setPhone(event.target.value)} value={phone} />
+                <Input helperText="Used for order updates and delivery coordination." label="Mobile number" onChange={(event) => setPhone(event.target.value)} value={phone} />
               </>
             ) : null}
             <Input label="Email" onChange={(event) => setEmail(event.target.value)} required type="email" value={email} />
@@ -108,10 +108,10 @@ export function AuthFormClient({ mode }: { mode: AuthMode }) {
         <aside className="rounded-card border border-black/10 bg-ink p-6 text-white shadow-card">
           <h2 className="text-2xl font-black tracking-tight">Account benefits</h2>
           <div className="mt-5 grid gap-4 text-sm font-semibold text-white/80">
-            <p>Protected account pages with mock local session guard.</p>
-            <p>Saved address and order history ready for backend sync.</p>
-            <p>Subscriptions, loyalty, referrals, reviews, and notifications are scaffolded.</p>
-            <p>OTP-ready architecture can be connected to SMS or WhatsApp providers later.</p>
+            <p>Save addresses for faster checkout.</p>
+            <p>Track orders, invoices, returns, and delivery updates.</p>
+            <p>Manage subscriptions, loyalty, referrals, reviews, and notifications.</p>
+            <p>Receive restock, price-drop, and order alerts through your preferred channels.</p>
           </div>
         </aside>
       </section>
@@ -129,11 +129,11 @@ export function ForgotPasswordClient() {
         <p className="text-xs font-black uppercase tracking-[0.14em] text-forest">Password recovery</p>
         <h1 className="mt-2 text-3xl font-black tracking-tight text-ink">Forgot password</h1>
         <p className="mt-3 text-sm leading-6 text-slate">
-          Placeholder flow for reset links. Real email delivery can be wired through the auth service later.
+          Enter your email and we will prepare a secure password reset request.
         </p>
         <div className="mt-6 grid gap-4">
           <Input label="Email" onChange={(event) => setEmail(event.target.value)} type="email" value={email} />
-          <button className="focus-ring h-12 rounded-md bg-ink text-sm font-black text-white" onClick={() => setMessage(`Reset placeholder prepared for ${email || "your email"}.`)} type="button">
+          <button className="focus-ring h-12 rounded-md bg-ink text-sm font-black text-white" onClick={() => setMessage(`Reset request prepared for ${email || "your email"}.`)} type="button">
             Send reset link
           </button>
           {message ? <p className="rounded-md bg-mint p-3 text-sm font-bold text-forest">{message}</p> : null}
