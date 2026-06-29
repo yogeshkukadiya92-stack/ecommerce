@@ -63,6 +63,13 @@ export function InventoryManagementClient() {
   const [movements, setMovements] = useState<AdvancedStockMovement[]>(advancedStockMovements);
   const [purchaseOrders, setPurchaseOrders] = useState<AdvancedPurchaseOrder[]>(advancedPurchaseOrders);
   const [toast, setToast] = useState("");
+  const [purchaseDraft, setPurchaseDraft] = useState({
+    batchId: inventoryBatchRecords[0]?.id ?? "",
+    cost: inventoryBatchRecords[0]?.purchaseCost ?? 1,
+    expectedDate: "2026-07-05",
+    quantity: 25,
+    supplierId: inventoryBatchRecords[0]?.supplierId ?? ""
+  });
   const [warehouseDraft, setWarehouseDraft] = useState({
     address: "",
     city: "",
@@ -133,29 +140,111 @@ export function InventoryManagementClient() {
 
   function receivePurchaseOrder(orderId: string) {
     const order = purchaseOrders.find((item) => item.id === orderId);
-    const firstBatch = batches.find((batch) => batch.variantId === order?.items[0]?.variantId);
 
-    if (!order || !firstBatch) {
+    if (!order) {
       setToast("Unable to receive this PO in mock state.");
       return;
     }
 
-    const result = receivePurchaseOrderStock({
-      adminId: session?.adminId ?? "admin-mock",
-      batches,
-      movements,
-      quantity: order.items[0].quantity,
-      sourceBatch: firstBatch
-    });
-    setBatches(result.batches);
-    setMovements(result.movements);
+    let workingBatches = batches;
+    let workingMovements = movements;
+    const movementIds: string[] = [];
+
+    for (const orderItem of order.items) {
+      const sourceBatch = workingBatches.find((batch) => batch.variantId === orderItem.variantId);
+
+      if (!sourceBatch) continue;
+
+      const result = receivePurchaseOrderStock({
+        adminId: session?.adminId ?? "admin-mock",
+        batches: workingBatches,
+        movements: workingMovements,
+        quantity: orderItem.quantity,
+        sourceBatch
+      });
+      workingBatches = result.batches;
+      workingMovements = result.movements;
+      movementIds.push(result.movement.id);
+    }
+
+    if (movementIds.length === 0) {
+      setToast("No matching batch found for this purchase order.");
+      return;
+    }
+
+    setBatches(workingBatches);
+    setMovements(workingMovements);
     setPurchaseOrders((current) =>
       current.map((item) => (item.id === orderId ? { ...item, status: "received" } : item))
     );
     audit("admin.inventory.purchase_order.receive", "PurchaseOrder", orderId, {
-      movementId: result.movement.id
+      movementIds
     });
     setToast("Purchase order received and stock movement created.");
+  }
+
+  function createPurchaseOrder() {
+    const selectedBatch = batches.find((batch) => batch.id === purchaseDraft.batchId);
+    const supplierBatch = batches.find((batch) => batch.supplierId === purchaseDraft.supplierId) ?? selectedBatch;
+
+    if (!selectedBatch) {
+      setToast("Select a product / SKU before creating purchase order.");
+      return;
+    }
+
+    if (purchaseDraft.quantity <= 0 || purchaseDraft.cost <= 0) {
+      setToast("Purchase quantity and cost must be greater than zero.");
+      return;
+    }
+
+    if (!purchaseDraft.expectedDate) {
+      setToast("Expected date is required.");
+      return;
+    }
+
+    const purchaseOrder: AdvancedPurchaseOrder = {
+      expectedDate: purchaseDraft.expectedDate,
+      id: `po-${Date.now()}`,
+      items: [
+        {
+          cost: purchaseDraft.cost,
+          productName: selectedBatch.productName,
+          quantity: purchaseDraft.quantity,
+          sku: selectedBatch.sku,
+          variantId: selectedBatch.variantId
+        }
+      ],
+      status: "ordered",
+      supplierId: purchaseDraft.supplierId || selectedBatch.supplierId,
+      supplierName: supplierBatch?.supplierName ?? selectedBatch.supplierName
+    };
+
+    setPurchaseOrders((current) => [purchaseOrder, ...current]);
+    audit("admin.inventory.purchase_order.create", "PurchaseOrder", purchaseOrder.id, {
+      quantity: purchaseDraft.quantity,
+      sku: selectedBatch.sku,
+      supplierId: purchaseOrder.supplierId
+    });
+    setToast("Purchase order created. Click Receive stock when goods arrive.");
+  }
+
+  function startPurchaseForSku(sku: string) {
+    const batch = batches.find((item) => item.sku === sku);
+
+    if (!batch) {
+      setToast("Unable to create PO for this SKU.");
+      return;
+    }
+
+    setPurchaseDraft({
+      batchId: batch.id,
+      cost: batch.purchaseCost,
+      expectedDate: "2026-07-05",
+      quantity: Math.max(25, 50 - batch.availableQuantity),
+      supplierId: batch.supplierId
+    });
+    setActiveTab("Purchase Orders");
+    setToast("Purchase order form prefilled from low stock alert.");
   }
 
   function submitAdjustment() {
@@ -251,7 +340,14 @@ export function InventoryManagementClient() {
       {activeTab === "Batches" ? <BatchesTab batches={batches} /> : null}
       {activeTab === "Movements" ? <MovementsTab movements={movements} /> : null}
       {activeTab === "Purchase Orders" ? (
-        <PurchaseOrdersTab orders={purchaseOrders} receivePurchaseOrder={receivePurchaseOrder} />
+        <PurchaseOrdersTab
+          batches={batches}
+          createPurchaseOrder={createPurchaseOrder}
+          draft={purchaseDraft}
+          orders={purchaseOrders}
+          receivePurchaseOrder={receivePurchaseOrder}
+          setDraft={setPurchaseDraft}
+        />
       ) : null}
       {activeTab === "Adjustments" ? (
         <AdjustmentsTab
@@ -262,7 +358,7 @@ export function InventoryManagementClient() {
         />
       ) : null}
       {activeTab === "Expiry Alerts" ? <ExpiryAlertsTab buckets={expiryBuckets} /> : null}
-      {activeTab === "Low Stock" ? <LowStockTab rows={lowStockRows} /> : null}
+      {activeTab === "Low Stock" ? <LowStockTab createPurchaseForSku={startPurchaseForSku} rows={lowStockRows} /> : null}
       {activeTab === "FEFO" ? (
         <FefoTab batches={batches} draft={fefoDraft} message={fefoMessage} runPreview={runFefoPreview} setDraft={setFefoDraft} />
       ) : null}
@@ -416,33 +512,85 @@ function MovementsTab({ movements }: { movements: AdvancedStockMovement[] }) {
 }
 
 function PurchaseOrdersTab({
+  batches,
+  createPurchaseOrder,
+  draft,
   orders,
-  receivePurchaseOrder
+  receivePurchaseOrder,
+  setDraft
 }: {
+  batches: InventoryBatchRecord[];
+  createPurchaseOrder: () => void;
+  draft: { batchId: string; cost: number; expectedDate: string; quantity: number; supplierId: string };
   orders: AdvancedPurchaseOrder[];
   receivePurchaseOrder: (orderId: string) => void;
+  setDraft: (draft: { batchId: string; cost: number; expectedDate: string; quantity: number; supplierId: string }) => void;
 }) {
+  const suppliers = [...new Map(batches.map((batch) => [batch.supplierId, batch])).values()];
+  const selectedBatch = batches.find((batch) => batch.id === draft.batchId) ?? batches[0];
+
   return (
-    <AdminCard title="Purchase orders">
-      <AdminTable
-        columns={["PO", "Supplier", "Expected", "Items", "Quantity", "Cost", "Status", "Receive"]}
-        rows={orders.map((order) => [
-          <span className="font-black text-ink" key="po">{order.id}</span>,
-          order.supplierName,
-          order.expectedDate,
-          order.items.map((item) => item.sku).join(", "),
-          order.items.reduce((sum, item) => sum + item.quantity, 0),
-          `Rs ${order.items.reduce((sum, item) => sum + item.cost * item.quantity, 0).toLocaleString("en-IN")}`,
-          <Badge key="status" tone={order.status === "received" ? "success" : "neutral"}>{order.status}</Badge>,
-          <button className="admin-action" disabled={order.status === "received"} key="receive" onClick={() => receivePurchaseOrder(order.id)} type="button">
-            <PackageCheck className="h-4 w-4" /> Receive stock
+    <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
+      <AdminCard title="Add purchase order">
+        <div className="grid gap-4">
+          <SelectField label="Supplier" onChange={(value) => setDraft({ ...draft, supplierId: value })} value={draft.supplierId}>
+            {suppliers.map((batch) => (
+              <option key={batch.supplierId} value={batch.supplierId}>{batch.supplierName}</option>
+            ))}
+          </SelectField>
+          <SelectField
+            label="Product / SKU"
+            onChange={(value) => {
+              const batch = batches.find((item) => item.id === value);
+              setDraft({
+                ...draft,
+                batchId: value,
+                cost: batch?.purchaseCost ?? draft.cost,
+                supplierId: batch?.supplierId ?? draft.supplierId
+              });
+            }}
+            value={draft.batchId}
+          >
+            {batches.map((batch) => (
+              <option key={batch.id} value={batch.id}>{batch.productName} / {batch.variantLabel} / {batch.sku}</option>
+            ))}
+          </SelectField>
+          <div className="rounded-md border border-black/10 bg-mist p-3 text-sm font-semibold text-slate">
+            Current stock: {selectedBatch?.availableQuantity ?? 0} available in {selectedBatch?.warehouseName ?? "warehouse"}.
+          </div>
+          <Input label="Expected date" onChange={(event) => setDraft({ ...draft, expectedDate: event.target.value })} type="date" value={draft.expectedDate} />
+          <Input label="Purchase quantity" min={1} onChange={(event) => setDraft({ ...draft, quantity: Number(event.target.value) })} type="number" value={draft.quantity} />
+          <Input label="Purchase cost per unit" min={1} onChange={(event) => setDraft({ ...draft, cost: Number(event.target.value) })} type="number" value={draft.cost} />
+          <button className="focus-ring inline-flex items-center justify-center gap-2 rounded-md bg-ink px-4 py-3 text-sm font-black text-white" onClick={createPurchaseOrder} type="button">
+            <Plus className="h-4 w-4" /> Create purchase order
           </button>
-        ])}
-      />
-      <p className="mt-4 rounded-md bg-mist p-3 text-sm font-semibold text-slate">
-        Receiving stock creates or updates batches and records a purchase_received stock movement.
-      </p>
-    </AdminCard>
+        </div>
+        <p className="mt-4 rounded-md bg-mint p-3 text-sm font-semibold text-forest">
+          Goods arrive pachhi same PO row ma Receive stock dabavsho to stock add thase ane purchase_received movement create thase.
+        </p>
+      </AdminCard>
+
+      <AdminCard title="Purchase orders">
+        <AdminTable
+          columns={["PO", "Supplier", "Expected", "Items", "Quantity", "Cost", "Status", "Receive"]}
+          rows={orders.map((order) => [
+            <span className="font-black text-ink" key="po">{order.id}</span>,
+            order.supplierName,
+            order.expectedDate,
+            order.items.map((item) => item.sku).join(", "),
+            order.items.reduce((sum, item) => sum + item.quantity, 0),
+            `Rs ${order.items.reduce((sum, item) => sum + item.cost * item.quantity, 0).toLocaleString("en-IN")}`,
+            <Badge key="status" tone={order.status === "received" ? "success" : "neutral"}>{order.status}</Badge>,
+            <button className="admin-action" disabled={order.status === "received"} key="receive" onClick={() => receivePurchaseOrder(order.id)} type="button">
+              <PackageCheck className="h-4 w-4" /> Receive stock
+            </button>
+          ])}
+        />
+        <p className="mt-4 rounded-md bg-mist p-3 text-sm font-semibold text-slate">
+          Receiving stock creates or updates batches and records a purchase_received stock movement.
+        </p>
+      </AdminCard>
+    </div>
   );
 }
 
@@ -511,7 +659,13 @@ function ExpiryAlertsTab({ buckets }: { buckets: ReturnType<typeof buildExpiryBu
   );
 }
 
-function LowStockTab({ rows }: { rows: ReturnType<typeof buildInventoryRows> }) {
+function LowStockTab({
+  createPurchaseForSku,
+  rows
+}: {
+  createPurchaseForSku: (sku: string) => void;
+  rows: ReturnType<typeof buildInventoryRows>;
+}) {
   return (
     <AdminCard title="Low stock alerts">
       <AdminTable
@@ -523,7 +677,7 @@ function LowStockTab({ rows }: { rows: ReturnType<typeof buildInventoryRows> }) 
           <span className="font-black text-coral" key="available">{item.availableStock}</span>,
           item.lowStockThreshold,
           item.reorderPoint,
-          <button className="admin-action" key="po" type="button">Create purchase order</button>
+          <button className="admin-action" key="po" onClick={() => createPurchaseForSku(item.sku)} type="button">Create purchase order</button>
         ])}
       />
     </AdminCard>
