@@ -299,11 +299,14 @@ export interface OrderItem extends BaseEntity {
 export interface Payment extends BaseEntity {
   orderId: ID;
   provider: PaymentProvider;
+  providerOrderId?: string;
   providerPaymentId?: string;
+  signature?: string;
   status: PaymentStatus;
   amount: number;
   currency: CurrencyCode;
   paidAt?: string;
+  failureReason?: string;
 }
 
 export interface Shipment extends BaseEntity {

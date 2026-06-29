@@ -1,4 +1,5 @@
 import type { Address, CurrencyCode, ShippingProvider } from "@/types/models";
+import type { FefoAllocation } from "@/types/inventory";
 
 export type AdminOrderStatus =
   | "pending"
@@ -44,6 +45,7 @@ export type RefundMethod = "original_payment" | "upi" | "store_credit" | "manual
 export type ReturnQcDecision = "restock" | "damaged" | "quarantine";
 
 export type AdminOrderItem = {
+  batchAllocations?: FefoAllocation[];
   batchId?: string;
   batchNumber?: string;
   gstRate: number;
@@ -92,10 +94,16 @@ export type AdminPaymentSnapshot = {
 };
 
 export type AdminShipmentSnapshot = {
+  awbCode?: string;
   carrier: ShippingProvider | "bluedart";
+  courierName?: string;
   estimatedDelivery?: string;
+  labelUrl?: string;
   ndrReason?: string;
+  providerOrderId?: string;
+  rateEstimate?: number;
   serviceabilityMessage?: string;
+  shipmentId?: string;
   status: AdminShipmentStatus;
   trackingNumber?: string;
 };

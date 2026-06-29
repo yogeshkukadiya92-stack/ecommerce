@@ -1,6 +1,6 @@
 import { createShipmentPlaceholder } from "@/lib/services/shipping";
 import { reserveStockByFefo } from "@/lib/inventory/fefo";
-import type { AdvancedStockMovement, InventoryBatchRecord } from "@/types/inventory";
+import type { AdvancedStockMovement, FefoAllocation, InventoryBatchRecord } from "@/types/inventory";
 import type {
   AdminOrder,
   AdminOrderStatus,
@@ -122,20 +122,22 @@ export function reserveOrderStock(input: {
         ...workingMovements
       ];
 
-      workingOrder = {
-        ...workingOrder,
-        items: workingOrder.items.map((entry) =>
-          entry.id === item.id
-            ? {
-                ...entry,
-                batchId: allocation.batchId,
-                batchNumber: allocation.batchNumber
-              }
-            : entry
-        )
-      };
       reservationNotes.push(`${item.sku} -> ${allocation.batchNumber} (${allocation.quantity})`);
     }
+
+    workingOrder = {
+      ...workingOrder,
+      items: workingOrder.items.map((entry) =>
+        entry.id === item.id
+          ? {
+              ...entry,
+              batchAllocations: reservation.allocations,
+              batchId: reservation.allocations[0]?.batchId,
+              batchNumber: reservation.allocations.map((allocation) => allocation.batchNumber).join(", ")
+            }
+          : entry
+      )
+    };
   }
 
   workingOrder = appendOrderTimeline(
@@ -166,6 +168,7 @@ export function assignCourier(input: {
   adminId: string;
   carrier: AdminShipmentSnapshot["carrier"];
   order: AdminOrder;
+  shipment?: Partial<AdminShipmentSnapshot>;
   trackingNumber?: string;
 }) {
   const shipment = createShipmentPlaceholder({
@@ -176,11 +179,18 @@ export function assignCourier(input: {
   });
 
   const shipmentSnapshot: AdminShipmentSnapshot = {
+    awbCode: input.shipment?.awbCode ?? shipment.awbCode,
     carrier: input.carrier,
-    estimatedDelivery: shipment.estimatedDelivery,
-    serviceabilityMessage: shipment.message,
-    status: "label_created",
-    trackingNumber: shipment.trackingNumber
+    courierName: input.shipment?.courierName ?? shipment.courierName,
+    estimatedDelivery: input.shipment?.estimatedDelivery ?? shipment.estimatedDelivery,
+    labelUrl: input.shipment?.labelUrl ?? shipment.labelUrl,
+    ndrReason: input.shipment?.ndrReason,
+    providerOrderId: input.shipment?.providerOrderId,
+    rateEstimate: input.shipment?.rateEstimate,
+    serviceabilityMessage: input.shipment?.serviceabilityMessage ?? shipment.message,
+    shipmentId: input.shipment?.shipmentId ?? shipment.shipmentId,
+    status: input.shipment?.status ?? "label_created",
+    trackingNumber: input.shipment?.trackingNumber ?? shipment.trackingNumber
   };
 
   return appendOrderTimeline(
@@ -190,8 +200,8 @@ export function assignCourier(input: {
     },
     {
       actor: input.adminId,
-      note: `${input.carrier} label created with tracking ${shipment.trackingNumber}.`,
-      status: "label_created",
+      note: `${input.carrier} label created${shipmentSnapshot.trackingNumber ? ` with tracking ${shipmentSnapshot.trackingNumber}` : ""}.`,
+      status: shipmentSnapshot.status,
       title: "Courier assigned"
     }
   );
@@ -207,36 +217,37 @@ export function markOrderShipped(input: {
   let workingMovements = [...input.movements];
 
   for (const item of input.order.items) {
-    if (!item.batchId) continue;
-    const batch = workingBatches.find((entry) => entry.id === item.batchId);
-    if (!batch) continue;
+    for (const allocation of allocationsForItem(item)) {
+      const batch = workingBatches.find((entry) => entry.id === allocation.batchId);
+      if (!batch) continue;
 
-    workingBatches = workingBatches.map((entry) =>
-      entry.id === item.batchId
-        ? {
-            ...entry,
-            reservedQuantity: Math.max(0, entry.reservedQuantity - item.quantity)
-          }
-        : entry
-    );
+      workingBatches = workingBatches.map((entry) =>
+        entry.id === allocation.batchId
+          ? {
+              ...entry,
+              reservedQuantity: Math.max(0, entry.reservedQuantity - allocation.quantity)
+            }
+          : entry
+      );
 
-    workingMovements = [
-      {
-        adminId: input.adminId,
-        adminNote: `Order ${input.order.orderNumber} shipped.`,
-        at: new Date().toISOString(),
-        batchId: batch.id,
-        batchNumber: batch.batchNumber,
-        id: `mov-ship-${Date.now()}-${batch.id}`,
-        productName: batch.productName,
-        quantity: item.quantity,
-        reason: `order ${input.order.orderNumber} shipped`,
-        sku: batch.sku,
-        type: "sale_shipped",
-        warehouseName: batch.warehouseName
-      },
-      ...workingMovements
-    ];
+      workingMovements = [
+        {
+          adminId: input.adminId,
+          adminNote: `Order ${input.order.orderNumber} shipped.`,
+          at: new Date().toISOString(),
+          batchId: batch.id,
+          batchNumber: batch.batchNumber,
+          id: `mov-ship-${Date.now()}-${batch.id}`,
+          productName: batch.productName,
+          quantity: allocation.quantity,
+          reason: `order ${input.order.orderNumber} shipped`,
+          sku: batch.sku,
+          type: "sale_shipped",
+          warehouseName: batch.warehouseName
+        },
+        ...workingMovements
+      ];
+    }
   }
 
   const order = appendOrderTimeline(
@@ -301,37 +312,38 @@ export function cancelOrder(input: {
   let workingMovements = [...input.movements];
 
   for (const item of input.order.items) {
-    if (!item.batchId) continue;
-    const batch = workingBatches.find((entry) => entry.id === item.batchId);
-    if (!batch) continue;
+    for (const allocation of allocationsForItem(item)) {
+      const batch = workingBatches.find((entry) => entry.id === allocation.batchId);
+      if (!batch) continue;
 
-    workingBatches = workingBatches.map((entry) =>
-      entry.id === item.batchId
-        ? {
-            ...entry,
-            availableQuantity: entry.availableQuantity + item.quantity,
-            reservedQuantity: Math.max(0, entry.reservedQuantity - item.quantity)
-          }
-        : entry
-    );
+      workingBatches = workingBatches.map((entry) =>
+        entry.id === allocation.batchId
+          ? {
+              ...entry,
+              availableQuantity: entry.availableQuantity + allocation.quantity,
+              reservedQuantity: Math.max(0, entry.reservedQuantity - allocation.quantity)
+            }
+          : entry
+      );
 
-    workingMovements = [
-      {
-        adminId: input.adminId,
-        adminNote: input.reason,
-        at: new Date().toISOString(),
-        batchId: batch.id,
-        batchNumber: batch.batchNumber,
-        id: `mov-cancel-${Date.now()}-${batch.id}`,
-        productName: batch.productName,
-        quantity: item.quantity,
-        reason: `order ${input.order.orderNumber} cancellation restored reserved stock`,
-        sku: batch.sku,
-        type: "manual_correction",
-        warehouseName: batch.warehouseName
-      },
-      ...workingMovements
-    ];
+      workingMovements = [
+        {
+          adminId: input.adminId,
+          adminNote: input.reason,
+          at: new Date().toISOString(),
+          batchId: batch.id,
+          batchNumber: batch.batchNumber,
+          id: `mov-cancel-${Date.now()}-${batch.id}`,
+          productName: batch.productName,
+          quantity: allocation.quantity,
+          reason: `order ${input.order.orderNumber} cancellation restored reserved stock`,
+          sku: batch.sku,
+          type: "manual_correction",
+          warehouseName: batch.warehouseName
+        },
+        ...workingMovements
+      ];
+    }
   }
 
   return {
@@ -442,37 +454,40 @@ export function completeReturnQc(input: {
   let workingMovements = [...input.movements];
 
   for (const item of input.order.items) {
-    if (!item.batchId) continue;
-    const batch = workingBatches.find((entry) => entry.id === item.batchId);
-    if (!batch) continue;
+    for (const allocation of allocationsForItem(item)) {
+      const batch = workingBatches.find((entry) => entry.id === allocation.batchId);
+      if (!batch) continue;
 
-    workingBatches = workingBatches.map((entry) => {
-      if (entry.id !== item.batchId) return entry;
+      workingBatches = workingBatches.map((entry) => {
+        if (entry.id !== allocation.batchId) return entry;
 
-      return {
-        ...entry,
-        availableQuantity: input.decision === "restock" ? entry.availableQuantity + item.quantity : entry.availableQuantity,
-        damagedQuantity: input.decision === "damaged" ? entry.damagedQuantity + item.quantity : entry.damagedQuantity
-      };
-    });
+        return {
+          ...entry,
+          availableQuantity:
+            input.decision === "restock" ? entry.availableQuantity + allocation.quantity : entry.availableQuantity,
+          damagedQuantity:
+            input.decision === "damaged" ? entry.damagedQuantity + allocation.quantity : entry.damagedQuantity
+        };
+      });
 
-    workingMovements = [
-      {
-        adminId: input.adminId,
-        adminNote: `Return QC decision: ${input.decision}.`,
-        at: new Date().toISOString(),
-        batchId: batch.id,
-        batchNumber: batch.batchNumber,
-        id: `mov-return-${Date.now()}-${batch.id}`,
-        productName: batch.productName,
-        quantity: item.quantity,
-        reason: `order ${input.order.orderNumber} return received`,
-        sku: batch.sku,
-        type: input.decision === "restock" ? "return_received" : input.decision === "damaged" ? "damaged" : "manual_correction",
-        warehouseName: batch.warehouseName
-      },
-      ...workingMovements
-    ];
+      workingMovements = [
+        {
+          adminId: input.adminId,
+          adminNote: `Return QC decision: ${input.decision}.`,
+          at: new Date().toISOString(),
+          batchId: batch.id,
+          batchNumber: batch.batchNumber,
+          id: `mov-return-${Date.now()}-${batch.id}`,
+          productName: batch.productName,
+          quantity: allocation.quantity,
+          reason: `order ${input.order.orderNumber} return received`,
+          sku: batch.sku,
+          type: input.decision === "restock" ? "return_received" : input.decision === "damaged" ? "damaged" : "manual_correction",
+          warehouseName: batch.warehouseName
+        },
+        ...workingMovements
+      ];
+    }
   }
 
   const returnStatus = input.decision === "restock" ? "restocked" : input.decision === "damaged" ? "damaged" : "quarantined";
@@ -560,4 +575,23 @@ function orderStatusTitle(status: AdminOrderStatus) {
   };
 
   return labels[status];
+}
+
+function allocationsForItem(item: { batchAllocations?: FefoAllocation[]; batchId?: string; batchNumber?: string; quantity: number }) {
+  if (item.batchAllocations?.length) {
+    return item.batchAllocations;
+  }
+
+  if (!item.batchId || !item.batchNumber) {
+    return [];
+  }
+
+  return [
+    {
+      batchId: item.batchId,
+      batchNumber: item.batchNumber,
+      expiryDate: "",
+      quantity: item.quantity
+    }
+  ];
 }

@@ -153,6 +153,88 @@ export async function createMockCheckoutOrder(input: PlaceOrderInput) {
   return order;
 }
 
+export function createPendingCheckoutOrder(input: PlaceOrderInput & {
+  provider?: "razorpay" | "cashfree" | "stripe";
+  providerOrderId?: string;
+}) {
+  const createdAt = new Date().toISOString();
+  const orderNumber = `FS-${Math.floor(100000 + Math.random() * 900000)}`;
+  const items = input.items.map((item: CartLineItem) => ({
+    ...item,
+    total: item.unitPrice * item.quantity
+  }));
+  const order: CheckoutOrder = {
+    billingAddress: input.address,
+    couponCode: input.couponCode,
+    createdAt,
+    customerId: input.customerId,
+    deliveryMethod: input.deliveryMethod,
+    discountAmount: input.totals.couponDiscount,
+    id: `ord-${Date.now()}`,
+    items,
+    orderNumber,
+    payment: {
+      method: input.paymentMethod,
+      provider: input.provider ?? "razorpay",
+      providerOrderId: input.providerOrderId,
+      status: "pending"
+    },
+    shippingAddress: input.address,
+    shippingAmount: input.totals.shipping,
+    status: "pending",
+    statusHistory: [
+      {
+        at: createdAt,
+        note: "Order created and waiting for payment.",
+        status: "pending"
+      }
+    ],
+    subtotal: input.totals.subtotal,
+    taxAmount: input.totals.tax,
+    totalAmount: input.totals.grandTotal
+  };
+
+  writeLocalOrders([order, ...readLocalOrders()]);
+  return order;
+}
+
+export function updateLocalOrderPayment(
+  orderNumber: string,
+  payment: Partial<CheckoutOrder["payment"]>,
+  input: {
+    note: string;
+    status: CheckoutOrder["status"];
+  }
+) {
+  const updatedAt = new Date().toISOString();
+  const orders = readLocalOrders();
+  const nextOrders = orders.map((order) => {
+    if (order.orderNumber !== orderNumber) {
+      return order;
+    }
+
+    return {
+      ...order,
+      payment: {
+        ...order.payment,
+        ...payment
+      },
+      status: input.status,
+      statusHistory: [
+        {
+          at: updatedAt,
+          note: input.note,
+          status: input.status
+        },
+        ...order.statusHistory
+      ]
+    };
+  });
+
+  writeLocalOrders(nextOrders);
+  return nextOrders.find((order) => order.orderNumber === orderNumber);
+}
+
 export function getLocalOrderByNumber(orderNumber: string) {
   return readLocalOrders().find((order) => order.orderNumber === orderNumber);
 }

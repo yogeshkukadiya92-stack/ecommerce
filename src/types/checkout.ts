@@ -35,9 +35,12 @@ export type CheckoutOrder = {
   orderNumber: string;
   payment: {
     method: PaymentMethod;
-    provider: "mock";
+    provider: "mock" | "razorpay" | "cashfree" | "stripe" | "cod";
+    providerOrderId?: string;
+    signature?: string;
     status: "pending" | "paid" | "failed" | "cod_pending";
     transactionId?: string;
+    failureReason?: string;
   };
   shippingAddress: CheckoutAddress;
   shippingAmount: number;

@@ -2,7 +2,7 @@ import { CatalogManagementClient } from "@/components/admin/CatalogManagementCli
 import { AdminShell } from "@/components/layout/AdminShell";
 
 export const metadata = {
-  title: "Catalog Management | FitSupplement Store"
+  title: "Catalog Management"
 };
 
 export default function CatalogAdminPage() {

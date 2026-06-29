@@ -1,46 +1,36 @@
 # FitSupplement Store
 
-Premium full-stack ecommerce foundation for health supplements, protein powders, performance nutrition, vitamins, shakers, and fitness accessories.
+Premium full-stack ecommerce web app for health supplements, protein powders, performance nutrition, vitamins, shakers, and fitness accessories.
 
-Phase 0 intentionally focuses on the technical foundation: project structure, data models, TypeScript contracts, mock seed data, protected-admin-ready routing, and integration placeholders. Full storefront UI, checkout, authentication, database writes, and live provider integrations are scheduled for later phases.
+The project currently includes a customer storefront, product discovery, product detail pages, cart, checkout simulation, customer account, protected mock admin, catalog management, advanced inventory, order fulfillment workflows, CMS/Website Studio, promotions, reviews, CRM, compliance, analytics, SEO, PWA placeholders, and Phase 14 automated tests.
 
-## Setup
-
-1. Install dependencies:
+## Quick Start
 
 ```bash
 npm install
-```
-
-2. Copy environment variables:
-
-```bash
 cp .env.example .env
-```
-
-3. Update `DATABASE_URL` in `.env` for PostgreSQL or Supabase.
-
-4. Generate Prisma client:
-
-```bash
 npm run db:generate
-```
-
-5. Run the development server:
-
-```bash
 npm run dev
 ```
 
-6. Open [http://localhost:3000](http://localhost:3000).
+Open `http://localhost:3000`.
+
+Local mock admin login only:
+
+- Email: `admin@fitsupplement.local`
+- Password: `admin123`
+
+Do not enable mock admin credentials in production.
 
 ## Useful Commands
 
 ```bash
 npm run dev
-npm run build
-npm run typecheck
 npm run lint
+npm run typecheck
+npm test
+npm run build
+npm run start
 npm run db:generate
 npm run db:push
 npm run db:seed
@@ -50,125 +40,116 @@ npm run db:seed
 
 ```text
 .
-├── prisma/
-│   ├── schema.prisma
-│   └── seed.ts
-├── src/
-│   ├── app/
-│   │   ├── (auth)/login/
-│   │   ├── admin/
-│   │   ├── api/
-│   │   ├── cart/
-│   │   ├── checkout/
-│   │   ├── products/
-│   │   ├── globals.css
-│   │   ├── layout.tsx
-│   │   └── page.tsx
-│   ├── components/
-│   │   ├── admin/
-│   │   ├── layout/
-│   │   └── ui/
-│   ├── constants/
-│   ├── lib/
-│   │   ├── auth/
-│   │   ├── db/
-│   │   ├── services/
-│   │   └── utils/
-│   ├── mock/
-│   └── types/
-├── .env.example
-├── next.config.ts
-├── package.json
-├── tailwind.config.ts
-└── tsconfig.json
+|-- docs/
+|   |-- DEPLOYMENT.md
+|   |-- LAUNCH_CHECKLIST.md
+|   |-- PAYMENTS.md
+|   |-- SHIPPING.md
+|   `-- TEST_REPORT.md
+|-- prisma/
+|   |-- schema.prisma
+|   `-- seed.ts
+|-- public/
+|   |-- icons/
+|   `-- og/
+|-- src/
+|   |-- app/
+|   |   |-- (auth)/
+|   |   |-- account/
+|   |   |-- admin/
+|   |   |-- api/
+|   |   |-- blog/
+|   |   |-- cart/
+|   |   |-- checkout/
+|   |   |-- collections/
+|   |   |-- products/
+|   |   |-- robots.ts
+|   |   `-- sitemap.ts
+|   |-- components/
+|   |   |-- admin/
+|   |   |-- cart/
+|   |   |-- checkout/
+|   |   |-- cms/
+|   |   |-- layout/
+|   |   |-- storefront/
+|   |   `-- ui/
+|   |-- constants/
+|   |-- lib/
+|   |   |-- admin/
+|   |   |-- auth/
+|   |   |-- cart/
+|   |   |-- cms/
+|   |   |-- compliance/
+|   |   |-- inventory/
+|   |   |-- orders/
+|   |   |-- promotions/
+|   |   |-- reports/
+|   |   |-- seo/
+|   |   `-- services/
+|   |-- mock/
+|   `-- types/
+|-- .env.example
+|-- next.config.ts
+|-- package.json
+|-- tailwind.config.ts
+`-- tsconfig.json
+```
+
+## Test Coverage
+
+Automated tests live beside business services:
+
+- `src/lib/cart/cartPricing.test.ts`
+- `src/lib/inventory/fefo.test.ts`
+- `src/lib/inventory/stockService.test.ts`
+- `src/lib/orders/orderOpsService.test.ts`
+- `src/lib/services/shipping.test.ts`
+
+They cover coupon validation, cart totals, FEFO reservation, stock adjustment movement records, purchase order receiving, order status transitions, split-batch reservation, shipping payloads/status mapping, and cancellation.
+
+Run:
+
+```bash
+npm test
 ```
 
 ## Phase Roadmap
 
-| Phase | Scope | Build expectation |
+| Phase | Scope | Status |
 | --- | --- | --- |
-| Phase 0 | Foundation, schema, types, seed data, placeholder routes | Working build |
-| Phase 1 | Storefront shell, product listing, responsive navigation | Working catalog UI |
-| Phase 2 | Product detail pages, variants, cart, wishlist | Working shopping flow |
-| Phase 3 | Checkout, address, coupon, payment/shipping placeholders | Working checkout simulation |
-| Phase 4 | Authentication, customer account, order history | Protected customer flows |
-| Phase 5 | Admin CRUD for catalog and inventory | Practical admin operations |
-| Phase 6 | Orders, shipments, payments, coupons, reviews | Operational back office |
-| Phase 7 | CMS, blog, SEO, analytics, audit logs | Growth and governance tools |
-| Phase 8 | Provider integrations, search upgrade, production hardening | Launch readiness |
+| 0 | Foundation, models, seed data, placeholders | Complete |
+| 1 | Design system and layouts | Complete |
+| 2 | Homepage, listings, filters, search | Complete |
+| 3 | Product detail page and variants | Complete |
+| 4 | Cart, checkout, auth, customer account | Complete |
+| 5 | Admin dashboard and catalog management | Complete |
+| 6 | Advanced inventory, batches, FEFO | Complete |
+| 7 | Admin orders, fulfillment, returns, refunds | Complete |
+| 8 | CMS and Website Studio | Complete |
+| 9 | Promotions, coupons, loyalty, referral, subscriptions | Complete |
+| 10 | Reviews, Q&A, CRM, marketing automation | Complete |
+| 11 | Compliance, RBAC, audit logs, safety checks | Complete |
+| 12 | Analytics and reporting | Complete |
+| 13 | SEO, performance, accessibility, PWA readiness | Complete |
+| 14 | Testing, bug fixes, deployment docs | Complete |
 
 ## Database Model Overview
 
-### Access and Identity
+- Identity and access: `User`, `AdminUser`, `Role`, `Permission`, `Customer`, `Address`.
+- Catalog: `Product`, `ProductVariant`, `ProductImage`, `Brand`, `Category`, `Collection`.
+- Inventory: `Warehouse`, `Batch`, `InventoryItem`, `StockMovement`, `Supplier`, `PurchaseOrder`, `PurchaseOrderItem`.
+- Commerce: `Cart`, `CartItem`, `Order`, `OrderItem`, `Payment`, `Shipment`, `Coupon`.
+- Trust and content: `Review`, `ProductQuestion`, `Wishlist`, `BlogPost`, `CMSPage`, `HomepageSection`, `Banner`, `Menu`, `FooterSection`.
+- Growth and governance: `SubscriptionPlan`, `LoyaltyPoint`, `Referral`, `AuditLog`.
 
-- `User`: shared login identity for customers and admins.
-- `AdminUser`: admin profile connected to one user.
-- `Role` and `Permission`: RBAC foundation for protected admin routes and actions.
-- `Customer`: shopper profile with addresses, orders, reviews, wishlist, loyalty, and referrals.
-- `Address`: reusable customer address model; orders store address snapshots as JSON for historical accuracy.
+## Production Docs
 
-### Catalog
-
-- `Product`: supplement product with SEO fields, nutrition facts, ingredients, allergens, usage instructions, warning text, label images, and lab report URL.
-- `ProductVariant`: SKU-level sale unit with flavor, size, weight, MRP, selling price, discount, stock, default batch, and expiry.
-- `ProductImage`: product and variant image records with ordering and primary image support.
-- `Brand`, `Category`, `Collection`: merchandising taxonomy and collection support.
-
-### Inventory and Procurement
-
-- `Warehouse`: physical stock location.
-- `Batch`: batch number, supplier, manufacturing date, expiry date, and received date.
-- `InventoryItem`: batch and warehouse stock bucket with available, reserved, damaged, expired, and low-stock threshold quantities.
-- `StockMovement`: immutable inventory ledger for purchases, sales, returns, adjustments, damage, expiry, and transfers.
-- `Supplier`, `PurchaseOrder`, `PurchaseOrderItem`: procurement workflow foundation.
-
-### Commerce
-
-- `Cart`, `CartItem`: customer or anonymous session cart.
-- `Order`, `OrderItem`: order lifecycle with pricing, coupon, shipping address snapshot, billing address snapshot, and item snapshots.
-- `Payment`: provider-ready payment tracking for Razorpay, Stripe, and Cashfree.
-- `Shipment`: courier-ready shipment tracking for Shiprocket, Delhivery, and manual fulfilment.
-- `Coupon`: percentage, fixed amount, and free-shipping promotion model.
-
-### Trust, Content, and Growth
-
-- `Review` and `ProductQuestion`: moderation-ready trust content.
-- `Wishlist`: customer product saves.
-- `BlogPost`, `CMSPage`, `HomepageSection`, `Banner`, `Menu`, `FooterSection`: SEO and CMS foundation.
-- `SubscriptionPlan`: recurring purchase-ready product variant plan.
-- `LoyaltyPoint` and `Referral`: retention and referral infrastructure.
-- `AuditLog`: admin action history for governance.
-
-## Seed and Mock Data
-
-Mock data lives in `src/mock/` and includes:
-
-- Categories
-- Brands
-- Products
-- Product variants
-- Product images
-- Warehouses
-- Suppliers
-- Inventory batches and stock buckets
-- Customers
-- Sample orders
-- Homepage banners and sections
-
-The current `prisma/seed.ts` reports the available seed data without writing to a database. Database writes should be enabled after the target PostgreSQL or Supabase environment is confirmed.
+- Deployment guide: `docs/DEPLOYMENT.md`
+- Launch checklist: `docs/LAUNCH_CHECKLIST.md`
+- Payment integration guide: `docs/PAYMENTS.md`
+- Shipping integration guide: `docs/SHIPPING.md`
+- Phase 14 test report: `docs/TEST_REPORT.md`
 
 ## Compliance Note
 
-The product model supports supplement warnings and label transparency. Product copy should avoid medical cure claims. The platform should present supplements as dietary and fitness products, not medical advice or disease-treatment products.
-
-## Phase 13 SEO, Performance, Accessibility, and PWA Notes
-
-- SEO metadata is centralized through `src/lib/seo/seo.ts` for canonical URLs, Open Graph images, Twitter cards, and reusable JSON-LD helpers.
-- Product pages emit product, breadcrumb, and FAQ schema placeholders. Listing pages emit breadcrumb and collection schema placeholders.
-- `src/app/sitemap.ts` and `src/app/robots.ts` provide framework-native sitemap and robots placeholders.
-- The PWA foundation includes `src/app/manifest.ts`, `/offline`, theme metadata, and valid SVG icon/OG placeholders in `public/`.
-- Product grids use responsive `next/image` sizes, lazy loading for product cards, and a safe load-more pagination pattern to protect mobile performance.
-- The app uses server-rendered route metadata where possible and keeps heavy admin/reporting interfaces behind protected admin routes.
-- Mobile UX includes app-like bottom navigation, sticky cart/add-to-cart placement above the nav, touch-friendly controls, and reduced-motion support.
-- Accessibility improvements include a skip link, visible focus states, labelled search/forms, dialog semantics, aria-live feedback for cart actions, alt text on product imagery, and reduced-motion CSS.
-- Future production performance work should add a real service worker, image CDN policies, route-level analytics, Core Web Vitals monitoring, and database/materialized views for reporting queries.
+Product copy must avoid disease cure claims. The platform should present supplements as fitness and dietary products, not medical advice or disease-treatment products. Product pages include responsible warnings and “Not for medicinal use” messaging.

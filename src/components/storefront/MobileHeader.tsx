@@ -40,7 +40,7 @@ export function MobileHeader({ config }: { config?: HeaderCmsConfig }) {
       </div>
       {config?.enableSearch === false ? null : (
         <div className="border-b border-black/10 bg-white px-4 py-3">
-          <SearchBar compact />
+          <SearchBar compact label="Search supplements mobile" />
         </div>
       )}
       {open ? (

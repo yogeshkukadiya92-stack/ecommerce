@@ -29,7 +29,7 @@ export function Header({ config }: { config?: HeaderCmsConfig }) {
           <Link className="text-xl font-black tracking-tight text-ink" href="/">
             {logoText}
           </Link>
-          {config?.enableSearch === false ? <div /> : <SearchBar />}
+          {config?.enableSearch === false ? <div /> : <SearchBar label="Search supplements desktop" />}
           <div className="flex items-center gap-2">
             {config?.enableAccount === false ? null : (
               <Link className="focus-ring rounded-md p-2 text-slate hover:bg-mist hover:text-ink" href="/login" aria-label="Account">
@@ -37,7 +37,7 @@ export function Header({ config }: { config?: HeaderCmsConfig }) {
               </Link>
             )}
             {config?.enableWishlist === false ? null : (
-              <Link className="focus-ring rounded-md p-2 text-slate hover:bg-mist hover:text-ink" href="/wishlist" aria-label="Wishlist">
+              <Link className="focus-ring rounded-md p-2 text-slate hover:bg-mist hover:text-ink" href="/account/wishlist" aria-label="Wishlist">
                 <Heart className="h-5 w-5" />
               </Link>
             )}

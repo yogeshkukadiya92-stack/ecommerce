@@ -9,6 +9,6 @@ export function hasPermission(admin: AdminUser, permission: PermissionKey) {
 export function requireAdminPlaceholder() {
   return {
     authenticated: false,
-    reason: "Admin authentication and session enforcement will be wired in a later phase."
+    reason: "Admin route protection is enforced by the admin session shell; server-side middleware can be connected when a persistent auth provider is added."
   };
 }

@@ -2,7 +2,7 @@ import { AuthFormClient } from "@/components/auth/AuthFormClient";
 import { SiteShell } from "@/components/layout/SiteShell";
 
 export const metadata = {
-  title: "Sign Up | FitSupplement Store"
+  title: "Sign Up"
 };
 
 export default function SignupPage() {

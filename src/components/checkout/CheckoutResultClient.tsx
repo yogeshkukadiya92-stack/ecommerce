@@ -49,6 +49,7 @@ export function CheckoutSuccessClient() {
 export function CheckoutFailureClient() {
   const searchParams = useSearchParams();
   const reason = searchParams.get("reason") ?? "payment";
+  const orderNumber = searchParams.get("order");
 
   return (
     <main className="container-page py-16">
@@ -57,7 +58,7 @@ export function CheckoutFailureClient() {
         <p className="mt-4 text-xs font-black uppercase tracking-[0.14em] text-coral">Order not completed</p>
         <h1 className="mt-2 text-3xl font-black tracking-tight text-ink">Payment could not be completed</h1>
         <p className="mt-3 text-sm leading-6 text-slate">
-          Failure placeholder reason: {reason}. No payment was captured in this mock flow.
+          {failureMessage(reason, orderNumber)}
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
           <Link className="focus-ring rounded-md bg-ink px-5 py-3 text-sm font-black text-white" href="/checkout">
@@ -70,4 +71,22 @@ export function CheckoutFailureClient() {
       </section>
     </main>
   );
+}
+
+function failureMessage(reason: string, orderNumber: string | null) {
+  const suffix = orderNumber ? ` Order reference: ${orderNumber}.` : "";
+
+  if (reason.includes("razorpay-verification")) {
+    return `We could not verify the Razorpay signature. If money was deducted, support will reconcile it with Razorpay before confirming the order.${suffix}`;
+  }
+
+  if (reason.includes("razorpay-payment-failed")) {
+    return `Razorpay reported that the payment failed. No successful payment was captured by the store.${suffix}`;
+  }
+
+  if (reason.includes("cod")) {
+    return `COD order creation failed. Please review the address and try again.${suffix}`;
+  }
+
+  return `Failure reason: ${reason}. No successful payment was captured by the store.${suffix}`;
 }

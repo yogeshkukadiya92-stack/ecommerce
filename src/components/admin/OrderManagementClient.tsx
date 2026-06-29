@@ -19,6 +19,7 @@ import type {
   AdminOrder,
   AdminOrderStatus,
   AdminPaymentStatus,
+  AdminShipmentSnapshot,
   AdminShipmentStatus,
   OrderFilters,
   PaymentMode,
@@ -117,6 +118,7 @@ export function OrderManagementClient({ initialOrderNumber }: { initialOrderNumb
   const [rejectReason, setRejectReason] = useState("Return policy conditions not met");
   const [carrier, setCarrier] = useState<AdminOrder["shipment"]["carrier"]>("shiprocket");
   const [trackingNumber, setTrackingNumber] = useState("");
+  const [shippingLoading, setShippingLoading] = useState(false);
   const [qcDecision, setQcDecision] = useState<ReturnQcDecision>("restock");
   const [trackingMessage, setTrackingMessage] = useState("");
   const adminId = session?.adminId ?? "admin-demo";
@@ -213,6 +215,165 @@ export function OrderManagementClient({ initialOrderNumber }: { initialOrderNumb
       setToast(successMessage);
     } catch (error) {
       setToast(error instanceof Error ? error.message : "Order operation failed.");
+    }
+  }
+
+  async function handleAssignCourier() {
+    if (!selectedOrder) return;
+
+    setShippingLoading(true);
+    setTrackingMessage("");
+
+    try {
+      if (carrier === "shiprocket") {
+        const response = await fetch("/api/shipping/shiprocket/create-shipment", {
+          body: JSON.stringify({
+            order: selectedOrder,
+            weightKg: Math.max(0.5, selectedOrder.items.reduce((sum, item) => sum + item.quantity * 0.5, 0))
+          }),
+          headers: { "Content-Type": "application/json" },
+          method: "POST"
+        });
+        const data = (await response.json()) as {
+          message?: string;
+          shipment?: Partial<AdminShipmentSnapshot>;
+        };
+
+        if (!response.ok || !data.shipment) {
+          throw new Error(data.message ?? "Shiprocket shipment creation failed.");
+        }
+
+        const nextOrder = assignCourier({
+          adminId,
+          carrier,
+          order: selectedOrder,
+          shipment: data.shipment,
+          trackingNumber
+        });
+        replaceOrder(nextOrder, "order.assign_shiprocket", {
+          awbCode: data.shipment.awbCode,
+          courierName: data.shipment.courierName,
+          shipmentId: data.shipment.shipmentId
+        });
+        setToast(data.message ?? "Shiprocket shipment created.");
+      } else {
+        const nextOrder = assignCourier({
+          adminId,
+          carrier,
+          order: selectedOrder,
+          trackingNumber
+        });
+        replaceOrder(nextOrder, "order.assign_courier", { carrier });
+        setToast("Courier assigned and label placeholder generated.");
+      }
+    } catch (error) {
+      setToast(error instanceof Error ? error.message : "Unable to assign courier.");
+    } finally {
+      setShippingLoading(false);
+    }
+  }
+
+  async function handleFetchTracking() {
+    if (!selectedOrder) return;
+
+    const trackingId = selectedOrder.shipment.awbCode ?? selectedOrder.shipment.trackingNumber ?? selectedOrder.shipment.shipmentId;
+
+    if (!trackingId) {
+      setTrackingMessage("Assign a courier before fetching tracking.");
+      return;
+    }
+
+    setShippingLoading(true);
+
+    try {
+      if (selectedOrder.shipment.carrier === "shiprocket") {
+        const response = await fetch("/api/shipping/shiprocket/tracking", {
+          body: JSON.stringify({ trackingNumber: trackingId }),
+          headers: { "Content-Type": "application/json" },
+          method: "POST"
+        });
+        const data = (await response.json()) as {
+          message?: string;
+          tracking?: {
+            events: Array<{ message: string; status: AdminShipmentStatus | "unknown" }>;
+            rawStatus?: string;
+            status: AdminShipmentStatus;
+            trackingNumber: string;
+          };
+        };
+
+        if (!response.ok || !data.tracking) {
+          throw new Error(data.message ?? "Unable to fetch Shiprocket tracking.");
+        }
+
+        const firstEvent = data.tracking.events[0];
+        const nextOrder = updateShipmentStatus(
+          selectedOrder,
+          data.tracking.status,
+          adminId,
+          firstEvent?.message ?? data.tracking.rawStatus ?? "Shiprocket tracking synced."
+        );
+        replaceOrder(nextOrder, "order.fetch_shiprocket_tracking", {
+          status: data.tracking.status,
+          trackingNumber: data.tracking.trackingNumber
+        });
+        setTrackingMessage(`${label(data.tracking.status)}: ${firstEvent?.message ?? "Shiprocket tracking synced."}`);
+      } else {
+        const tracking = fetchTrackingPlaceholder(trackingId);
+        setTrackingMessage(`${tracking.status}: ${tracking.events[0].message}`);
+      }
+    } catch (error) {
+      setTrackingMessage(error instanceof Error ? error.message : "Tracking fetch failed.");
+    } finally {
+      setShippingLoading(false);
+    }
+  }
+
+  async function handleCheckServiceability() {
+    if (!selectedOrder) return;
+
+    setShippingLoading(true);
+
+    try {
+      if (carrier !== "shiprocket") {
+        const local = checkPincodeServiceability({
+          carrier,
+          pincode: selectedOrder.shippingAddress.postalCode,
+          warehousePincode: advancedWarehouses[0]?.pincode
+        });
+        setToast(local.message);
+        return;
+      }
+
+      const response = await fetch("/api/shipping/shiprocket/serviceability", {
+        body: JSON.stringify({
+          cod: selectedOrder.payment.method === "cod",
+          deliveryPostcode: selectedOrder.shippingAddress.postalCode,
+          pickupPostcode: advancedWarehouses[0]?.pincode ?? "400001",
+          weightKg: Math.max(0.5, selectedOrder.items.reduce((sum, item) => sum + item.quantity * 0.5, 0))
+        }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST"
+      });
+      const data = (await response.json()) as {
+        courierName?: string;
+        estimatedDays?: string;
+        isServiceable?: boolean;
+        message?: string;
+        rateEstimate?: number;
+      };
+
+      if (!response.ok) {
+        throw new Error(data.message ?? "Shiprocket serviceability check failed.");
+      }
+
+      setToast(
+        `${data.isServiceable ? "Serviceable" : "Review needed"}: ${data.courierName ?? "Shiprocket"} ${data.estimatedDays ? `(${data.estimatedDays})` : ""}${data.rateEstimate ? `, approx Rs ${data.rateEstimate}` : ""}. ${data.message ?? ""}`.trim()
+      );
+    } catch (error) {
+      setToast(error instanceof Error ? error.message : "Unable to check serviceability.");
+    } finally {
+      setShippingLoading(false);
     }
   }
 
@@ -377,6 +538,9 @@ export function OrderManagementClient({ initialOrderNumber }: { initialOrderNumb
               <InfoBlock label="Phone" value={selectedOrder.customerPhone} helper={selectedOrder.codConfirmed ? "COD verified" : "COD verification pending"} />
               <InfoBlock label="Pincode serviceability" value={serviceability.isServiceable ? "Serviceable" : "Review needed"} helper={serviceability.message} />
             </div>
+            <button className="admin-action mt-4" disabled={shippingLoading} onClick={handleCheckServiceability} type="button">
+              <Truck className="h-4 w-4" /> Live pincode check
+            </button>
             <div className="mt-5 grid gap-4 md:grid-cols-2">
               <AddressBlock label="Shipping address" address={selectedOrder.shippingAddress} />
               <AddressBlock label="Billing address" address={selectedOrder.billingAddress} />
@@ -394,7 +558,11 @@ export function OrderManagementClient({ initialOrderNumber }: { initialOrderNumb
                 </div>,
                 <div key="batch">
                   <p className="font-semibold text-ink">{item.batchNumber ?? "Not reserved"}</p>
-                  <p className="text-xs text-slate">{item.batchId ?? "FEFO pending"}</p>
+                  <p className="text-xs text-slate">
+                    {item.batchAllocations?.length
+                      ? item.batchAllocations.map((allocation) => `${allocation.batchNumber} x ${allocation.quantity}`).join(", ")
+                      : item.batchId ?? "FEFO pending"}
+                  </p>
                 </div>,
                 item.quantity,
                 <p key="tax">{item.hsnCode} / {item.gstRate}%</p>,
@@ -475,19 +643,11 @@ export function OrderManagementClient({ initialOrderNumber }: { initialOrderNumb
               />
               <button
                 className="admin-action mt-7 h-11 justify-center"
-                onClick={() => {
-                  const nextOrder = assignCourier({
-                    adminId,
-                    carrier,
-                    order: selectedOrder,
-                    trackingNumber
-                  });
-                  replaceOrder(nextOrder, "order.assign_courier", { carrier });
-                  setToast("Courier assigned and label placeholder generated.");
-                }}
+                disabled={shippingLoading}
+                onClick={handleAssignCourier}
                 type="button"
               >
-                Assign courier
+                {shippingLoading ? "Working..." : "Assign courier"}
               </button>
             </div>
 
@@ -513,10 +673,8 @@ export function OrderManagementClient({ initialOrderNumber }: { initialOrderNumb
               </button>
               <button
                 className="admin-action"
-                onClick={() => {
-                  const tracking = fetchTrackingPlaceholder(selectedOrder.shipment.trackingNumber ?? "TRACKING-PENDING");
-                  setTrackingMessage(`${tracking.status}: ${tracking.events[0].message}`);
-                }}
+                disabled={shippingLoading}
+                onClick={handleFetchTracking}
                 type="button"
               >
                 Fetch tracking
@@ -534,6 +692,12 @@ export function OrderManagementClient({ initialOrderNumber }: { initialOrderNumb
               <button className="admin-action" type="button">
                 <FileText className="h-4 w-4" /> Generate packing slip
               </button>
+            </div>
+            <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              <InfoBlock label="Shipment ID" value={selectedOrder.shipment.shipmentId ?? "Not created"} helper={selectedOrder.shipment.providerOrderId ? `Order ${selectedOrder.shipment.providerOrderId}` : undefined} />
+              <InfoBlock label="Courier" value={selectedOrder.shipment.courierName ?? label(selectedOrder.shipment.carrier)} helper={selectedOrder.shipment.awbCode ? `AWB ${selectedOrder.shipment.awbCode}` : "AWB pending"} />
+              <InfoBlock label="Rate estimate" value={selectedOrder.shipment.rateEstimate ? `Rs ${selectedOrder.shipment.rateEstimate}` : "Pending"} helper={selectedOrder.shipment.estimatedDelivery} />
+              <InfoBlock label="Label" value={selectedOrder.shipment.labelUrl ? "Ready" : "Pending"} helper={selectedOrder.shipment.labelUrl ?? "Packing slip fallback"} />
             </div>
             {trackingMessage ? <p className="mt-3 text-sm font-semibold text-forest">{trackingMessage}</p> : null}
           </AdminCard>

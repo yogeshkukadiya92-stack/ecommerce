@@ -3,7 +3,7 @@ import { CartClient } from "@/components/cart/CartClient";
 
 export const metadata = {
   description: "Review your FitSupplement cart, apply coupons, and continue to checkout.",
-  title: "Cart | FitSupplement Store"
+  title: "Cart"
 };
 
 export default function CartPage() {

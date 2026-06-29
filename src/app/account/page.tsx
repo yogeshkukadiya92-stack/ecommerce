@@ -2,7 +2,7 @@ import { AccountDashboardClient } from "@/components/account/AccountClients";
 import { SiteShell } from "@/components/layout/SiteShell";
 
 export const metadata = {
-  title: "Account | FitSupplement Store"
+  title: "Account"
 };
 
 export default function AccountPage() {

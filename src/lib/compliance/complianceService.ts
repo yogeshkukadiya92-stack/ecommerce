@@ -46,7 +46,15 @@ export function claimHasDiseaseLanguage(claim: ProductClaimReview) {
 
 export function affectedOrdersForRecall(recall: BatchRecallRecord) {
   const orderIds = new Set(recall.affectedOrderIds);
-  return adminOrders.filter((order) => orderIds.has(order.id) || order.items.some((item) => item.batchId === recall.batchId));
+  return adminOrders.filter(
+    (order) =>
+      orderIds.has(order.id) ||
+      order.items.some(
+        (item) =>
+          item.batchId === recall.batchId ||
+          item.batchAllocations?.some((allocation) => allocation.batchId === recall.batchId)
+      )
+  );
 }
 
 export function batchIsBlockedFromSale(batchId: string, recalls: BatchRecallRecord[]) {

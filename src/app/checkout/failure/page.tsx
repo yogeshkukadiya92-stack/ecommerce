@@ -4,7 +4,7 @@ import { SiteShell } from "@/components/layout/SiteShell";
 import { Skeleton } from "@/components/ui/Skeleton";
 
 export const metadata = {
-  title: "Order Failure | FitSupplement Store"
+  title: "Order Failure"
 };
 
 export default function CheckoutFailurePage() {

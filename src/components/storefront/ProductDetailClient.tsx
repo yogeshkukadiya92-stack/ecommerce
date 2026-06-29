@@ -332,6 +332,7 @@ export function ProductDetailClient({
 
           <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
             <button
+              aria-label={`Add ${product.name} ${selectedVariant.flavor} ${selectedVariant.size} to cart`}
               className="focus-ring h-12 rounded-md bg-ink text-sm font-black text-white hover:bg-forest"
               onClick={handleAddToCart}
               type="button"
@@ -339,6 +340,7 @@ export function ProductDetailClient({
               Add to cart
             </button>
             <button
+              aria-label={`Buy ${product.name} ${selectedVariant.flavor} ${selectedVariant.size} now`}
               className="focus-ring h-12 rounded-md bg-lime text-sm font-black text-ink hover:bg-mint"
               onClick={handleAddToCart}
               type="button"
@@ -486,6 +488,7 @@ export function ProductDetailClient({
       >
         <div className="grid grid-cols-[1fr_1fr] gap-2">
           <button
+            aria-label={`Add ${product.name} ${selectedVariant.flavor} ${selectedVariant.size} to cart from sticky bar`}
             className="focus-ring flex h-12 items-center justify-center gap-2 rounded-md bg-ink text-sm font-black text-white"
             onClick={handleAddToCart}
             type="button"
@@ -493,6 +496,7 @@ export function ProductDetailClient({
             <ShoppingCart className="h-4 w-4" /> Add to cart
           </button>
           <button
+            aria-label={`Buy ${product.name} ${selectedVariant.flavor} ${selectedVariant.size} now from sticky bar`}
             className="focus-ring h-12 rounded-md bg-lime text-sm font-black text-ink"
             onClick={handleAddToCart}
             type="button"

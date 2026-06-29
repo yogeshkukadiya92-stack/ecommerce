@@ -2,7 +2,7 @@ import { InventoryManagementClient } from "@/components/admin/InventoryManagemen
 import { AdminShell } from "@/components/layout/AdminShell";
 
 export const metadata = {
-  title: "Inventory Management | FitSupplement Store"
+  title: "Inventory Management"
 };
 
 export default function InventoryAdminPage() {

@@ -2,7 +2,7 @@ import { AccountOrderDetailClient } from "@/components/account/AccountClients";
 import { SiteShell } from "@/components/layout/SiteShell";
 
 export const metadata = {
-  title: "Order Detail | FitSupplement Store"
+  title: "Order Detail"
 };
 
 export default async function AccountOrderDetailPage({

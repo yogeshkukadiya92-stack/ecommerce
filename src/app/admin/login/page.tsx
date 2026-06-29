@@ -1,7 +1,7 @@
 import { AdminLoginClient } from "@/components/admin/AdminLoginClient";
 
 export const metadata = {
-  title: "Admin Login | FitSupplement Store"
+  title: "Admin Login"
 };
 
 export default function AdminLoginPage() {

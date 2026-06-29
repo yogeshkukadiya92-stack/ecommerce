@@ -11,7 +11,11 @@ import { calculateCartTotals, applyCoupon, formatRs } from "@/lib/cart/cartPrici
 import { clearLocalCart } from "@/lib/cart/localCart";
 import { useCart } from "@/lib/cart/useCart";
 import { useCustomerSession } from "@/lib/auth/useCustomerSession";
-import { createMockCheckoutOrder } from "@/lib/orders/localOrders";
+import {
+  createMockCheckoutOrder,
+  createPendingCheckoutOrder,
+  updateLocalOrderPayment
+} from "@/lib/orders/localOrders";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Input } from "@/components/ui/Input";
@@ -42,6 +46,57 @@ const paymentMethods: Array<{ label: string; value: PaymentMethod }> = [
   { label: "Wallet", value: "wallet" },
   { label: "COD", value: "cod" }
 ];
+
+type RazorpayCheckoutResponse = {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+};
+
+type RazorpayFailureResponse = {
+  error?: {
+    code?: string;
+    description?: string;
+    metadata?: {
+      order_id?: string;
+      payment_id?: string;
+    };
+    reason?: string;
+  };
+};
+
+type RazorpayCheckoutOptions = {
+  amount: number;
+  currency: string;
+  description: string;
+  handler: (response: RazorpayCheckoutResponse) => void;
+  key: string;
+  modal: {
+    ondismiss: () => void;
+  };
+  name: string;
+  notes: Record<string, string>;
+  order_id: string;
+  prefill: {
+    contact: string;
+    email: string;
+    name: string;
+  };
+  theme: {
+    color: string;
+  };
+};
+
+type RazorpayCheckoutInstance = {
+  on: (event: "payment.failed", callback: (response: RazorpayFailureResponse) => void) => void;
+  open: () => void;
+};
+
+declare global {
+  interface Window {
+    Razorpay?: new (options: RazorpayCheckoutOptions) => RazorpayCheckoutInstance;
+  }
+}
 
 export function CheckoutClient() {
   const router = useRouter();
@@ -112,9 +167,14 @@ export function CheckoutClient() {
     }
 
     setIsPlacingOrder(true);
-    setNotice("Creating secure mock order...");
+    setNotice(paymentMethod === "cod" ? "Creating COD order..." : "Opening secure Razorpay checkout...");
 
     try {
+      if (paymentMethod !== "cod") {
+        await handleRazorpayPayment();
+        return;
+      }
+
       const order = await createMockCheckoutOrder({
         address,
         couponCode: totals.couponCode,
@@ -133,11 +193,163 @@ export function CheckoutClient() {
       clearLocalCart();
       cart.clearCart();
       router.push(`/checkout/success?order=${order.orderNumber}`);
-    } catch {
-      router.push("/checkout/failure?reason=mock-payment");
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Payment could not be started. Please try again.");
+      if (paymentMethod === "cod") {
+        router.push("/checkout/failure?reason=cod-order");
+      }
     } finally {
       setIsPlacingOrder(false);
     }
+  }
+
+  async function handleRazorpayPayment() {
+    const order = createPendingCheckoutOrder({
+      address,
+      couponCode: totals.couponCode,
+      customerId: session?.customerId,
+      deliveryMethod,
+      items: enrichedItems,
+      paymentMethod,
+      provider: "razorpay",
+      totals: {
+        couponDiscount: totals.couponDiscount,
+        grandTotal: totals.grandTotal,
+        shipping: totals.shipping,
+        subtotal: totals.subtotal,
+        tax: totals.tax
+      }
+    });
+    const initializedPayment = await initializeRazorpayPayment({
+      amount: totals.grandTotal,
+      customer: {
+        email: address.email,
+        name: address.fullName,
+        phone: address.phone
+      },
+      orderNumber: order.orderNumber
+    });
+
+    updateLocalOrderPayment(
+      order.orderNumber,
+      {
+        provider: "razorpay",
+        providerOrderId: initializedPayment.razorpayOrderId,
+        status: "pending"
+      },
+      {
+        note: "Razorpay order initialized and waiting for customer authorization.",
+        status: "pending"
+      }
+    );
+
+    await loadRazorpayCheckoutScript();
+
+    if (!window.Razorpay) {
+      throw new Error("Razorpay checkout could not be loaded. Please retry or choose COD.");
+    }
+
+    const checkout = new window.Razorpay({
+      amount: initializedPayment.amount,
+      currency: initializedPayment.currency,
+      description: `FitSupplement order ${order.orderNumber}`,
+      handler: async (response) => {
+        setNotice("Verifying Razorpay payment...");
+
+        try {
+          const verifiedPayment = await verifyRazorpayPayment({
+            checkoutOrderNumber: order.orderNumber,
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature
+          });
+
+          updateLocalOrderPayment(
+            order.orderNumber,
+            {
+              provider: "razorpay",
+              providerOrderId: verifiedPayment.providerOrderId,
+              signature: verifiedPayment.signature,
+              status: "paid",
+              transactionId: verifiedPayment.providerPaymentId
+            },
+            {
+              note: "Razorpay payment verified successfully.",
+              status: "paid"
+            }
+          );
+          clearLocalCart();
+          cart.clearCart();
+          router.push(`/checkout/success?order=${order.orderNumber}`);
+        } catch (error) {
+          updateLocalOrderPayment(
+            order.orderNumber,
+            {
+              failureReason: error instanceof Error ? error.message : "Razorpay verification failed.",
+              status: "failed"
+            },
+            {
+              note: "Razorpay payment verification failed.",
+              status: "pending"
+            }
+          );
+          router.push(`/checkout/failure?reason=razorpay-verification&order=${order.orderNumber}`);
+        }
+      },
+      key: initializedPayment.keyId,
+      modal: {
+        ondismiss: () => {
+          updateLocalOrderPayment(
+            order.orderNumber,
+            {
+              provider: "razorpay",
+              providerOrderId: initializedPayment.razorpayOrderId,
+              status: "pending"
+            },
+            {
+              note: "Razorpay checkout was closed before payment completion.",
+              status: "pending"
+            }
+          );
+          setNotice("Payment is still pending. You can retry Razorpay or choose COD.");
+          setIsPlacingOrder(false);
+        }
+      },
+      name: "FitSupplement Store",
+      notes: {
+        checkoutOrderNumber: order.orderNumber
+      },
+      order_id: initializedPayment.razorpayOrderId,
+      prefill: {
+        contact: address.phone,
+        email: address.email,
+        name: address.fullName
+      },
+      theme: {
+        color: "#0f3d2e"
+      }
+    });
+
+    checkout.on("payment.failed", (response) => {
+      const reason = response.error?.description ?? response.error?.reason ?? "Razorpay payment failed.";
+      updateLocalOrderPayment(
+        order.orderNumber,
+        {
+          failureReason: reason,
+          provider: "razorpay",
+          providerOrderId: response.error?.metadata?.order_id ?? initializedPayment.razorpayOrderId,
+          status: "failed",
+          transactionId: response.error?.metadata?.payment_id
+        },
+        {
+          note: reason,
+          status: "pending"
+        }
+      );
+      router.push(`/checkout/failure?reason=razorpay-payment-failed&order=${order.orderNumber}`);
+    });
+
+    checkout.open();
   }
 
   if (!cart.isReady) {
@@ -245,7 +457,11 @@ export function CheckoutClient() {
               <p className="mt-3 rounded-md bg-mist p-3 text-xs font-bold text-slate">
                 COD confirmation placeholder: final COD verification can later be connected to OTP or courier rules.
               </p>
-            ) : null}
+            ) : (
+              <p className="mt-3 rounded-md bg-mist p-3 text-xs font-bold text-slate">
+                Online payments open Razorpay Checkout. Secret keys stay on the server and payment signatures are verified before the order is marked paid.
+              </p>
+            )}
           </Panel>
 
           <Panel title="Coupon">
@@ -342,4 +558,105 @@ function enrichCartItem(item: CartLineItem): CartLineItem {
     unitPrice: item.unitPrice ?? variant.sellingPrice,
     variantLabel: item.variantLabel ?? [variant.flavor, variant.size].filter(Boolean).join(" / ")
   };
+}
+
+async function initializeRazorpayPayment(input: {
+  amount: number;
+  customer: {
+    email: string;
+    name: string;
+    phone: string;
+  };
+  orderNumber: string;
+}) {
+  const response = await fetch("/api/payments/razorpay/initiate", {
+    body: JSON.stringify({
+      amount: input.amount,
+      currency: "INR",
+      customer: input.customer,
+      notes: {
+        checkoutOrderNumber: input.orderNumber
+      },
+      receipt: input.orderNumber
+    }),
+    headers: {
+      "Content-Type": "application/json"
+    },
+    method: "POST"
+  });
+  const data = (await response.json()) as {
+    amount?: number;
+    currency?: string;
+    keyId?: string;
+    message?: string;
+    razorpayOrderId?: string;
+  };
+
+  if (!response.ok || !data.keyId || !data.razorpayOrderId || !data.amount || !data.currency) {
+    throw new Error(data.message ?? "Razorpay payment could not be initialized. Please try COD or retry later.");
+  }
+
+  return {
+    amount: data.amount,
+    currency: data.currency,
+    keyId: data.keyId,
+    razorpayOrderId: data.razorpayOrderId
+  };
+}
+
+async function verifyRazorpayPayment(input: RazorpayCheckoutResponse & {
+  checkoutOrderNumber: string;
+}) {
+  const response = await fetch("/api/payments/razorpay/verify", {
+    body: JSON.stringify(input),
+    headers: {
+      "Content-Type": "application/json"
+    },
+    method: "POST"
+  });
+  const data = (await response.json()) as {
+    message?: string;
+    providerOrderId?: string;
+    providerPaymentId?: string;
+    signature?: string;
+    status?: "paid";
+    verified?: boolean;
+  };
+
+  if (!response.ok || !data.verified || !data.providerOrderId || !data.providerPaymentId || !data.signature) {
+    throw new Error(data.message ?? "Razorpay payment verification failed.");
+  }
+
+  return {
+    providerOrderId: data.providerOrderId,
+    providerPaymentId: data.providerPaymentId,
+    signature: data.signature,
+    status: data.status ?? "paid"
+  };
+}
+
+function loadRazorpayCheckoutScript() {
+  if (window.Razorpay) {
+    return Promise.resolve();
+  }
+
+  return new Promise<void>((resolve, reject) => {
+    const existingScript = document.querySelector<HTMLScriptElement>("script[data-razorpay-checkout]");
+
+    if (existingScript) {
+      existingScript.addEventListener("load", () => resolve(), { once: true });
+      existingScript.addEventListener("error", () => reject(new Error("Razorpay checkout script failed to load.")), {
+        once: true
+      });
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.async = true;
+    script.dataset.razorpayCheckout = "true";
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("Razorpay checkout script failed to load."));
+    document.body.appendChild(script);
+  });
 }

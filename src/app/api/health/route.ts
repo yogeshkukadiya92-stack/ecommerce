@@ -4,6 +4,7 @@ export function GET() {
   return NextResponse.json({
     ok: true,
     service: "FitSupplement Store",
-    phase: "0"
+    phase: "14",
+    status: "launch-readiness-tested"
   });
 }

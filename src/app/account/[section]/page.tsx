@@ -24,7 +24,7 @@ export async function generateMetadata({
   const { section } = await params;
 
   return {
-    title: `${section.replace("-", " ")} | FitSupplement Store`
+    title: section.replace("-", " ")
   };
 }
 

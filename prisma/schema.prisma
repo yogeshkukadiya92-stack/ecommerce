@@ -505,10 +505,13 @@ model Payment {
   orderId           String          @unique
   order             Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
   provider          PaymentProvider
+  providerOrderId   String?
   providerPaymentId String?
+  signature         String?
   status            PaymentStatus   @default(PENDING)
   amount            Decimal         @db.Decimal(12, 2)
   currency          String          @default("INR")
+  failureReason     String?
   paidAt            DateTime?
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
