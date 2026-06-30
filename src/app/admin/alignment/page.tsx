@@ -8,7 +8,7 @@ export const metadata = {
 export default function AlignmentAdminPage() {
   return (
     <AdminShell title="Alignment">
-      <WebsiteStudioClient initialTab="Alignment" tabsLocked />
+      <WebsiteStudioClient autoSaveChanges initialTab="Alignment" tabsLocked />
     </AdminShell>
   );
 }

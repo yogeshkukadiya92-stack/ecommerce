@@ -65,9 +65,11 @@ const statuses: CmsPublishStatus[] = ["draft", "scheduled", "published", "unpubl
 const alignments: CmsSectionAlignment[] = ["left", "center", "right"];
 
 export function WebsiteStudioClient({
+  autoSaveChanges = false,
   initialTab = "Homepage",
   tabsLocked = false
 }: {
+  autoSaveChanges?: boolean;
   initialTab?: StudioTab;
   tabsLocked?: boolean;
 } = {}) {
@@ -116,12 +118,21 @@ export function WebsiteStudioClient({
   }
 
   function updateSection(sectionId: string, patch: Partial<HomepageSection>) {
-    setStudioData((current) => ({
-      ...current,
-      homepageSections: current.homepageSections.map((section) =>
-        section.id === sectionId ? { ...section, ...patch } : section
-      )
-    }));
+    setStudioData((current) => {
+      const nextData = {
+        ...current,
+        homepageSections: current.homepageSections.map((section) =>
+          section.id === sectionId ? { ...section, ...patch } : section
+        )
+      };
+
+      if (autoSaveChanges) {
+        writeWebsiteStudioDraft(nextData);
+        setToast("Alignment draft saved.");
+      }
+
+      return nextData;
+    });
   }
 
   function moveSection(sectionId: string, direction: -1 | 1) {
