@@ -135,6 +135,15 @@ export function WebsiteStudioClient({
     });
   }
 
+  function updateStudioData(nextData: WebsiteStudioData) {
+    setStudioData(nextData);
+
+    if (autoSaveChanges) {
+      writeWebsiteStudioDraft(nextData);
+      setToast("Website editor draft saved.");
+    }
+  }
+
   function moveSection(sectionId: string, direction: -1 | 1) {
     const ordered = [...studioData.homepageSections].sort((first, second) => first.order - second.order);
     const index = ordered.findIndex((section) => section.id === sectionId);
@@ -213,14 +222,14 @@ export function WebsiteStudioClient({
               updateSection={updateSection}
             />
           ) : null}
-          {activeTab === "Header" ? <HeaderBuilder data={studioData} setData={setStudioData} /> : null}
-          {activeTab === "Footer" ? <FooterBuilder data={studioData} setData={setStudioData} /> : null}
-          {activeTab === "Banners" ? <BannerManager data={studioData} setData={setStudioData} /> : null}
-          {activeTab === "Landing Pages" ? <LandingPageBuilder data={studioData} setData={setStudioData} /> : null}
-          {activeTab === "Blog" ? <BlogManager data={studioData} setData={setStudioData} /> : null}
-          {activeTab === "Policies" ? <PolicyManager data={studioData} setData={setStudioData} /> : null}
-          {activeTab === "Popups" ? <PopupBuilder data={studioData} setData={setStudioData} /> : null}
-          {activeTab === "SEO" ? <SeoManager data={studioData} setData={setStudioData} /> : null}
+          {activeTab === "Header" ? <HeaderBuilder data={studioData} setData={updateStudioData} /> : null}
+          {activeTab === "Footer" ? <FooterBuilder data={studioData} setData={updateStudioData} /> : null}
+          {activeTab === "Banners" ? <BannerManager data={studioData} setData={updateStudioData} /> : null}
+          {activeTab === "Landing Pages" ? <LandingPageBuilder data={studioData} setData={updateStudioData} /> : null}
+          {activeTab === "Blog" ? <BlogManager data={studioData} setData={updateStudioData} /> : null}
+          {activeTab === "Policies" ? <PolicyManager data={studioData} setData={updateStudioData} /> : null}
+          {activeTab === "Popups" ? <PopupBuilder data={studioData} setData={updateStudioData} /> : null}
+          {activeTab === "SEO" ? <SeoManager data={studioData} setData={updateStudioData} /> : null}
           {activeTab === "Versions" ? <VersionHistory data={studioData} /> : null}
         </div>
 
@@ -554,6 +563,58 @@ function BannerManager({ data, setData }: { data: WebsiteStudioData; setData: (d
 }
 
 function LandingPageBuilder({ data, setData }: { data: WebsiteStudioData; setData: (data: WebsiteStudioData) => void }) {
+  function updateLandingPage(pageId: string, patch: Partial<WebsiteStudioData["landingPages"][number]>) {
+    setData({
+      ...data,
+      landingPages: data.landingPages.map((entry) => entry.id === pageId ? { ...entry, ...patch } : entry)
+    });
+  }
+
+  function updateLandingSection(
+    pageId: string,
+    sectionId: string,
+    patch: Partial<WebsiteStudioData["landingPages"][number]["sections"][number]>
+  ) {
+    setData({
+      ...data,
+      landingPages: data.landingPages.map((entry) =>
+        entry.id === pageId
+          ? {
+              ...entry,
+              sections: entry.sections.map((section) => section.id === sectionId ? { ...section, ...patch } : section)
+            }
+          : entry
+      )
+    });
+  }
+
+  function addLandingSection(pageId: string) {
+    setData({
+      ...data,
+      landingPages: data.landingPages.map((entry) =>
+        entry.id === pageId
+          ? {
+              ...entry,
+              sections: [
+                ...entry.sections,
+                {
+                  backgroundStyle: "white",
+                  contentAlignment: "left",
+                  enabled: true,
+                  id: `landing-section-${Date.now()}`,
+                  order: entry.sections.length + 1,
+                  references: [],
+                  subtitle: "Edit this landing page content from admin.",
+                  title: "New landing section",
+                  type: "hero_banner"
+                }
+              ]
+            }
+          : entry
+      )
+    });
+  }
+
   return (
     <AdminCard title="Landing page builder">
       <div className="grid gap-5">
@@ -563,33 +624,22 @@ function LandingPageBuilder({ data, setData }: { data: WebsiteStudioData; setDat
             <div className="grid gap-4 md:grid-cols-2">
               <Input
                 label="Page title"
-                onChange={(event) =>
-                  setData({ ...data, landingPages: data.landingPages.map((entry) => entry.id === page.id ? { ...entry, title: event.target.value } : entry) })
-                }
+                onChange={(event) => updateLandingPage(page.id, { title: event.target.value })}
                 value={page.title}
               />
               <Input
                 label="Slug"
-                onChange={(event) =>
-                  setData({ ...data, landingPages: data.landingPages.map((entry) => entry.id === page.id ? { ...entry, slug: event.target.value } : entry) })
-                }
+                onChange={(event) => updateLandingPage(page.id, { slug: event.target.value })}
                 value={page.slug}
               />
               <Input
                 label="SEO title"
-                onChange={(event) =>
-                  setData({ ...data, landingPages: data.landingPages.map((entry) => entry.id === page.id ? { ...entry, seoTitle: event.target.value } : entry) })
-                }
+                onChange={(event) => updateLandingPage(page.id, { seoTitle: event.target.value })}
                 value={page.seoTitle}
               />
               <Select
                 label="Publish status"
-                onChange={(event) =>
-                  setData({
-                    ...data,
-                    landingPages: data.landingPages.map((entry) => entry.id === page.id ? { ...entry, status: event.target.value as CmsPublishStatus } : entry)
-                  })
-                }
+                onChange={(event) => updateLandingPage(page.id, { status: event.target.value as CmsPublishStatus })}
                 value={page.status}
               >
                 {statuses.map((status) => <option key={status} value={status}>{label(status)}</option>)}
@@ -597,14 +647,93 @@ function LandingPageBuilder({ data, setData }: { data: WebsiteStudioData; setDat
               <div className="md:col-span-2">
                 <Textarea
                   label="SEO description"
-                  onChange={(value) =>
-                    setData({
-                      ...data,
-                      landingPages: data.landingPages.map((entry) => entry.id === page.id ? { ...entry, seoDescription: value } : entry)
-                    })
-                  }
+                  onChange={(value) => updateLandingPage(page.id, { seoDescription: value })}
                   value={page.seoDescription}
                 />
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-md bg-mist p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="text-sm font-black text-ink">Landing page sections</p>
+                <button className="admin-action" onClick={() => addLandingSection(page.id)} type="button">
+                  Add landing section
+                </button>
+              </div>
+              {page.sections.length === 0 ? (
+                <p className="mt-3 text-sm text-slate">No sections yet. Add a section to edit photo, content, alignment, and links.</p>
+              ) : null}
+              <div className="mt-4 grid gap-4">
+                {page.sections.map((section) => (
+                  <div className="rounded-md border border-black/10 bg-white p-4" key={section.id}>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <Input
+                        label="Section title"
+                        onChange={(event) => updateLandingSection(page.id, section.id, { title: event.target.value })}
+                        value={section.title}
+                      />
+                      <Select
+                        label="Section type"
+                        onChange={(event) => updateLandingSection(page.id, section.id, { type: event.target.value as HomepageSectionType })}
+                        value={section.type}
+                      >
+                        {sectionTypes.map((type) => <option key={type} value={type}>{label(type)}</option>)}
+                      </Select>
+                      <div className="md:col-span-2">
+                        <Textarea
+                          label="Section content"
+                          onChange={(value) => updateLandingSection(page.id, section.id, { subtitle: value })}
+                          value={section.subtitle ?? ""}
+                        />
+                      </div>
+                      <Input
+                        label="Photo / banner image"
+                        onChange={(event) => updateLandingSection(page.id, section.id, { desktopImageUrl: event.target.value })}
+                        placeholder="https://..."
+                        value={section.desktopImageUrl ?? ""}
+                      />
+                      <Input
+                        label="CTA text"
+                        onChange={(event) => updateLandingSection(page.id, section.id, { ctaLabel: event.target.value })}
+                        value={section.ctaLabel ?? ""}
+                      />
+                      <Input
+                        label="CTA link"
+                        onChange={(event) => updateLandingSection(page.id, section.id, { ctaLink: event.target.value })}
+                        value={section.ctaLink ?? ""}
+                      />
+                      <Select
+                        label="Background"
+                        onChange={(event) => updateLandingSection(page.id, section.id, { backgroundStyle: event.target.value as HomepageSection["backgroundStyle"] })}
+                        value={section.backgroundStyle}
+                      >
+                        {["white", "mist", "ink", "mint", "image"].map((style) => <option key={style} value={style}>{label(style)}</option>)}
+                      </Select>
+                      <Select
+                        label="Alignment"
+                        onChange={(event) => updateLandingSection(page.id, section.id, { contentAlignment: event.target.value as CmsSectionAlignment })}
+                        value={section.contentAlignment ?? "left"}
+                      >
+                        {alignments.map((alignment) => <option key={alignment} value={alignment}>{label(alignment)}</option>)}
+                      </Select>
+                      <Input
+                        label="Order"
+                        min={1}
+                        onChange={(event) => updateLandingSection(page.id, section.id, { order: Number(event.target.value) })}
+                        type="number"
+                        value={section.order}
+                      />
+                      <label className="flex items-center gap-2 rounded-md border border-black/10 p-3 text-sm font-bold text-ink">
+                        <input
+                          checked={section.enabled}
+                          onChange={(event) => updateLandingSection(page.id, section.id, { enabled: event.target.checked })}
+                          type="checkbox"
+                        />
+                        Visible on landing page
+                      </label>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

@@ -2,13 +2,13 @@ import { WebsiteStudioClient } from "@/components/admin/WebsiteStudioClient";
 import { AdminShell } from "@/components/layout/AdminShell";
 
 export const metadata = {
-  title: "Alignment"
+  title: "Website Editor"
 };
 
 export default function AlignmentAdminPage() {
   return (
-    <AdminShell title="Alignment">
-      <WebsiteStudioClient autoSaveChanges initialTab="Alignment" tabsLocked />
+    <AdminShell title="Website Editor">
+      <WebsiteStudioClient autoSaveChanges initialTab="Alignment" />
     </AdminShell>
   );
 }
