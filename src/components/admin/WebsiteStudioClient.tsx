@@ -64,9 +64,15 @@ const sectionTypes: HomepageSectionType[] = [
 const statuses: CmsPublishStatus[] = ["draft", "scheduled", "published", "unpublished"];
 const alignments: CmsSectionAlignment[] = ["left", "center", "right"];
 
-export function WebsiteStudioClient() {
+export function WebsiteStudioClient({
+  initialTab = "Homepage",
+  tabsLocked = false
+}: {
+  initialTab?: StudioTab;
+  tabsLocked?: boolean;
+} = {}) {
   const { session } = useAdminSession();
-  const [activeTab, setActiveTab] = useState<StudioTab>("Homepage");
+  const [activeTab, setActiveTab] = useState<StudioTab>(initialTab);
   const [studioData, setStudioData] = useState<WebsiteStudioData>(() => readWebsiteStudioDraft() ?? websiteStudioData);
   const [selectedSectionId, setSelectedSectionId] = useState(studioData.homepageSections[0]?.id ?? "");
   const [previewMode, setPreviewMode] = useState(false);
@@ -161,18 +167,20 @@ export function WebsiteStudioClient() {
     <div className="space-y-6">
       {toast ? <div className="rounded-md bg-mint px-4 py-3 text-sm font-semibold text-forest">{toast}</div> : null}
 
-      <div className="flex flex-wrap gap-2">
-        {tabs.map((tab) => (
-          <button
-            className={`rounded-md px-4 py-2 text-sm font-black ${activeTab === tab ? "bg-ink text-white" : "bg-white text-ink"}`}
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            type="button"
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
+      {tabsLocked ? null : (
+        <div className="flex flex-wrap gap-2">
+          {tabs.map((tab) => (
+            <button
+              className={`rounded-md px-4 py-2 text-sm font-black ${activeTab === tab ? "bg-ink text-white" : "bg-white text-ink"}`}
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              type="button"
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_420px]">
         <div className="min-w-0 space-y-6">

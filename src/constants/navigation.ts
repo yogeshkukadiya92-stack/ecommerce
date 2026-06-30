@@ -9,6 +9,7 @@ export const ADMIN_NAVIGATION = [
   { href: "/admin/compliance", label: "Compliance" },
   { href: "/admin/marketing", label: "Marketing" },
   { href: "/admin/content", label: "CMS & Blog" },
+  { href: "/admin/alignment", label: "Alignment" },
   { href: "/admin/analytics", label: "Analytics" },
   { href: "/admin/security", label: "Security" },
   { href: "/admin/audit", label: "Audit Logs" },
