@@ -7,17 +7,20 @@ import {
   AlignRight,
   ArrowDown,
   ArrowUp,
+  Copy,
   Eye,
   FileText,
   Globe,
   ImageIcon,
   LayoutTemplate,
   Megaphone,
+  Plus,
   Save,
-  Send
+  Send,
+  Trash2
 } from "lucide-react";
 import { websiteStudioData } from "@/mock/cms";
-import type { CmsPublishStatus, CmsSectionAlignment, HomepageSection, HomepageSectionType, WebsiteStudioData } from "@/types/cms";
+import type { CmsMenuItem, CmsPublishStatus, CmsSectionAlignment, HomepageSection, HomepageSectionType, MenuLinkType, WebsiteStudioData } from "@/types/cms";
 import { writeAdminAuditLog } from "@/lib/admin/auditLog";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { readWebsiteStudioDraft, writeWebsiteStudioDraft } from "@/lib/cms/cmsLocalStorage";
@@ -144,6 +147,66 @@ export function WebsiteStudioClient({
     }
   }
 
+  function addHomepageSection() {
+    const nextOrder = Math.max(0, ...studioData.homepageSections.map((section) => section.order)) + 1;
+    const section: HomepageSection = {
+      backgroundStyle: "white",
+      contentAlignment: "left",
+      ctaLabel: "Shop now",
+      ctaLink: "/products",
+      enabled: true,
+      id: `home-section-${Date.now()}`,
+      order: nextOrder,
+      references: [],
+      status: "draft",
+      subtitle: "Edit this content from Website Editor.",
+      title: "New homepage section",
+      type: "image_banner"
+    };
+    const nextData = { ...studioData, homepageSections: [...studioData.homepageSections, section] };
+
+    setSelectedSectionId(section.id);
+    updateStudioData(nextData);
+  }
+
+  function duplicateHomepageSection(sectionId: string) {
+    const source = studioData.homepageSections.find((section) => section.id === sectionId);
+
+    if (!source) return;
+
+    const copy: HomepageSection = {
+      ...source,
+      id: `${source.id}-copy-${Date.now()}`,
+      order: Math.max(0, ...studioData.homepageSections.map((section) => section.order)) + 1,
+      status: "draft",
+      title: `${source.title} Copy`
+    };
+    const nextData = { ...studioData, homepageSections: [...studioData.homepageSections, copy] };
+
+    setSelectedSectionId(copy.id);
+    updateStudioData(nextData);
+  }
+
+  function deleteHomepageSection(sectionId: string) {
+    if (studioData.homepageSections.length <= 1) {
+      setToast("Keep at least one homepage section.");
+      return;
+    }
+
+    if (!window.confirm("Delete this homepage section from the draft?")) {
+      return;
+    }
+
+    const remainingSections = studioData.homepageSections.filter((section) => section.id !== sectionId);
+    const nextData = { ...studioData, homepageSections: remainingSections };
+
+    if (selectedSectionId === sectionId) {
+      setSelectedSectionId(remainingSections[0]?.id ?? "");
+    }
+
+    updateStudioData(nextData);
+  }
+
   function moveSection(sectionId: string, direction: -1 | 1) {
     const ordered = [...studioData.homepageSections].sort((first, second) => first.order - second.order);
     const index = ordered.findIndex((section) => section.id === sectionId);
@@ -155,10 +218,10 @@ export function WebsiteStudioClient({
     ordered[index].order = ordered[nextIndex].order;
     ordered[nextIndex].order = currentOrder;
 
-    setStudioData((current) => ({
-      ...current,
-      homepageSections: current.homepageSections.map((section) => ordered.find((entry) => entry.id === section.id) ?? section)
-    }));
+    updateStudioData({
+      ...studioData,
+      homepageSections: studioData.homepageSections.map((section) => ordered.find((entry) => entry.id === section.id) ?? section)
+    });
   }
 
   function saveDraft() {
@@ -206,6 +269,9 @@ export function WebsiteStudioClient({
         <div className="min-w-0 space-y-6">
           {activeTab === "Homepage" ? (
             <HomepageBuilder
+              addSection={addHomepageSection}
+              deleteSection={deleteHomepageSection}
+              duplicateSection={duplicateHomepageSection}
               moveSection={moveSection}
               selectedSection={selectedSection}
               selectedSectionId={selectedSectionId}
@@ -258,6 +324,16 @@ export function WebsiteStudioClient({
               </div>
             </div>
           </AdminCard>
+
+          {selectedSection ? (
+            <AdminCard title="Selected section live preview">
+              <div className="max-h-[520px] overflow-y-auto rounded-md border border-black/10 bg-mist">
+                <div className="origin-top scale-[0.78]">
+                  <HomepageSectionRenderer preview sections={[selectedSection]} />
+                </div>
+              </div>
+            </AdminCard>
+          ) : null}
         </aside>
       </div>
     </div>
@@ -265,6 +341,9 @@ export function WebsiteStudioClient({
 }
 
 function HomepageBuilder({
+  addSection,
+  deleteSection,
+  duplicateSection,
   moveSection,
   selectedSection,
   selectedSectionId,
@@ -272,6 +351,9 @@ function HomepageBuilder({
   setSelectedSectionId,
   updateSection
 }: {
+  addSection: () => void;
+  deleteSection: (sectionId: string) => void;
+  duplicateSection: (sectionId: string) => void;
   moveSection: (sectionId: string, direction: -1 | 1) => void;
   selectedSection?: HomepageSection;
   selectedSectionId: string;
@@ -284,6 +366,11 @@ function HomepageBuilder({
   return (
     <>
       <AdminCard title="Homepage builder">
+        <div className="mb-4 flex flex-wrap justify-end gap-2">
+          <button className="admin-action" onClick={addSection} type="button">
+            <Plus className="h-4 w-4" /> Add section
+          </button>
+        </div>
         <AdminTable
           columns={["Drag", "Section", "Type", "Status", "Visible", "Actions"]}
           rows={[...sections]
@@ -299,6 +386,8 @@ function HomepageBuilder({
               <div className="flex flex-wrap gap-2" key="actions">
                 <button className="admin-action" onClick={() => moveSection(section.id, -1)} type="button"><ArrowUp className="h-4 w-4" /></button>
                 <button className="admin-action" onClick={() => moveSection(section.id, 1)} type="button"><ArrowDown className="h-4 w-4" /></button>
+                <button className="admin-action" onClick={() => duplicateSection(section.id)} type="button"><Copy className="h-4 w-4" /></button>
+                <button className="admin-action text-coral" onClick={() => deleteSection(section.id)} type="button"><Trash2 className="h-4 w-4" /></button>
                 <button className="admin-action" onClick={() => updateSection(section.id, { enabled: !section.enabled })} type="button">
                   {section.enabled ? "Disable" : "Enable"}
                 </button>
@@ -317,8 +406,8 @@ function HomepageBuilder({
           <Select label="Publish status" onChange={(event) => updateSection(selectedSectionId, { status: event.target.value as CmsPublishStatus })} value={selectedSection.status}>
             {statuses.map((status) => <option key={status} value={status}>{label(status)}</option>)}
           </Select>
-          <Input label="Desktop banner image" onChange={(event) => updateSection(selectedSectionId, { desktopImageUrl: event.target.value })} placeholder="https://..." value={selectedSection.desktopImageUrl ?? ""} />
-          <Input label="Mobile banner image" onChange={(event) => updateSection(selectedSectionId, { mobileImageUrl: event.target.value })} placeholder="https://..." value={selectedSection.mobileImageUrl ?? ""} />
+          <ImageUrlField label="Desktop banner image" onChange={(value) => updateSection(selectedSectionId, { desktopImageUrl: value })} value={selectedSection.desktopImageUrl ?? ""} />
+          <ImageUrlField label="Mobile banner image" onChange={(value) => updateSection(selectedSectionId, { mobileImageUrl: value })} value={selectedSection.mobileImageUrl ?? ""} />
           <Input label="CTA button text" onChange={(event) => updateSection(selectedSectionId, { ctaLabel: event.target.value })} value={selectedSection.ctaLabel ?? ""} />
           <Input label="CTA link" onChange={(event) => updateSection(selectedSectionId, { ctaLink: event.target.value })} value={selectedSection.ctaLink ?? ""} />
           <Select label="Background style" onChange={(event) => updateSection(selectedSectionId, { backgroundStyle: event.target.value as HomepageSection["backgroundStyle"] })} value={selectedSection.backgroundStyle}>
@@ -415,11 +504,109 @@ function AlignmentBuilder({
 }
 
 function HeaderBuilder({ data, setData }: { data: WebsiteStudioData; setData: (data: WebsiteStudioData) => void }) {
+  function updateMenuItem(itemId: string, patch: Partial<CmsMenuItem>) {
+    setData({
+      ...data,
+      header: {
+        ...data.header,
+        megaMenuItems: data.header.megaMenuItems.map((item) => item.id === itemId ? { ...item, ...patch } : item)
+      }
+    });
+  }
+
+  function updateChildMenuItem(itemId: string, childId: string, patch: Partial<CmsMenuItem>) {
+    setData({
+      ...data,
+      header: {
+        ...data.header,
+        megaMenuItems: data.header.megaMenuItems.map((item) =>
+          item.id === itemId
+            ? {
+                ...item,
+                children: item.children?.map((child) => child.id === childId ? { ...child, ...patch } : child) ?? []
+              }
+            : item
+        )
+      }
+    });
+  }
+
+  function addMenuItem() {
+    setData({
+      ...data,
+      header: {
+        ...data.header,
+        megaMenuItems: [
+          ...data.header.megaMenuItems,
+          {
+            enabled: true,
+            id: `menu-${Date.now()}`,
+            label: "New menu item",
+            linkType: "custom_url",
+            url: "/products"
+          }
+        ]
+      }
+    });
+  }
+
+  function addChildMenuItem(itemId: string) {
+    setData({
+      ...data,
+      header: {
+        ...data.header,
+        megaMenuItems: data.header.megaMenuItems.map((item) =>
+          item.id === itemId
+            ? {
+                ...item,
+                children: [
+                  ...(item.children ?? []),
+                  {
+                    enabled: true,
+                    id: `menu-child-${Date.now()}`,
+                    label: "New child link",
+                    linkType: "custom_url",
+                    url: "/products"
+                  }
+                ]
+              }
+            : item
+        )
+      }
+    });
+  }
+
+  function deleteMenuItem(itemId: string) {
+    if (!window.confirm("Delete this menu item?")) return;
+
+    setData({
+      ...data,
+      header: {
+        ...data.header,
+        megaMenuItems: data.header.megaMenuItems.filter((item) => item.id !== itemId)
+      }
+    });
+  }
+
+  function deleteChildMenuItem(itemId: string, childId: string) {
+    setData({
+      ...data,
+      header: {
+        ...data.header,
+        megaMenuItems: data.header.megaMenuItems.map((item) =>
+          item.id === itemId
+            ? { ...item, children: item.children?.filter((child) => child.id !== childId) ?? [] }
+            : item
+        )
+      }
+    });
+  }
+
   return (
     <AdminCard title="Header and menu builder">
       <div className="grid gap-4 md:grid-cols-2">
         <Input label="Logo text" onChange={(event) => setData({ ...data, header: { ...data.header, logoText: event.target.value } })} value={data.header.logoText} />
-        <Input label="Logo upload placeholder" onChange={(event) => setData({ ...data, header: { ...data.header, logoUrl: event.target.value } })} placeholder="Image URL" value={data.header.logoUrl ?? ""} />
+        <ImageUrlField label="Logo image" onChange={(value) => setData({ ...data, header: { ...data.header, logoUrl: value } })} value={data.header.logoUrl ?? ""} />
         <Input label="Announcement bar text" onChange={(event) => setData({ ...data, header: { ...data.header, announcementText: event.target.value } })} value={data.header.announcementText} />
         <Input label="Announcement bar link" onChange={(event) => setData({ ...data, header: { ...data.header, announcementUrl: event.target.value } })} value={data.header.announcementUrl ?? ""} />
       </div>
@@ -431,21 +618,156 @@ function HeaderBuilder({ data, setData }: { data: WebsiteStudioData; setData: (d
           </label>
         ))}
       </div>
-      <AdminTable
-        columns={["Mega menu item", "Link type", "URL", "Nested items", "Status"]}
-        rows={data.header.megaMenuItems.map((item) => [
-          item.label,
-          label(item.linkType),
-          item.url,
-          item.children?.map((child) => child.label).join(", ") ?? "None",
-          <Badge key="status" tone={item.enabled ? "success" : "neutral"}>{item.enabled ? "Enabled" : "Disabled"}</Badge>
-        ])}
-      />
+      <div className="mt-6 rounded-md bg-mist p-4">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm font-black text-ink">Mega menu editor</p>
+          <button className="admin-action" onClick={addMenuItem} type="button">
+            <Plus className="h-4 w-4" /> Add menu item
+          </button>
+        </div>
+        <div className="grid gap-4">
+          {data.header.megaMenuItems.map((item) => (
+            <div className="rounded-md border border-black/10 bg-white p-4" key={item.id}>
+              <div className="grid gap-4 md:grid-cols-[1fr_160px_1fr_auto] md:items-end">
+                <Input label="Label" onChange={(event) => updateMenuItem(item.id, { label: event.target.value })} value={item.label} />
+                <Select label="Link type" onChange={(event) => updateMenuItem(item.id, { linkType: event.target.value as MenuLinkType })} value={item.linkType}>
+                  {["category", "brand", "page", "custom_url"].map((type) => <option key={type} value={type}>{label(type)}</option>)}
+                </Select>
+                <Input label="URL" onChange={(event) => updateMenuItem(item.id, { url: event.target.value })} value={item.url} />
+                <button className="admin-action text-coral" onClick={() => deleteMenuItem(item.id)} type="button">
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+              <label className="mt-3 flex items-center gap-2 text-sm font-bold text-ink">
+                <input checked={item.enabled} onChange={(event) => updateMenuItem(item.id, { enabled: event.target.checked })} type="checkbox" />
+                Enabled
+              </label>
+              <div className="mt-4 rounded-md bg-mist p-3">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-slate">Nested links</p>
+                  <button className="admin-action" onClick={() => addChildMenuItem(item.id)} type="button">
+                    <Plus className="h-4 w-4" /> Add child
+                  </button>
+                </div>
+                <div className="grid gap-3">
+                  {(item.children ?? []).map((child) => (
+                    <div className="grid gap-3 rounded-md bg-white p-3 md:grid-cols-[1fr_160px_1fr_auto] md:items-end" key={child.id}>
+                      <Input label="Child label" onChange={(event) => updateChildMenuItem(item.id, child.id, { label: event.target.value })} value={child.label} />
+                      <Select label="Type" onChange={(event) => updateChildMenuItem(item.id, child.id, { linkType: event.target.value as MenuLinkType })} value={child.linkType}>
+                        {["category", "brand", "page", "custom_url"].map((type) => <option key={type} value={type}>{label(type)}</option>)}
+                      </Select>
+                      <Input label="Child URL" onChange={(event) => updateChildMenuItem(item.id, child.id, { url: event.target.value })} value={child.url} />
+                      <button className="admin-action text-coral" onClick={() => deleteChildMenuItem(item.id, child.id)} type="button">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                      <label className="flex items-center gap-2 text-sm font-bold text-ink md:col-span-4">
+                        <input checked={child.enabled} onChange={(event) => updateChildMenuItem(item.id, child.id, { enabled: event.target.checked })} type="checkbox" />
+                        Child enabled
+                      </label>
+                    </div>
+                  ))}
+                  {item.children?.length ? null : <p className="text-sm text-slate">No nested links yet.</p>}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </AdminCard>
   );
 }
 
 function FooterBuilder({ data, setData }: { data: WebsiteStudioData; setData: (data: WebsiteStudioData) => void }) {
+  function updateFooterColumn(columnId: string, patch: Partial<WebsiteStudioData["footer"]["footerColumns"][number]>) {
+    setData({
+      ...data,
+      footer: {
+        ...data.footer,
+        footerColumns: data.footer.footerColumns.map((column) => column.id === columnId ? { ...column, ...patch } : column)
+      }
+    });
+  }
+
+  function updateFooterLink(columnId: string, linkId: string, patch: Partial<WebsiteStudioData["footer"]["footerColumns"][number]["links"][number]>) {
+    setData({
+      ...data,
+      footer: {
+        ...data.footer,
+        footerColumns: data.footer.footerColumns.map((column) =>
+          column.id === columnId
+            ? { ...column, links: column.links.map((link) => link.id === linkId ? { ...link, ...patch } : link) }
+            : column
+        )
+      }
+    });
+  }
+
+  function addFooterColumn() {
+    setData({
+      ...data,
+      footer: {
+        ...data.footer,
+        footerColumns: [
+          ...data.footer.footerColumns,
+          {
+            enabled: true,
+            id: `footer-column-${Date.now()}`,
+            links: [],
+            title: "New column"
+          }
+        ]
+      }
+    });
+  }
+
+  function addFooterLink(columnId: string) {
+    setData({
+      ...data,
+      footer: {
+        ...data.footer,
+        footerColumns: data.footer.footerColumns.map((column) =>
+          column.id === columnId
+            ? {
+                ...column,
+                links: [
+                  ...column.links,
+                  {
+                    id: `footer-link-${Date.now()}`,
+                    label: "New link",
+                    url: "/products"
+                  }
+                ]
+              }
+            : column
+        )
+      }
+    });
+  }
+
+  function deleteFooterColumn(columnId: string) {
+    if (!window.confirm("Delete this footer column?")) return;
+
+    setData({
+      ...data,
+      footer: {
+        ...data.footer,
+        footerColumns: data.footer.footerColumns.filter((column) => column.id !== columnId)
+      }
+    });
+  }
+
+  function deleteFooterLink(columnId: string, linkId: string) {
+    setData({
+      ...data,
+      footer: {
+        ...data.footer,
+        footerColumns: data.footer.footerColumns.map((column) =>
+          column.id === columnId ? { ...column, links: column.links.filter((link) => link.id !== linkId) } : column
+        )
+      }
+    });
+  }
+
   return (
     <AdminCard title="Footer builder">
       <div className="grid gap-4 md:grid-cols-2">
@@ -454,14 +776,44 @@ function FooterBuilder({ data, setData }: { data: WebsiteStudioData; setData: (d
         <Input label="Newsletter text" onChange={(event) => setData({ ...data, footer: { ...data.footer, newsletterText: event.target.value } })} value={data.footer.newsletterText} />
         <Input label="Copyright text" onChange={(event) => setData({ ...data, footer: { ...data.footer, copyrightText: event.target.value } })} value={data.footer.copyrightText} />
       </div>
-      <AdminTable
-        columns={["Column", "Links", "Status"]}
-        rows={data.footer.footerColumns.map((column) => [
-          column.title,
-          column.links.map((link) => link.label).join(", "),
-          <Badge key="status" tone={column.enabled ? "success" : "neutral"}>{column.enabled ? "Enabled" : "Disabled"}</Badge>
-        ])}
-      />
+      <div className="mt-6 rounded-md bg-mist p-4">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm font-black text-ink">Footer link editor</p>
+          <button className="admin-action" onClick={addFooterColumn} type="button">
+            <Plus className="h-4 w-4" /> Add column
+          </button>
+        </div>
+        <div className="grid gap-4">
+          {data.footer.footerColumns.map((column) => (
+            <div className="rounded-md border border-black/10 bg-white p-4" key={column.id}>
+              <div className="grid gap-4 md:grid-cols-[1fr_auto_auto] md:items-end">
+                <Input label="Column title" onChange={(event) => updateFooterColumn(column.id, { title: event.target.value })} value={column.title} />
+                <label className="flex items-center gap-2 rounded-md border border-black/10 p-3 text-sm font-bold text-ink">
+                  <input checked={column.enabled} onChange={(event) => updateFooterColumn(column.id, { enabled: event.target.checked })} type="checkbox" />
+                  Enabled
+                </label>
+                <button className="admin-action text-coral" onClick={() => deleteFooterColumn(column.id)} type="button">
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="mt-4 grid gap-3">
+                {column.links.map((link) => (
+                  <div className="grid gap-3 rounded-md bg-mist p-3 md:grid-cols-[1fr_1fr_auto] md:items-end" key={link.id}>
+                    <Input label="Link label" onChange={(event) => updateFooterLink(column.id, link.id, { label: event.target.value })} value={link.label} />
+                    <Input label="Link URL" onChange={(event) => updateFooterLink(column.id, link.id, { url: event.target.value })} value={link.url} />
+                    <button className="admin-action text-coral" onClick={() => deleteFooterLink(column.id, link.id)} type="button">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+                <button className="admin-action w-fit" onClick={() => addFooterLink(column.id)} type="button">
+                  <Plus className="h-4 w-4" /> Add link
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
       <p className="mt-4 text-sm text-slate">Payment icons placeholder: {data.footer.paymentIcons.join(", ")}</p>
     </AdminCard>
   );
@@ -510,17 +862,17 @@ function BannerManager({ data, setData }: { data: WebsiteStudioData; setData: (d
               >
                 {["homepage", "product_listing", "cart", "all"].map((target) => <option key={target} value={target}>{label(target)}</option>)}
               </Select>
-              <Input
+              <ImageUrlField
                 label="Desktop image"
-                onChange={(event) =>
-                  setData({ ...data, banners: data.banners.map((entry) => entry.id === banner.id ? { ...entry, desktopImageUrl: event.target.value } : entry) })
+                onChange={(value) =>
+                  setData({ ...data, banners: data.banners.map((entry) => entry.id === banner.id ? { ...entry, desktopImageUrl: value } : entry) })
                 }
                 value={banner.desktopImageUrl}
               />
-              <Input
+              <ImageUrlField
                 label="Mobile image"
-                onChange={(event) =>
-                  setData({ ...data, banners: data.banners.map((entry) => entry.id === banner.id ? { ...entry, mobileImageUrl: event.target.value } : entry) })
+                onChange={(value) =>
+                  setData({ ...data, banners: data.banners.map((entry) => entry.id === banner.id ? { ...entry, mobileImageUrl: value } : entry) })
                 }
                 value={banner.mobileImageUrl ?? ""}
               />
@@ -563,6 +915,33 @@ function BannerManager({ data, setData }: { data: WebsiteStudioData; setData: (d
 }
 
 function LandingPageBuilder({ data, setData }: { data: WebsiteStudioData; setData: (data: WebsiteStudioData) => void }) {
+  function addLandingPage() {
+    setData({
+      ...data,
+      landingPages: [
+        ...data.landingPages,
+        {
+          id: `landing-page-${Date.now()}`,
+          sections: [],
+          seoDescription: "Edit this landing page SEO description.",
+          seoTitle: "New Landing Page",
+          slug: `landing-page-${data.landingPages.length + 1}`,
+          status: "draft",
+          title: "New Landing Page"
+        }
+      ]
+    });
+  }
+
+  function deleteLandingPage(pageId: string) {
+    if (!window.confirm("Delete this landing page from the draft?")) return;
+
+    setData({
+      ...data,
+      landingPages: data.landingPages.filter((page) => page.id !== pageId)
+    });
+  }
+
   function updateLandingPage(pageId: string, patch: Partial<WebsiteStudioData["landingPages"][number]>) {
     setData({
       ...data,
@@ -615,12 +994,33 @@ function LandingPageBuilder({ data, setData }: { data: WebsiteStudioData; setDat
     });
   }
 
+  function deleteLandingSection(pageId: string, sectionId: string) {
+    setData({
+      ...data,
+      landingPages: data.landingPages.map((entry) =>
+        entry.id === pageId
+          ? { ...entry, sections: entry.sections.filter((section) => section.id !== sectionId) }
+          : entry
+      )
+    });
+  }
+
   return (
     <AdminCard title="Landing page builder">
+      <div className="mb-4 flex justify-end">
+        <button className="admin-action" onClick={addLandingPage} type="button">
+          <Plus className="h-4 w-4" /> Add landing page
+        </button>
+      </div>
       <div className="grid gap-5">
         {data.landingPages.map((page) => (
           <div className="rounded-md border border-black/10 p-4" key={page.id}>
-            <div className="mb-4 inline-flex items-center gap-2 font-black text-ink"><LayoutTemplate className="h-4 w-4" /> {page.title}</div>
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <div className="inline-flex items-center gap-2 font-black text-ink"><LayoutTemplate className="h-4 w-4" /> {page.title}</div>
+              <button className="admin-action text-coral" onClick={() => deleteLandingPage(page.id)} type="button">
+                <Trash2 className="h-4 w-4" /> Delete page
+              </button>
+            </div>
             <div className="grid gap-4 md:grid-cols-2">
               <Input
                 label="Page title"
@@ -666,6 +1066,11 @@ function LandingPageBuilder({ data, setData }: { data: WebsiteStudioData; setDat
               <div className="mt-4 grid gap-4">
                 {page.sections.map((section) => (
                   <div className="rounded-md border border-black/10 bg-white p-4" key={section.id}>
+                    <div className="mb-4 flex justify-end">
+                      <button className="admin-action text-coral" onClick={() => deleteLandingSection(page.id, section.id)} type="button">
+                        <Trash2 className="h-4 w-4" /> Delete section
+                      </button>
+                    </div>
                     <div className="grid gap-4 md:grid-cols-2">
                       <Input
                         label="Section title"
@@ -686,10 +1091,9 @@ function LandingPageBuilder({ data, setData }: { data: WebsiteStudioData; setDat
                           value={section.subtitle ?? ""}
                         />
                       </div>
-                      <Input
+                      <ImageUrlField
                         label="Photo / banner image"
-                        onChange={(event) => updateLandingSection(page.id, section.id, { desktopImageUrl: event.target.value })}
-                        placeholder="https://..."
+                        onChange={(value) => updateLandingSection(page.id, section.id, { desktopImageUrl: value })}
                         value={section.desktopImageUrl ?? ""}
                       />
                       <Input
@@ -779,10 +1183,10 @@ function BlogManager({ data, setData }: { data: WebsiteStudioData; setData: (dat
                 }
                 value={post.category}
               />
-              <Input
+              <ImageUrlField
                 label="Featured image"
-                onChange={(event) =>
-                  setData({ ...data, blogPosts: data.blogPosts.map((entry) => entry.id === post.id ? { ...entry, featuredImageUrl: event.target.value } : entry) })
+                onChange={(value) =>
+                  setData({ ...data, blogPosts: data.blogPosts.map((entry) => entry.id === post.id ? { ...entry, featuredImageUrl: value } : entry) })
                 }
                 value={post.featuredImageUrl ?? ""}
               />
@@ -944,7 +1348,7 @@ function SeoManager({ data, setData }: { data: WebsiteStudioData; setData: (data
         <Input label="Page title" onChange={(event) => setData({ ...data, seo: [{ ...homeSeo, title: event.target.value }, ...data.seo.slice(1)] })} value={homeSeo.title} />
         <Input label="Meta description" onChange={(event) => setData({ ...data, seo: [{ ...homeSeo, metaDescription: event.target.value }, ...data.seo.slice(1)] })} value={homeSeo.metaDescription} />
         <Input label="Canonical URL placeholder" onChange={(event) => setData({ ...data, seo: [{ ...homeSeo, canonicalUrl: event.target.value }, ...data.seo.slice(1)] })} value={homeSeo.canonicalUrl ?? ""} />
-        <Input label="Open Graph image" onChange={(event) => setData({ ...data, seo: [{ ...homeSeo, ogImageUrl: event.target.value }, ...data.seo.slice(1)] })} value={homeSeo.ogImageUrl ?? ""} />
+        <ImageUrlField label="Open Graph image" onChange={(value) => setData({ ...data, seo: [{ ...homeSeo, ogImageUrl: value }, ...data.seo.slice(1)] })} value={homeSeo.ogImageUrl ?? ""} />
       </div>
       <label className="mt-4 flex items-center gap-2 rounded-md border border-black/10 p-3 text-sm font-bold text-ink">
         <input checked={homeSeo.noindex} onChange={(event) => setData({ ...data, seo: [{ ...homeSeo, noindex: event.target.checked }, ...data.seo.slice(1)] })} type="checkbox" />
@@ -994,6 +1398,60 @@ function Textarea({
         value={value}
       />
     </label>
+  );
+}
+
+function ImageUrlField({
+  label: imageLabel,
+  onChange,
+  value
+}: {
+  label: string;
+  onChange: (value: string) => void;
+  value: string;
+}) {
+  function handleFile(file?: File) {
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        onChange(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  return (
+    <div className="grid gap-3">
+      <Input label={imageLabel} onChange={(event) => onChange(event.target.value)} placeholder="https://... or upload below" value={value} />
+      <div className="grid gap-3 rounded-md border border-dashed border-black/20 bg-mist p-3">
+        <div
+          aria-label={`${imageLabel} preview`}
+          className="aspect-[16/9] rounded-md border border-black/10 bg-white bg-cover bg-center"
+          role="img"
+          style={value ? { backgroundImage: `url(${value})` } : undefined}
+        >
+          {value ? null : <div className="grid h-full place-items-center text-xs font-bold text-slate">No image selected</div>}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <label className="admin-action cursor-pointer">
+            <ImageIcon className="h-4 w-4" /> Upload image
+            <input
+              accept="image/*"
+              className="sr-only"
+              onChange={(event) => handleFile(event.target.files?.[0])}
+              type="file"
+            />
+          </label>
+          {value ? (
+            <button className="admin-action text-coral" onClick={() => onChange("")} type="button">
+              Clear
+            </button>
+          ) : null}
+        </div>
+      </div>
+    </div>
   );
 }
 

@@ -27,9 +27,17 @@ export function Header({ config }: { config?: HeaderCmsConfig }) {
       <div className="hidden bg-white lg:block">
         <div className="container-page grid h-20 grid-cols-[220px_1fr_auto] items-center gap-6">
           <Link className="group flex items-center gap-3 text-xl font-extrabold tracking-tight text-ink" href="/">
-            <span className="grid h-10 w-10 place-items-center rounded-md bg-ink text-lime shadow-sm">
-              <Sparkles className="h-5 w-5" />
-            </span>
+            {config?.logoUrl ? (
+              <span
+                aria-hidden="true"
+                className="h-10 w-10 rounded-md border border-black/10 bg-white bg-contain bg-center bg-no-repeat shadow-sm"
+                style={{ backgroundImage: `url(${config.logoUrl})` }}
+              />
+            ) : (
+              <span className="grid h-10 w-10 place-items-center rounded-md bg-ink text-lime shadow-sm">
+                <Sparkles className="h-5 w-5" />
+              </span>
+            )}
             <span className="leading-tight">
               {logoText}
               <span className="block text-[10px] font-extrabold uppercase tracking-[0.16em] text-forest">Sports nutrition</span>
