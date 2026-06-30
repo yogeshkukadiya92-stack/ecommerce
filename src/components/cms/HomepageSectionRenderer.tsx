@@ -2,6 +2,7 @@ import { Award, CreditCard, Play, RotateCcw, ShieldCheck, Truck } from "lucide-r
 import Image from "next/image";
 import Link from "next/link";
 import type { HomepageSection } from "@/types/cms";
+import { cn } from "@/lib/utils/cn";
 import { brands, categories, featuredProducts, getProductsByCollection, goalCards, testimonials } from "@/mock";
 import { bundleDeals } from "@/mock/promotions";
 import { getPublishedBlogPosts } from "@/lib/cms/cmsRepository";
@@ -26,6 +27,9 @@ export function HomepageSectionRenderer({ preview = false, sections }: { preview
 function RenderedSection({ preview, section }: { preview: boolean; section: HomepageSection }) {
   if (!section.enabled && !preview) return null;
 
+  const alignment = section.contentAlignment ?? "left";
+  const align = getAlignmentClasses(alignment);
+
   const previewBadge = preview ? (
     <div className="container-page pt-3">
       <span className="inline-flex rounded-md bg-ink px-2 py-1 text-xs font-black text-white">
@@ -40,10 +44,10 @@ function RenderedSection({ preview, section }: { preview: boolean; section: Home
         <section className={sectionShell(section.backgroundStyle)}>
           {previewBadge}
           <div className="container-page grid items-center gap-10 py-10 lg:grid-cols-[1.02fr_0.98fr] lg:py-14">
-            <div className="max-w-2xl">
+            <div className={cn("max-w-2xl", align.text, align.block)}>
               <h1 className="text-4xl font-extrabold tracking-tight text-ink sm:text-5xl lg:text-6xl lg:leading-[1.02]">{section.title}</h1>
-              <p className="mt-5 max-w-xl text-base leading-7 text-slate sm:text-lg">{section.subtitle}</p>
-              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+              <p className={cn("mt-5 max-w-xl text-base leading-7 text-slate sm:text-lg", align.block)}>{section.subtitle}</p>
+              <div className={cn("mt-7 flex flex-col gap-3 sm:flex-row", align.flex)}>
                 <Button href={section.ctaLink ?? "/products"} size="lg" variant="dark">
                   {section.ctaLabel ?? "Shop now"}
                 </Button>
@@ -51,7 +55,7 @@ function RenderedSection({ preview, section }: { preview: boolean; section: Home
                   Shop best sellers
                 </Button>
               </div>
-              <div className="mt-7 flex flex-wrap gap-2 text-xs font-extrabold text-forest">
+              <div className={cn("mt-7 flex flex-wrap gap-2 text-xs font-extrabold text-forest", align.flex)}>
                 {["Verified supply", "Secure checkout", "Expiry-visible batches"].map((item) => (
                   <span className="rounded-md border border-black/10 bg-white px-3 py-2 shadow-sm" key={item}>{item}</span>
                 ))}
@@ -90,21 +94,23 @@ function RenderedSection({ preview, section }: { preview: boolean; section: Home
       return (
         <section className="container-page py-8">
           <div className="grid gap-6 rounded-card bg-ink p-6 text-white shadow-card lg:grid-cols-[1fr_320px] lg:items-center">
-            <div>
+            <div className={align.text}>
               <p className="text-xs font-black uppercase tracking-[0.14em] text-lime">{section.type === "flash_sale" ? "Flash sale" : "Banner"}</p>
               <h2 className="mt-3 text-3xl font-black tracking-tight">{section.title}</h2>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-white/70">{section.subtitle}</p>
+              <p className={cn("mt-3 max-w-2xl text-sm leading-6 text-white/70", align.block)}>{section.subtitle}</p>
               {section.type === "flash_sale" ? (
-                <div className="mt-5 inline-grid grid-cols-4 gap-2 text-center text-xs font-black">
+                <div className={cn("mt-5 inline-grid grid-cols-4 gap-2 text-center text-xs font-black", align.inlineBlock)}>
                   {["02 days", "11 hrs", "42 min", "09 sec"].map((part) => (
                     <span className="rounded-md bg-white/10 px-3 py-2" key={part}>{part}</span>
                   ))}
                 </div>
               ) : null}
             </div>
-            <Button href={section.ctaLink ?? "/products"} variant="primary">
-              {section.ctaLabel ?? "Shop now"}
-            </Button>
+            <div className={align.justifySelf}>
+              <Button href={section.ctaLink ?? "/products"} variant="primary">
+                {section.ctaLabel ?? "Shop now"}
+              </Button>
+            </div>
           </div>
           {section.type === "flash_sale" ? (
             <div className="mt-4 grid gap-4 md:grid-cols-2">
@@ -126,7 +132,7 @@ function RenderedSection({ preview, section }: { preview: boolean; section: Home
     case "category_grid":
       return (
         <section className="container-page py-8">
-          <SectionTitle description={section.subtitle} title={section.title} />
+          <SectionTitle alignment={alignment} description={section.subtitle} title={section.title} />
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {categories.map((category) => (
               <CategoryCard key={category.id} category={category} />
@@ -137,7 +143,7 @@ function RenderedSection({ preview, section }: { preview: boolean; section: Home
     case "brand_carousel":
       return (
         <section className="container-page pb-14 pt-8">
-          <SectionTitle description={section.subtitle} title={section.title} />
+          <SectionTitle alignment={alignment} description={section.subtitle} title={section.title} />
           <div className="grid gap-4 md:grid-cols-3">
             {brands.map((brand) => (
               <BrandCard key={brand.id} brand={brand} />
@@ -160,6 +166,7 @@ function RenderedSection({ preview, section }: { preview: boolean; section: Home
                 </Button>
               ) : undefined
             }
+            alignment={alignment}
             description={section.subtitle}
             title={section.title}
           />
@@ -170,7 +177,7 @@ function RenderedSection({ preview, section }: { preview: boolean; section: Home
     case "goal_cards":
       return (
         <section className="container-page py-8">
-          <SectionTitle description={section.subtitle} title={section.title} />
+          <SectionTitle alignment={alignment} description={section.subtitle} title={section.title} />
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {goalCards.map((goal) => (
               <Link
@@ -189,7 +196,7 @@ function RenderedSection({ preview, section }: { preview: boolean; section: Home
     case "trust_badges":
       return (
         <section className="container-page py-8">
-          <SectionTitle description={section.subtitle} title={section.title} />
+          <SectionTitle alignment={alignment} description={section.subtitle} title={section.title} />
           <div className="grid gap-3 md:grid-cols-4">
             <TrustBadge description="Every supplement is sourced for transparent, label-first shopping." icon={Award} title="Authentic products" />
             <TrustBadge description="Encrypted checkout with online payment and COD options." icon={CreditCard} title="Secure payments" />
@@ -201,7 +208,7 @@ function RenderedSection({ preview, section }: { preview: boolean; section: Home
     case "testimonials":
       return (
         <section className="container-page py-8">
-          <SectionTitle description={section.subtitle} title={section.title} />
+          <SectionTitle alignment={alignment} description={section.subtitle} title={section.title} />
           <div className="grid gap-4 md:grid-cols-3">
             {testimonials.map((testimonial) => (
               <figure className="rounded-card border border-black/10 bg-white p-5 shadow-sm" key={testimonial.name}>
@@ -218,7 +225,7 @@ function RenderedSection({ preview, section }: { preview: boolean; section: Home
     case "blog_preview":
       return (
         <section className="container-page py-8">
-          <SectionTitle description={section.subtitle} title={section.title} />
+          <SectionTitle alignment={alignment} description={section.subtitle} title={section.title} />
           <div className="grid gap-4 md:grid-cols-3">
             {getPublishedBlogPosts().map((post) => (
               <article className="rounded-card border border-black/10 bg-white p-5 shadow-sm" key={post.slug}>
@@ -237,7 +244,7 @@ function RenderedSection({ preview, section }: { preview: boolean; section: Home
       return (
         <section className="container-page pb-14 pt-8">
           <div className="rounded-card border border-black/10 bg-white p-6 shadow-sm">
-            <SectionTitle description={section.subtitle} title={section.title} />
+            <SectionTitle alignment={alignment} description={section.subtitle} title={section.title} />
             <NewsletterBox />
           </div>
         </section>
@@ -247,8 +254,8 @@ function RenderedSection({ preview, section }: { preview: boolean; section: Home
         <section className="container-page py-8">
           <div className="grid gap-6 rounded-card bg-white p-6 shadow-sm lg:grid-cols-[1fr_360px] lg:items-center">
             <div>
-              <SectionTitle description={section.subtitle} title={section.title} />
-              <p className="text-sm text-slate">{section.videoUrl ? "Watch the latest product and fitness guide." : "Product education, usage tips, and label guidance in one place."}</p>
+              <SectionTitle alignment={alignment} description={section.subtitle} title={section.title} />
+              <p className={cn("text-sm text-slate", align.text)}>{section.videoUrl ? "Watch the latest product and fitness guide." : "Product education, usage tips, and label guidance in one place."}</p>
             </div>
             <div className="grid aspect-video place-items-center rounded-md bg-ink text-white">
               <Play className="h-10 w-10" />
@@ -259,14 +266,48 @@ function RenderedSection({ preview, section }: { preview: boolean; section: Home
     case "custom_html":
       return (
         <section className="container-page py-8">
-          <div className="rounded-card border border-dashed border-black/20 bg-white p-6">
-            <ShieldCheck className="h-6 w-6 text-forest" />
+          <div className={cn("rounded-card border border-dashed border-black/20 bg-white p-6", align.text)}>
+            <ShieldCheck className={cn("h-6 w-6 text-forest", align.icon)} />
             <h2 className="mt-3 text-2xl font-black text-ink">{section.title}</h2>
             <p className="mt-2 text-sm text-slate">CMS-managed content block for campaign copy, product education, and trust messaging.</p>
           </div>
         </section>
       );
   }
+}
+
+function getAlignmentClasses(alignment: NonNullable<HomepageSection["contentAlignment"]>) {
+  const classes = {
+    center: {
+      block: "mx-auto",
+      flex: "justify-center",
+      icon: "mx-auto",
+      inlineBlock: "mx-auto",
+      justifySelf: "justify-self-center",
+      text: "text-center"
+    },
+    left: {
+      block: "",
+      flex: "justify-start",
+      icon: "",
+      inlineBlock: "",
+      justifySelf: "justify-self-start",
+      text: "text-left"
+    },
+    right: {
+      block: "ml-auto",
+      flex: "justify-end",
+      icon: "ml-auto",
+      inlineBlock: "ml-auto",
+      justifySelf: "justify-self-end",
+      text: "text-right"
+    }
+  } satisfies Record<
+    NonNullable<HomepageSection["contentAlignment"]>,
+    { block: string; flex: string; icon: string; inlineBlock: string; justifySelf: string; text: string }
+  >;
+
+  return classes[alignment];
 }
 
 function sectionShell(backgroundStyle: HomepageSection["backgroundStyle"]) {

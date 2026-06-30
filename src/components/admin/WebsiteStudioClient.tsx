@@ -1,9 +1,23 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, Eye, FileText, Globe, ImageIcon, LayoutTemplate, Megaphone, Save, Send } from "lucide-react";
+import {
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
+  ArrowDown,
+  ArrowUp,
+  Eye,
+  FileText,
+  Globe,
+  ImageIcon,
+  LayoutTemplate,
+  Megaphone,
+  Save,
+  Send
+} from "lucide-react";
 import { websiteStudioData } from "@/mock/cms";
-import type { CmsPublishStatus, HomepageSection, HomepageSectionType, WebsiteStudioData } from "@/types/cms";
+import type { CmsPublishStatus, CmsSectionAlignment, HomepageSection, HomepageSectionType, WebsiteStudioData } from "@/types/cms";
 import { writeAdminAuditLog } from "@/lib/admin/auditLog";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { readWebsiteStudioDraft, writeWebsiteStudioDraft } from "@/lib/cms/cmsLocalStorage";
@@ -16,6 +30,7 @@ import { AdminTable } from "./AdminTable";
 
 const tabs = [
   "Homepage",
+  "Alignment",
   "Header",
   "Footer",
   "Banners",
@@ -47,6 +62,7 @@ const sectionTypes: HomepageSectionType[] = [
 ];
 
 const statuses: CmsPublishStatus[] = ["draft", "scheduled", "published", "unpublished"];
+const alignments: CmsSectionAlignment[] = ["left", "center", "right"];
 
 export function WebsiteStudioClient() {
   const { session } = useAdminSession();
@@ -170,12 +186,20 @@ export function WebsiteStudioClient() {
               updateSection={updateSection}
             />
           ) : null}
+          {activeTab === "Alignment" ? (
+            <AlignmentBuilder
+              sections={studioData.homepageSections}
+              selectedSectionId={selectedSectionId}
+              setSelectedSectionId={setSelectedSectionId}
+              updateSection={updateSection}
+            />
+          ) : null}
           {activeTab === "Header" ? <HeaderBuilder data={studioData} setData={setStudioData} /> : null}
           {activeTab === "Footer" ? <FooterBuilder data={studioData} setData={setStudioData} /> : null}
           {activeTab === "Banners" ? <BannerManager data={studioData} setData={setStudioData} /> : null}
-          {activeTab === "Landing Pages" ? <LandingPageBuilder data={studioData} /> : null}
-          {activeTab === "Blog" ? <BlogManager data={studioData} /> : null}
-          {activeTab === "Policies" ? <PolicyManager data={studioData} /> : null}
+          {activeTab === "Landing Pages" ? <LandingPageBuilder data={studioData} setData={setStudioData} /> : null}
+          {activeTab === "Blog" ? <BlogManager data={studioData} setData={setStudioData} /> : null}
+          {activeTab === "Policies" ? <PolicyManager data={studioData} setData={setStudioData} /> : null}
           {activeTab === "Popups" ? <PopupBuilder data={studioData} setData={setStudioData} /> : null}
           {activeTab === "SEO" ? <SeoManager data={studioData} setData={setStudioData} /> : null}
           {activeTab === "Versions" ? <VersionHistory data={studioData} /> : null}
@@ -272,6 +296,9 @@ function HomepageBuilder({
           <Select label="Background style" onChange={(event) => updateSection(selectedSectionId, { backgroundStyle: event.target.value as HomepageSection["backgroundStyle"] })} value={selectedSection.backgroundStyle}>
             {["white", "mist", "ink", "mint", "image"].map((style) => <option key={style} value={style}>{label(style)}</option>)}
           </Select>
+          <Select label="Content alignment" onChange={(event) => updateSection(selectedSectionId, { contentAlignment: event.target.value as CmsSectionAlignment })} value={selectedSection.contentAlignment ?? "left"}>
+            {alignments.map((alignment) => <option key={alignment} value={alignment}>{label(alignment)}</option>)}
+          </Select>
           <Input label="Schedule publish date" onChange={(event) => updateSection(selectedSectionId, { publishAt: event.target.value })} type="datetime-local" value={selectedSection.publishAt ?? ""} />
         </div>
         <div className="mt-4 rounded-md bg-mist p-4">
@@ -282,6 +309,80 @@ function HomepageBuilder({
         </div>
       </AdminCard>
     </>
+  );
+}
+
+function AlignmentBuilder({
+  sections,
+  selectedSectionId,
+  setSelectedSectionId,
+  updateSection
+}: {
+  sections: HomepageSection[];
+  selectedSectionId: string;
+  setSelectedSectionId: (sectionId: string) => void;
+  updateSection: (sectionId: string, patch: Partial<HomepageSection>) => void;
+}) {
+  const selectedSection = sections.find((section) => section.id === selectedSectionId) ?? sections[0];
+
+  return (
+    <AdminCard title="Alignment">
+      <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px]">
+        <Select label="Homepage section" onChange={(event) => setSelectedSectionId(event.target.value)} value={selectedSection?.id ?? ""}>
+          {[...sections]
+            .sort((first, second) => first.order - second.order)
+            .map((section) => (
+              <option key={section.id} value={section.id}>{section.title}</option>
+            ))}
+        </Select>
+        <Select
+          label="Content alignment"
+          onChange={(event) => selectedSection && updateSection(selectedSection.id, { contentAlignment: event.target.value as CmsSectionAlignment })}
+          value={selectedSection?.contentAlignment ?? "left"}
+        >
+          {alignments.map((alignment) => <option key={alignment} value={alignment}>{label(alignment)}</option>)}
+        </Select>
+      </div>
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-3">
+        {alignments.map((alignment) => {
+          const active = (selectedSection?.contentAlignment ?? "left") === alignment;
+          const Icon = alignment === "left" ? AlignLeft : alignment === "center" ? AlignCenter : AlignRight;
+
+          return (
+            <button
+              className={`flex items-center justify-center gap-2 rounded-md border px-4 py-3 text-sm font-black ${
+                active ? "border-forest bg-mint text-forest" : "border-black/10 bg-white text-ink"
+              }`}
+              key={alignment}
+              onClick={() => selectedSection && updateSection(selectedSection.id, { contentAlignment: alignment })}
+              type="button"
+            >
+              <Icon className="h-4 w-4" />
+              {label(alignment)}
+            </button>
+          );
+        })}
+      </div>
+
+      <AdminTable
+        columns={["Section", "Alignment"]}
+        rows={[...sections]
+          .sort((first, second) => first.order - second.order)
+          .map((section) => [
+            <button className="text-left font-black text-ink" key="section" onClick={() => setSelectedSectionId(section.id)} type="button">
+              {section.title}
+            </button>,
+            <Select
+              key="alignment"
+              onChange={(event) => updateSection(section.id, { contentAlignment: event.target.value as CmsSectionAlignment })}
+              value={section.contentAlignment ?? "left"}
+            >
+              {alignments.map((alignment) => <option key={alignment} value={alignment}>{label(alignment)}</option>)}
+            </Select>
+          ])}
+      />
+    </AdminCard>
   );
 }
 
@@ -341,78 +442,319 @@ function FooterBuilder({ data, setData }: { data: WebsiteStudioData; setData: (d
 function BannerManager({ data, setData }: { data: WebsiteStudioData; setData: (data: WebsiteStudioData) => void }) {
   return (
     <AdminCard title="Banner manager">
-      <AdminTable
-        columns={["Banner", "Target", "Dates", "CTA", "Status"]}
-        rows={data.banners.map((banner) => [
-          <span className="inline-flex items-center gap-2 font-black text-ink" key="banner"><ImageIcon className="h-4 w-4" /> {banner.title}</span>,
-          label(banner.targetPage),
-          `${banner.startDate ?? "Now"} to ${banner.endDate ?? "Open"}`,
-          `${banner.ctaLabel} -> ${banner.ctaLink}`,
-          <button
-            className="admin-action"
-            key="status"
-            onClick={() =>
-              setData({
-                ...data,
-                banners: data.banners.map((entry) => entry.id === banner.id ? { ...entry, active: !entry.active } : entry)
-              })
-            }
-            type="button"
-          >
-            {banner.active ? "Active" : "Inactive"}
-          </button>
-        ])}
-      />
+      <div className="grid gap-5">
+        {data.banners.map((banner) => (
+          <div className="rounded-md border border-black/10 p-4" key={banner.id}>
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <span className="inline-flex items-center gap-2 font-black text-ink"><ImageIcon className="h-4 w-4" /> {banner.title}</span>
+              <button
+                className="admin-action"
+                onClick={() =>
+                  setData({
+                    ...data,
+                    banners: data.banners.map((entry) => entry.id === banner.id ? { ...entry, active: !entry.active } : entry)
+                  })
+                }
+                type="button"
+              >
+                {banner.active ? "Active" : "Inactive"}
+              </button>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Input
+                label="Banner title"
+                onChange={(event) =>
+                  setData({ ...data, banners: data.banners.map((entry) => entry.id === banner.id ? { ...entry, title: event.target.value } : entry) })
+                }
+                value={banner.title}
+              />
+              <Select
+                label="Target page"
+                onChange={(event) =>
+                  setData({
+                    ...data,
+                    banners: data.banners.map((entry) =>
+                      entry.id === banner.id ? { ...entry, targetPage: event.target.value as WebsiteStudioData["banners"][number]["targetPage"] } : entry
+                    )
+                  })
+                }
+                value={banner.targetPage}
+              >
+                {["homepage", "product_listing", "cart", "all"].map((target) => <option key={target} value={target}>{label(target)}</option>)}
+              </Select>
+              <Input
+                label="Desktop image"
+                onChange={(event) =>
+                  setData({ ...data, banners: data.banners.map((entry) => entry.id === banner.id ? { ...entry, desktopImageUrl: event.target.value } : entry) })
+                }
+                value={banner.desktopImageUrl}
+              />
+              <Input
+                label="Mobile image"
+                onChange={(event) =>
+                  setData({ ...data, banners: data.banners.map((entry) => entry.id === banner.id ? { ...entry, mobileImageUrl: event.target.value } : entry) })
+                }
+                value={banner.mobileImageUrl ?? ""}
+              />
+              <Input
+                label="CTA text"
+                onChange={(event) =>
+                  setData({ ...data, banners: data.banners.map((entry) => entry.id === banner.id ? { ...entry, ctaLabel: event.target.value } : entry) })
+                }
+                value={banner.ctaLabel}
+              />
+              <Input
+                label="CTA link"
+                onChange={(event) =>
+                  setData({ ...data, banners: data.banners.map((entry) => entry.id === banner.id ? { ...entry, ctaLink: event.target.value } : entry) })
+                }
+                value={banner.ctaLink}
+              />
+              <Input
+                label="Start date"
+                onChange={(event) =>
+                  setData({ ...data, banners: data.banners.map((entry) => entry.id === banner.id ? { ...entry, startDate: event.target.value } : entry) })
+                }
+                type="date"
+                value={banner.startDate ?? ""}
+              />
+              <Input
+                label="End date"
+                onChange={(event) =>
+                  setData({ ...data, banners: data.banners.map((entry) => entry.id === banner.id ? { ...entry, endDate: event.target.value } : entry) })
+                }
+                type="date"
+                value={banner.endDate ?? ""}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
     </AdminCard>
   );
 }
 
-function LandingPageBuilder({ data }: { data: WebsiteStudioData }) {
+function LandingPageBuilder({ data, setData }: { data: WebsiteStudioData; setData: (data: WebsiteStudioData) => void }) {
   return (
     <AdminCard title="Landing page builder">
-      <AdminTable
-        columns={["Page", "Slug", "SEO", "Status"]}
-        rows={data.landingPages.map((page) => [
-          <span className="inline-flex items-center gap-2 font-black text-ink" key="page"><LayoutTemplate className="h-4 w-4" /> {page.title}</span>,
-          page.slug,
-          page.seoTitle,
-          <Badge key="status" tone={page.status === "published" ? "success" : "neutral"}>{label(page.status)}</Badge>
-        ])}
-      />
+      <div className="grid gap-5">
+        {data.landingPages.map((page) => (
+          <div className="rounded-md border border-black/10 p-4" key={page.id}>
+            <div className="mb-4 inline-flex items-center gap-2 font-black text-ink"><LayoutTemplate className="h-4 w-4" /> {page.title}</div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Input
+                label="Page title"
+                onChange={(event) =>
+                  setData({ ...data, landingPages: data.landingPages.map((entry) => entry.id === page.id ? { ...entry, title: event.target.value } : entry) })
+                }
+                value={page.title}
+              />
+              <Input
+                label="Slug"
+                onChange={(event) =>
+                  setData({ ...data, landingPages: data.landingPages.map((entry) => entry.id === page.id ? { ...entry, slug: event.target.value } : entry) })
+                }
+                value={page.slug}
+              />
+              <Input
+                label="SEO title"
+                onChange={(event) =>
+                  setData({ ...data, landingPages: data.landingPages.map((entry) => entry.id === page.id ? { ...entry, seoTitle: event.target.value } : entry) })
+                }
+                value={page.seoTitle}
+              />
+              <Select
+                label="Publish status"
+                onChange={(event) =>
+                  setData({
+                    ...data,
+                    landingPages: data.landingPages.map((entry) => entry.id === page.id ? { ...entry, status: event.target.value as CmsPublishStatus } : entry)
+                  })
+                }
+                value={page.status}
+              >
+                {statuses.map((status) => <option key={status} value={status}>{label(status)}</option>)}
+              </Select>
+              <div className="md:col-span-2">
+                <Textarea
+                  label="SEO description"
+                  onChange={(value) =>
+                    setData({
+                      ...data,
+                      landingPages: data.landingPages.map((entry) => entry.id === page.id ? { ...entry, seoDescription: value } : entry)
+                    })
+                  }
+                  value={page.seoDescription}
+                />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </AdminCard>
   );
 }
 
-function BlogManager({ data }: { data: WebsiteStudioData }) {
+function BlogManager({ data, setData }: { data: WebsiteStudioData; setData: (data: WebsiteStudioData) => void }) {
   return (
     <AdminCard title="Blog CMS">
-      <AdminTable
-        columns={["Post", "Author", "Category", "SEO", "Disclaimer", "Status"]}
-        rows={data.blogPosts.map((post) => [
-          <span className="inline-flex items-center gap-2 font-black text-ink" key="post"><FileText className="h-4 w-4" /> {post.title}</span>,
-          post.author,
-          post.category,
-          post.seoTitle,
-          post.disclaimerEnabled ? "Enabled" : "Disabled",
-          <Badge key="status" tone={post.status === "published" ? "success" : "neutral"}>{label(post.status)}</Badge>
-        ])}
-      />
+      <div className="grid gap-5">
+        {data.blogPosts.map((post) => (
+          <div className="rounded-md border border-black/10 p-4" key={post.id}>
+            <div className="mb-4 inline-flex items-center gap-2 font-black text-ink"><FileText className="h-4 w-4" /> {post.title}</div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Input
+                label="Post title"
+                onChange={(event) =>
+                  setData({ ...data, blogPosts: data.blogPosts.map((entry) => entry.id === post.id ? { ...entry, title: event.target.value } : entry) })
+                }
+                value={post.title}
+              />
+              <Input
+                label="Slug"
+                onChange={(event) =>
+                  setData({ ...data, blogPosts: data.blogPosts.map((entry) => entry.id === post.id ? { ...entry, slug: event.target.value } : entry) })
+                }
+                value={post.slug}
+              />
+              <Input
+                label="Author"
+                onChange={(event) =>
+                  setData({ ...data, blogPosts: data.blogPosts.map((entry) => entry.id === post.id ? { ...entry, author: event.target.value } : entry) })
+                }
+                value={post.author}
+              />
+              <Input
+                label="Category"
+                onChange={(event) =>
+                  setData({ ...data, blogPosts: data.blogPosts.map((entry) => entry.id === post.id ? { ...entry, category: event.target.value } : entry) })
+                }
+                value={post.category}
+              />
+              <Input
+                label="Featured image"
+                onChange={(event) =>
+                  setData({ ...data, blogPosts: data.blogPosts.map((entry) => entry.id === post.id ? { ...entry, featuredImageUrl: event.target.value } : entry) })
+                }
+                value={post.featuredImageUrl ?? ""}
+              />
+              <Select
+                label="Publish status"
+                onChange={(event) =>
+                  setData({ ...data, blogPosts: data.blogPosts.map((entry) => entry.id === post.id ? { ...entry, status: event.target.value as CmsPublishStatus } : entry) })
+                }
+                value={post.status}
+              >
+                {statuses.map((status) => <option key={status} value={status}>{label(status)}</option>)}
+              </Select>
+              <Input
+                label="SEO title"
+                onChange={(event) =>
+                  setData({ ...data, blogPosts: data.blogPosts.map((entry) => entry.id === post.id ? { ...entry, seoTitle: event.target.value } : entry) })
+                }
+                value={post.seoTitle}
+              />
+              <label className="flex items-center gap-2 rounded-md border border-black/10 p-3 text-sm font-bold text-ink">
+                <input
+                  checked={post.disclaimerEnabled}
+                  onChange={(event) =>
+                    setData({
+                      ...data,
+                      blogPosts: data.blogPosts.map((entry) => entry.id === post.id ? { ...entry, disclaimerEnabled: event.target.checked } : entry)
+                    })
+                  }
+                  type="checkbox"
+                />
+                Disclaimer enabled
+              </label>
+              <div className="md:col-span-2">
+                <Textarea
+                  label="SEO description"
+                  onChange={(value) =>
+                    setData({ ...data, blogPosts: data.blogPosts.map((entry) => entry.id === post.id ? { ...entry, seoDescription: value } : entry) })
+                  }
+                  value={post.seoDescription}
+                />
+              </div>
+              <div className="md:col-span-2">
+                <Textarea
+                  label="Post content"
+                  onChange={(value) =>
+                    setData({ ...data, blogPosts: data.blogPosts.map((entry) => entry.id === post.id ? { ...entry, content: value } : entry) })
+                  }
+                  rows={6}
+                  value={post.content}
+                />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </AdminCard>
   );
 }
 
-function PolicyManager({ data }: { data: WebsiteStudioData }) {
+function PolicyManager({ data, setData }: { data: WebsiteStudioData; setData: (data: WebsiteStudioData) => void }) {
   return (
     <AdminCard title="Policy pages">
-      <AdminTable
-        columns={["Policy", "Slug", "SEO description", "Status"]}
-        rows={data.policies.map((page) => [
-          page.title,
-          `/pages/${page.slug}`,
-          page.seoDescription,
-          <Badge key="status" tone={page.status === "published" ? "success" : "neutral"}>{label(page.status)}</Badge>
-        ])}
-      />
+      <div className="grid gap-5">
+        {data.policies.map((page) => (
+          <div className="rounded-md border border-black/10 p-4" key={page.id}>
+            <div className="mb-4 font-black text-ink">{page.title}</div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Input
+                label="Policy title"
+                onChange={(event) =>
+                  setData({ ...data, policies: data.policies.map((entry) => entry.id === page.id ? { ...entry, title: event.target.value } : entry) })
+                }
+                value={page.title}
+              />
+              <Input
+                label="Slug"
+                onChange={(event) =>
+                  setData({ ...data, policies: data.policies.map((entry) => entry.id === page.id ? { ...entry, slug: event.target.value } : entry) })
+                }
+                value={page.slug}
+              />
+              <Input
+                label="SEO title"
+                onChange={(event) =>
+                  setData({ ...data, policies: data.policies.map((entry) => entry.id === page.id ? { ...entry, seoTitle: event.target.value } : entry) })
+                }
+                value={page.seoTitle}
+              />
+              <Select
+                label="Publish status"
+                onChange={(event) =>
+                  setData({ ...data, policies: data.policies.map((entry) => entry.id === page.id ? { ...entry, status: event.target.value as CmsPublishStatus } : entry) })
+                }
+                value={page.status}
+              >
+                {statuses.map((status) => <option key={status} value={status}>{label(status)}</option>)}
+              </Select>
+              <div className="md:col-span-2">
+                <Textarea
+                  label="SEO description"
+                  onChange={(value) =>
+                    setData({ ...data, policies: data.policies.map((entry) => entry.id === page.id ? { ...entry, seoDescription: value } : entry) })
+                  }
+                  value={page.seoDescription}
+                />
+              </div>
+              <div className="md:col-span-2">
+                <Textarea
+                  label="Page content"
+                  onChange={(value) =>
+                    setData({ ...data, policies: data.policies.map((entry) => entry.id === page.id ? { ...entry, content: value } : entry) })
+                  }
+                  rows={6}
+                  value={page.content}
+                />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </AdminCard>
   );
 }
@@ -480,6 +822,30 @@ function VersionHistory({ data }: { data: WebsiteStudioData }) {
       />
       <button className="admin-action mt-4" type="button"><Globe className="h-4 w-4" /> Rollback placeholder</button>
     </AdminCard>
+  );
+}
+
+function Textarea({
+  label: textareaLabel,
+  onChange,
+  rows = 4,
+  value
+}: {
+  label: string;
+  onChange: (value: string) => void;
+  rows?: number;
+  value: string;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-2 block text-sm font-semibold text-ink">{textareaLabel}</span>
+      <textarea
+        className="focus-ring w-full rounded-md border border-black/10 bg-white px-3 py-3 text-sm leading-6 text-ink placeholder:text-slate"
+        onChange={(event) => onChange(event.target.value)}
+        rows={rows}
+        value={value}
+      />
+    </label>
   );
 }
 

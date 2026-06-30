@@ -17,6 +17,7 @@ export type HomepageSectionType =
   | "custom_html";
 
 export type CmsBackgroundStyle = "white" | "mist" | "ink" | "mint" | "image";
+export type CmsSectionAlignment = "left" | "center" | "right";
 
 export type CmsContentReference = {
   id: string;
@@ -27,6 +28,7 @@ export type CmsContentReference = {
 
 export type HomepageSection = {
   backgroundStyle: CmsBackgroundStyle;
+  contentAlignment?: CmsSectionAlignment;
   ctaLabel?: string;
   ctaLink?: string;
   desktopImageUrl?: string;
@@ -109,7 +111,18 @@ export type CmsBanner = {
 
 export type CmsPageSection = Pick<
   HomepageSection,
-  "backgroundStyle" | "ctaLabel" | "ctaLink" | "desktopImageUrl" | "enabled" | "id" | "order" | "references" | "subtitle" | "title" | "type"
+  | "backgroundStyle"
+  | "contentAlignment"
+  | "ctaLabel"
+  | "ctaLink"
+  | "desktopImageUrl"
+  | "enabled"
+  | "id"
+  | "order"
+  | "references"
+  | "subtitle"
+  | "title"
+  | "type"
 >;
 
 export type LandingPage = {

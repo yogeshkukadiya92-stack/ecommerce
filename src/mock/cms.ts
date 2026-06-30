@@ -121,6 +121,7 @@ export const websiteStudioData: WebsiteStudioData = {
   homepageSections: [
     {
       backgroundStyle: "white",
+      contentAlignment: "left",
       ctaLabel: "Shop supplements",
       ctaLink: "/products",
       desktopImageUrl: "https://images.unsplash.com/photo-1593095948071-474c5cc2989d?auto=format&fit=crop&w=1600&q=80",
@@ -137,6 +138,7 @@ export const websiteStudioData: WebsiteStudioData = {
     },
     {
       backgroundStyle: "mist",
+      contentAlignment: "left",
       enabled: true,
       id: "home-goals",
       order: 2,
@@ -152,6 +154,7 @@ export const websiteStudioData: WebsiteStudioData = {
     },
     {
       backgroundStyle: "white",
+      contentAlignment: "left",
       enabled: true,
       id: "home-categories",
       order: 3,
@@ -167,6 +170,7 @@ export const websiteStudioData: WebsiteStudioData = {
     },
     {
       backgroundStyle: "white",
+      contentAlignment: "left",
       ctaLabel: "View all",
       ctaLink: "/collections/best-sellers",
       enabled: true,
@@ -180,6 +184,7 @@ export const websiteStudioData: WebsiteStudioData = {
     },
     {
       backgroundStyle: "ink",
+      contentAlignment: "left",
       ctaLabel: "See offer",
       ctaLink: "/collections/combo-deals",
       enabled: true,
@@ -193,6 +198,7 @@ export const websiteStudioData: WebsiteStudioData = {
     },
     {
       backgroundStyle: "white",
+      contentAlignment: "left",
       enabled: true,
       id: "home-brands",
       order: 6,
@@ -208,6 +214,7 @@ export const websiteStudioData: WebsiteStudioData = {
     },
     {
       backgroundStyle: "white",
+      contentAlignment: "left",
       enabled: true,
       id: "home-trust",
       order: 7,
@@ -219,6 +226,7 @@ export const websiteStudioData: WebsiteStudioData = {
     },
     {
       backgroundStyle: "white",
+      contentAlignment: "left",
       enabled: true,
       id: "home-blog",
       order: 8,
@@ -230,6 +238,7 @@ export const websiteStudioData: WebsiteStudioData = {
     },
     {
       backgroundStyle: "white",
+      contentAlignment: "left",
       enabled: true,
       id: "home-testimonials",
       order: 9,
@@ -241,6 +250,7 @@ export const websiteStudioData: WebsiteStudioData = {
     },
     {
       backgroundStyle: "white",
+      contentAlignment: "left",
       enabled: true,
       id: "home-newsletter",
       order: 10,
