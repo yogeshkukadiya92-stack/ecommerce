@@ -201,7 +201,7 @@ function ReviewSummaryGrid({ reviews }: { reviews: ProductReview[] }) {
             <div className="mt-4 flex flex-wrap gap-2">
               {summary.commonTags.map((tag) => <Badge key={tag}>{tag}</Badge>)}
             </div>
-            <p className="mt-4 text-sm font-semibold text-slate">Review request trigger after delivery placeholder is enabled for this product.</p>
+            <p className="mt-4 text-sm font-semibold text-slate">Review request trigger after delivery is enabled for this product.</p>
           </AdminCard>
         );
       })}

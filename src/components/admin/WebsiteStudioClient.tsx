@@ -243,7 +243,7 @@ export function WebsiteStudioClient({
       )
     };
 
-    commit(nextData, "cms.publish", "Published homepage CMS sections to local storefront preview.");
+    commit(nextData, "cms.publish", "Published homepage CMS sections to the storefront.");
   }
 
   return (
@@ -313,7 +313,7 @@ export function WebsiteStudioClient({
               </button>
             </div>
             <p className="mt-3 text-xs leading-5 text-slate">
-              Save/publish writes to the mock Website Studio store in localStorage. The homepage reads this data and falls back to seeded CMS content.
+              Save or publish your latest website content. Published homepage sections are reflected on the storefront in this browser.
             </p>
           </AdminCard>
 
@@ -814,7 +814,7 @@ function FooterBuilder({ data, setData }: { data: WebsiteStudioData; setData: (d
           ))}
         </div>
       </div>
-      <p className="mt-4 text-sm text-slate">Payment icons placeholder: {data.footer.paymentIcons.join(", ")}</p>
+      <p className="mt-4 text-sm text-slate">Payment icons: {data.footer.paymentIcons.join(", ")}</p>
     </AdminCard>
   );
 }
@@ -1347,14 +1347,14 @@ function SeoManager({ data, setData }: { data: WebsiteStudioData; setData: (data
       <div className="grid gap-4 md:grid-cols-2">
         <Input label="Page title" onChange={(event) => setData({ ...data, seo: [{ ...homeSeo, title: event.target.value }, ...data.seo.slice(1)] })} value={homeSeo.title} />
         <Input label="Meta description" onChange={(event) => setData({ ...data, seo: [{ ...homeSeo, metaDescription: event.target.value }, ...data.seo.slice(1)] })} value={homeSeo.metaDescription} />
-        <Input label="Canonical URL placeholder" onChange={(event) => setData({ ...data, seo: [{ ...homeSeo, canonicalUrl: event.target.value }, ...data.seo.slice(1)] })} value={homeSeo.canonicalUrl ?? ""} />
+        <Input label="Canonical URL" onChange={(event) => setData({ ...data, seo: [{ ...homeSeo, canonicalUrl: event.target.value }, ...data.seo.slice(1)] })} value={homeSeo.canonicalUrl ?? ""} />
         <ImageUrlField label="Open Graph image" onChange={(value) => setData({ ...data, seo: [{ ...homeSeo, ogImageUrl: value }, ...data.seo.slice(1)] })} value={homeSeo.ogImageUrl ?? ""} />
       </div>
       <label className="mt-4 flex items-center gap-2 rounded-md border border-black/10 p-3 text-sm font-bold text-ink">
         <input checked={homeSeo.noindex} onChange={(event) => setData({ ...data, seo: [{ ...homeSeo, noindex: event.target.checked }, ...data.seo.slice(1)] })} type="checkbox" />
         Noindex this page
       </label>
-      <p className="mt-4 text-sm text-slate">Structured data placeholder: {homeSeo.structuredDataPlaceholder}</p>
+      <p className="mt-4 text-sm text-slate">Structured data: {homeSeo.structuredDataPlaceholder}</p>
     </AdminCard>
   );
 }
@@ -1372,7 +1372,7 @@ function VersionHistory({ data }: { data: WebsiteStudioData }) {
           version.note
         ])}
       />
-      <button className="admin-action mt-4" type="button"><Globe className="h-4 w-4" /> Rollback placeholder</button>
+      <button className="admin-action mt-4" type="button"><Globe className="h-4 w-4" /> Restore selected version</button>
     </AdminCard>
   );
 }

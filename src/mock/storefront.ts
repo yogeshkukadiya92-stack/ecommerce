@@ -278,7 +278,7 @@ export const productDetailContentById: Record<string, ProductDetailContent> = {
     authenticity: {
       batchNumberExample: "WF-A1-1127",
       expiryExample: "30 Nov 2027",
-      qrVerification: "QR verification placeholder ready for admin-managed serial checks.",
+      qrVerification: "QR verification ready for admin-managed serial checks.",
       serialVerification: "Serial code can be matched against future inventory batch records."
     },
     compareProductIds: ["prod-mass-gainer", "prod-creatine-mono", "prod-daily-multi"],
@@ -324,7 +324,7 @@ export const productDetailContentById: Record<string, ProductDetailContent> = {
         body: "Mixes quickly and the serving info is easy to compare. I like seeing batch and lab-report cues.",
         customerName: "Aarav M.",
         isVerifiedPurchase: true,
-        mediaPlaceholder: "Photo review placeholder",
+        mediaPlaceholder: "Photo review",
         rating: 5,
         tags: ["Taste", "Mixability", "Value"],
         title: "Clean product card details"
@@ -333,7 +333,7 @@ export const productDetailContentById: Record<string, ProductDetailContent> = {
         body: "Good everyday protein option. The warning and allergen information feels clear.",
         customerName: "Nisha R.",
         isVerifiedPurchase: true,
-        mediaPlaceholder: "Video review placeholder",
+        mediaPlaceholder: "Video review",
         rating: 4,
         tags: ["Taste", "Label clarity"],
         title: "Clear supplement information"
@@ -341,13 +341,13 @@ export const productDetailContentById: Record<string, ProductDetailContent> = {
     ],
     storageInstructions:
       "Store in a cool, dry place away from direct sunlight. Keep the lid tightly closed after opening.",
-    videoUrl: "Product routine video placeholder"
+    videoUrl: "Product routine guide"
   },
   "prod-mass-gainer": {
     authenticity: {
       batchNumberExample: "PL-C1-0827",
       expiryExample: "31 Aug 2027",
-      qrVerification: "QR verification placeholder ready for future packaging scans.",
+      qrVerification: "QR verification ready for packaging scans.",
       serialVerification: "Serial lookup can be connected to warehouse batch records later."
     },
     compareProductIds: ["prod-whey-elite", "prod-creatine-mono"],
@@ -383,7 +383,7 @@ export const productDetailContentById: Record<string, ProductDetailContent> = {
         body: "Useful for comparing calories and serving details before adding to cart.",
         customerName: "Kabir S.",
         isVerifiedPurchase: true,
-        mediaPlaceholder: "Photo review placeholder",
+        mediaPlaceholder: "Photo review",
         rating: 5,
         tags: ["Value", "Serving size"],
         title: "Helpful comparison details"
@@ -396,7 +396,7 @@ export const productDetailContentById: Record<string, ProductDetailContent> = {
     authenticity: {
       batchNumberExample: "NF-D1-0128",
       expiryExample: "31 Jan 2028",
-      qrVerification: "QR verification placeholder for future authenticity scans.",
+      qrVerification: "QR verification ready for authenticity scans.",
       serialVerification: "Serial verification can be mapped to supplier and batch records."
     },
     compareProductIds: ["prod-whey-elite", "prod-daily-multi"],
@@ -432,7 +432,7 @@ export const productDetailContentById: Record<string, ProductDetailContent> = {
         body: "Simple unflavoured creatine. The lab-report marker is useful.",
         customerName: "Rohan P.",
         isVerifiedPurchase: true,
-        mediaPlaceholder: "Photo review placeholder",
+        mediaPlaceholder: "Photo review",
         rating: 5,
         tags: ["Mixability", "Value"],
         title: "Straightforward product"
@@ -445,7 +445,7 @@ export const productDetailContentById: Record<string, ProductDetailContent> = {
     authenticity: {
       batchNumberExample: "VS-E1-1227",
       expiryExample: "31 Dec 2027",
-      qrVerification: "QR verification placeholder for future label scans.",
+      qrVerification: "QR verification ready for label scans.",
       serialVerification: "Serial lookup can be connected to purchase order records."
     },
     compareProductIds: ["prod-whey-elite", "prod-creatine-mono"],
@@ -481,7 +481,7 @@ export const productDetailContentById: Record<string, ProductDetailContent> = {
         body: "Easy to understand daily wellness option with clear warning text.",
         customerName: "Meera K.",
         isVerifiedPurchase: true,
-        mediaPlaceholder: "Photo review placeholder",
+        mediaPlaceholder: "Photo review",
         rating: 4,
         tags: ["Value", "Label clarity"],
         title: "Clear daily product"

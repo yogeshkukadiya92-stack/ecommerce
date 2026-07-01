@@ -117,7 +117,7 @@ export function InventoryManagementClient() {
     };
     setWarehouses((current) => [warehouse, ...current]);
     audit("admin.inventory.warehouse.create", "Warehouse", warehouse.id, { name: warehouse.name });
-    setToast("Warehouse created in mock state.");
+    setToast("Warehouse created.");
   }
 
   function toggleWarehouse(warehouseId: string) {
@@ -142,7 +142,7 @@ export function InventoryManagementClient() {
     const order = purchaseOrders.find((item) => item.id === orderId);
 
     if (!order) {
-      setToast("Unable to receive this PO in mock state.");
+      setToast("Unable to receive this purchase order.");
       return;
     }
 
@@ -651,7 +651,7 @@ function ExpiryAlertsTab({ buckets }: { buckets: ReturnType<typeof buildExpiryBu
             batch.sku,
             batch.expiryDate,
             <Badge key="status" tone="sale">{batch.expiryStatus}</Badge>,
-            "Auto-hide expired and near-expiry discount suggestion placeholders"
+            "Auto-hide expired stock and suggest near-expiry discounts"
           ])}
         />
       </AdminCard>
@@ -732,7 +732,7 @@ function ReportsTab() {
             <ClipboardList className="h-5 w-5 text-forest" />
             <p className="mt-3 font-black text-ink">{report.name}</p>
             <p className="mt-1 text-sm leading-6 text-slate">{report.description}</p>
-            <button className="admin-action mt-3" type="button">Generate placeholder</button>
+            <button className="admin-action mt-3" type="button">Generate report</button>
           </div>
         ))}
       </div>

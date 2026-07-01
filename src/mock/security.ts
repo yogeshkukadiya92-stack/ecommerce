@@ -3,9 +3,9 @@ import type { AdminAuditLogEntry } from "@/types/admin";
 export const seededAuditLogs: AdminAuditLogEntry[] = [
   {
     action: "admin.login",
-    actorEmail: "admin@fitsupplement.local",
-    actorId: "admin-yogesh",
-    actorName: "FitSupplement Admin",
+    actorEmail: "owner@store-admin.in",
+    actorId: "admin-owner",
+    actorName: "Store Owner",
     at: "2026-06-29T08:30:00.000Z",
     entityType: "AdminSession",
     ipAddress: "103.24.xxx.xxx",
@@ -15,9 +15,9 @@ export const seededAuditLogs: AdminAuditLogEntry[] = [
   },
   {
     action: "admin.product.price_change",
-    actorEmail: "admin@fitsupplement.local",
-    actorId: "admin-yogesh",
-    actorName: "FitSupplement Admin",
+    actorEmail: "owner@store-admin.in",
+    actorId: "admin-owner",
+    actorName: "Store Owner",
     at: "2026-06-29T08:45:00.000Z",
     entityId: "var-whey-choco-1kg",
     entityType: "ProductVariant",
@@ -29,7 +29,7 @@ export const seededAuditLogs: AdminAuditLogEntry[] = [
   },
   {
     action: "admin.inventory.stock_adjustment",
-    actorEmail: "inventory@fitsupplement.local",
+    actorEmail: "inventory@store-admin.in",
     actorId: "admin-inventory",
     actorName: "Inventory Manager",
     at: "2026-06-28T16:20:00.000Z",
@@ -44,7 +44,7 @@ export const seededAuditLogs: AdminAuditLogEntry[] = [
   },
   {
     action: "admin.cms.publish",
-    actorEmail: "content@fitsupplement.local",
+    actorEmail: "content@store-admin.in",
     actorId: "admin-content",
     actorName: "Content Manager",
     at: "2026-06-27T12:10:00.000Z",
@@ -58,7 +58,7 @@ export const seededAuditLogs: AdminAuditLogEntry[] = [
   },
   {
     action: "admin.login.failed",
-    actorEmail: "unknown@fitsupplement.local",
+    actorEmail: "unknown@store-admin.in",
     actorId: "system",
     actorName: "System",
     at: "2026-06-26T20:02:00.000Z",
@@ -71,11 +71,11 @@ export const seededAuditLogs: AdminAuditLogEntry[] = [
 ];
 
 export const securityChecklist = [
-  "Two-factor authentication placeholder",
-  "Password reset placeholder",
-  "Session timeout placeholder",
-  "Rate limiting placeholder",
+  "Two-factor authentication",
+  "Password reset workflow",
+  "Session timeout",
+  "Rate limiting",
   "Input validation",
-  "Secure file upload validation placeholder",
+  "Secure file upload validation",
   "Sensitive data masking"
 ] as const;

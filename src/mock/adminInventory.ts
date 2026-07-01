@@ -166,7 +166,7 @@ export const advancedPurchaseOrders: AdvancedPurchaseOrder[] = [
 export const inventoryReports = [
   { description: "MRP and cost value by warehouse and batch.", name: "Inventory valuation" },
   { description: "Every stock movement with reason and admin actor.", name: "Stock movement report" },
-  { description: "Slow movers and aged stock placeholder.", name: "Dead stock report" },
+  { description: "Slow movers and aged stock.", name: "Dead stock report" },
   { description: "Near-expiry and expired quantity risk.", name: "Expiry risk report" },
   { description: "Supplier purchase and landed cost report.", name: "Supplier purchase report" }
 ] as const;

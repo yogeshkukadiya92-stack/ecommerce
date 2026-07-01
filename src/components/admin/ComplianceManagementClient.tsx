@@ -89,7 +89,7 @@ export function ComplianceManagementClient() {
               ...item,
               reviewerNote:
                 warningTerms.length > 0 && status === "approved"
-                  ? "Approval blocked placeholder: disease claim terms detected."
+                  ? "Approval blocked: disease claim terms detected."
                   : item.reviewerNote,
               status: warningTerms.length > 0 && status === "approved" ? "rejected" : status,
               warningTerms: [...new Set([...item.warningTerms, ...warningTerms])]
@@ -130,7 +130,7 @@ export function ComplianceManagementClient() {
     audit("admin.compliance.product.delist", "Product", product.productId, {
       newValue: { reason: record.reason, status: "delisted" }
     });
-    setToast(`${product.productName} delisted in mock state.`);
+    setToast(`${product.productName} delisted.`);
   }
 
   function createRecall(batchId: string, batchNumber: string, productId: string, productName: string, sku: string) {
@@ -176,7 +176,7 @@ export function ComplianceManagementClient() {
     audit("admin.compliance.recall.notify", "BatchRecall", recallId, {
       newValue: { customerNotificationStatus: "sent", status: "notified" }
     });
-    setToast("Customer notification placeholder marked sent.");
+    setToast("Customer notification marked sent.");
   }
 
   function audit(action: string, entityType: string, entityId?: string, metadata?: Record<string, unknown>) {
@@ -280,7 +280,7 @@ function ProductsTab({
             <div className="grid gap-1 text-xs font-bold text-slate" key="assets">
               <span>Label image: {record.labelImageUrl ? "Ready" : "Required"}</span>
               <span>Nutrition label: {record.nutritionLabelImageUrl ? "Ready" : "Required"}</span>
-              <span>COA/lab report: {record.labReportUrl ? "Ready" : "Upload placeholder"}</span>
+              <span>COA/lab report: {record.labReportUrl ? "Ready" : "Upload required"}</span>
               <span>Completeness: {completeness.percent}%</span>
             </div>,
             record.batchExpiryVisible ? "Visible" : "Missing",
@@ -333,7 +333,7 @@ function ClaimsTab({
         })}
       />
       <p className="mt-4 rounded-md bg-mist p-3 text-sm font-semibold text-slate">
-        Disease cure claim placeholder scans for words like cure, treat, diagnose, and prevent disease before approval.
+        Disease-claim scanning checks words like cure, treat, diagnose, and prevent disease before approval.
       </p>
     </AdminCard>
   );

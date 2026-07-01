@@ -40,7 +40,7 @@ export function writeAdminAuditLog(
     actorId: session?.adminId ?? "system",
     actorName: entry.actorName ?? session?.fullName ?? "System",
     at: new Date().toISOString(),
-    ipAddress: entry.ipAddress ?? "IP/device placeholder",
+    ipAddress: entry.ipAddress ?? "Current session",
     module: entry.module ?? moduleFromAction(entry.action),
     userAgent: entry.userAgent ?? getDevicePlaceholder()
   };
@@ -63,8 +63,8 @@ function moduleFromAction(action: string) {
 
 function getDevicePlaceholder() {
   if (typeof navigator === "undefined") {
-    return "Device placeholder";
+    return "Browser device";
   }
 
-  return navigator.userAgent.includes("Windows") ? "Windows browser placeholder" : "Browser device placeholder";
+  return navigator.userAgent.includes("Windows") ? "Windows browser" : "Browser device";
 }

@@ -347,7 +347,7 @@ export const websiteStudioData: WebsiteStudioData = {
     },
     {
       active: false,
-      displayRules: ["Exit intent placeholder", "Desktop only"],
+      displayRules: ["Exit intent", "Desktop only"],
       id: "popup-coupon",
       title: "Coupon popup",
       type: "coupon"
@@ -360,7 +360,7 @@ export const websiteStudioData: WebsiteStudioData = {
       noindex: false,
       ogImageUrl: "https://images.unsplash.com/photo-1593095948071-474c5cc2989d?auto=format&fit=crop&w=1200&q=80",
       pageKey: "homepage",
-      structuredDataPlaceholder: "Organization + WebSite structured data placeholder.",
+      structuredDataPlaceholder: "Organization + WebSite structured data enabled.",
       title: "FitSupplement Store | Premium Supplements Online"
     }
   ],

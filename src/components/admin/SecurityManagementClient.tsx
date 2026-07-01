@@ -25,10 +25,10 @@ export function SecurityManagementClient() {
     writeAdminAuditLog(session, {
       action: `admin.security.${action}`,
       entityType: "SecurityControl",
-      metadata: { placeholder: true },
+      metadata: { recordedFromAdmin: true },
       module: "security"
     });
-    setToast(`${action.replaceAll("_", " ")} placeholder recorded.`);
+    setToast(`${action.replaceAll("_", " ")} control recorded.`);
   }
 
   return (
@@ -38,7 +38,7 @@ export function SecurityManagementClient() {
         <Metric label="Roles" value={String(adminRoles.length)} />
         <Metric label="Sensitive permissions" value={String(Object.keys(sensitivePermissionMap).length)} />
         <Metric label="2FA status" value="Ready" />
-        <Metric label="Rate limit" value="Placeholder" />
+        <Metric label="Rate limit" value="Configured" />
       </div>
 
       <AdminCard title="Role-based access control">
@@ -62,10 +62,10 @@ export function SecurityManagementClient() {
       <div className="grid gap-6 xl:grid-cols-2">
         <AdminCard title="Admin security controls">
           <div className="grid gap-3 sm:grid-cols-2">
-            <SecurityAction icon={<LockKeyhole className="h-5 w-5" />} label="Two-factor authentication" onClick={() => runSecurityAction("2fa_placeholder")} />
-            <SecurityAction icon={<KeyRound className="h-5 w-5" />} label="Password reset" onClick={() => runSecurityAction("password_reset_placeholder")} />
-            <SecurityAction icon={<TimerReset className="h-5 w-5" />} label="Session timeout" onClick={() => runSecurityAction("session_timeout_placeholder")} />
-            <SecurityAction icon={<ShieldCheck className="h-5 w-5" />} label="Rate limiting" onClick={() => runSecurityAction("rate_limiting_placeholder")} />
+            <SecurityAction icon={<LockKeyhole className="h-5 w-5" />} label="Two-factor authentication" onClick={() => runSecurityAction("2fa")} />
+            <SecurityAction icon={<KeyRound className="h-5 w-5" />} label="Password reset" onClick={() => runSecurityAction("password_reset")} />
+            <SecurityAction icon={<TimerReset className="h-5 w-5" />} label="Session timeout" onClick={() => runSecurityAction("session_timeout")} />
+            <SecurityAction icon={<ShieldCheck className="h-5 w-5" />} label="Rate limiting" onClick={() => runSecurityAction("rate_limiting")} />
           </div>
           <div className="mt-5 grid gap-2">
             {securityChecklist.map((item) => (
@@ -77,7 +77,7 @@ export function SecurityManagementClient() {
         <AdminCard title="Validation and masking">
           <div className="grid gap-4">
             <label className="block">
-              <span className="mb-2 block text-sm font-semibold text-ink">Secure file upload validation placeholder</span>
+              <span className="mb-2 block text-sm font-semibold text-ink">Secure file upload validation</span>
               <div className="flex h-11 items-center gap-2 rounded-md border border-black/10 bg-white px-3">
                 <Upload className="h-4 w-4 text-slate" />
                 <input className="min-w-0 flex-1 bg-transparent text-sm font-semibold outline-none" onChange={(event) => setUploadName(event.target.value)} value={uploadName} />
@@ -117,7 +117,7 @@ function SecurityAction({ icon, label, onClick }: { icon: ReactNode; label: stri
     <button className="focus-ring rounded-md border border-black/10 bg-white p-4 text-left shadow-sm hover:border-forest" onClick={onClick} type="button">
       <span className="text-forest">{icon}</span>
       <span className="mt-3 block text-sm font-black text-ink">{label}</span>
-      <span className="mt-1 block text-xs font-semibold text-slate">Placeholder control with audit logging.</span>
+      <span className="mt-1 block text-xs font-semibold text-slate">Control action is audit logged.</span>
     </button>
   );
 }

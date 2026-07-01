@@ -89,10 +89,10 @@ export const promotionRules: PromotionRule[] = [
   },
   {
     active: true,
-    description: "Gift with purchase placeholder for shaker above Rs 3,999.",
+    description: "Gift with purchase for shaker above Rs 3,999.",
     discountType: "fixed_amount",
     id: "promo-gwp-shaker",
-    name: "Free shaker gift placeholder",
+    name: "Free shaker gift",
     performance: { conversionRate: 4.2, orders: 38, revenue: 152000 },
     startDate: "2026-06-15",
     type: "gift_with_purchase",
@@ -144,7 +144,7 @@ export const loyaltyPointEntries: LoyaltyPointEntry[] = [
   { at: "2026-06-18", customerId: "cust-aarav", id: "lp-002", note: "Verified review reward", points: 75, type: "review" },
   { at: "2026-06-22", customerId: "cust-aarav", id: "lp-003", note: "Referral signup reward", points: 150, type: "referral" },
   { at: "2026-06-25", customerId: "cust-aarav", id: "lp-004", note: "Checkout redemption", points: -100, type: "redeem" },
-  { at: "2026-06-28", customerId: "cust-aarav", id: "lp-005", note: "Admin adjustment placeholder", points: 105, type: "admin_adjustment" }
+  { at: "2026-06-28", customerId: "cust-aarav", id: "lp-005", note: "Admin adjustment", points: 105, type: "admin_adjustment" }
 ];
 
 export const referralRecords: ReferralRecord[] = [

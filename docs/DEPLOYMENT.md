@@ -11,17 +11,19 @@ Required:
 - `DATABASE_URL`
 - `AUTH_SECRET`
 - `AUTH_SESSION_COOKIE_NAME`
-- `ADMIN_MOCK_LOGIN_ENABLED=false`
+- `NEXT_PUBLIC_ADMIN_EMAIL`
+- `NEXT_PUBLIC_ADMIN_PASSWORD`
+- `NEXT_PUBLIC_ADMIN_NAME`
 - `ADMIN_SESSION_TIMEOUT_MINUTES`
 - `RATE_LIMIT_ENABLED=true`
 
-Payment placeholders to replace before launch:
+Payment provider configuration:
 
 - Razorpay: `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`, `RAZORPAY_TEST_MODE`
 - Stripe: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`
 - Cashfree: `CASHFREE_APP_ID`, `CASHFREE_SECRET_KEY`
 
-Shipping placeholders to replace before launch:
+Shipping provider configuration:
 
 - Shiprocket: `SHIPROCKET_EMAIL`, `SHIPROCKET_PASSWORD`
 - Delhivery: `DELHIVERY_API_TOKEN`
@@ -64,7 +66,7 @@ Monitoring and backup:
 npm run db:generate
 ```
 
-4. For the current mock-first build, use:
+4. For initial schema setup, use:
 
 ```bash
 npm run db:push
@@ -85,7 +87,7 @@ Local:
 npm run db:seed
 ```
 
-Current seed behavior reports available mock data. Enable write-based seeding only after confirming the production schema and destructive-reset policy.
+Seed only the data you want to keep in the target environment. Confirm the production schema and destructive-reset policy before running seed commands.
 
 ## Build and Start
 
@@ -98,23 +100,23 @@ npm run build
 npm run start
 ```
 
-## Local Admin Credentials
+## Admin Credentials
 
-Local mock admin only:
+Set the admin credentials in the deployment provider:
 
-- Email: `admin@fitsupplement.local`
-- Password: `admin123`
+- `NEXT_PUBLIC_ADMIN_EMAIL`
+- `NEXT_PUBLIC_ADMIN_PASSWORD`
+- `NEXT_PUBLIC_ADMIN_NAME`
 
 Production requirements:
 
-- Set `ADMIN_MOCK_LOGIN_ENABLED=false`.
-- Replace mock localStorage auth with a persistent auth provider.
+- Rotate all admin credentials after first deployment.
 - Rotate all secrets after deployment.
 - Enable 2FA before sharing admin access.
 
 ## Security Checklist
 
-- Disable mock admin login in production.
+- Do not commit admin credentials to the repository.
 - Use HTTPS-only cookies.
 - Set strong `AUTH_SECRET`.
 - Enable server-side RBAC middleware for protected admin routes.

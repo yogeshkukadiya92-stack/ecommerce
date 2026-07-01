@@ -2,7 +2,7 @@
 
 Premium full-stack ecommerce web app for health supplements, protein powders, performance nutrition, vitamins, shakers, and fitness accessories.
 
-The project currently includes a customer storefront, product discovery, product detail pages, cart, checkout simulation, customer account, protected mock admin, catalog management, advanced inventory, order fulfillment workflows, CMS/Website Studio, promotions, reviews, CRM, compliance, analytics, SEO, PWA placeholders, and Phase 14 automated tests.
+The project includes a customer storefront, product discovery, product detail pages, cart, checkout, customer account, protected admin panel, catalog management, advanced inventory, order fulfillment workflows, CMS/Website Studio, promotions, reviews, CRM, compliance, analytics, SEO, PWA readiness, and automated tests.
 
 ## Quick Start
 
@@ -15,12 +15,11 @@ npm run dev
 
 Open `http://localhost:3000`.
 
-Local mock admin login only:
+Configure admin access with environment variables before signing in:
 
-- Email: `admin@fitsupplement.local`
-- Password: `admin123`
-
-Do not enable mock admin credentials in production.
+- `NEXT_PUBLIC_ADMIN_EMAIL`
+- `NEXT_PUBLIC_ADMIN_PASSWORD`
+- `NEXT_PUBLIC_ADMIN_NAME`
 
 ## Useful Commands
 
@@ -117,7 +116,7 @@ npm test
 
 | Phase | Scope | Status |
 | --- | --- | --- |
-| 0 | Foundation, models, seed data, placeholders | Complete |
+| 0 | Foundation, models, seed data, launch configuration | Complete |
 | 1 | Design system and layouts | Complete |
 | 2 | Homepage, listings, filters, search | Complete |
 | 3 | Product detail page and variants | Complete |

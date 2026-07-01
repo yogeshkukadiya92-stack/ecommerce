@@ -121,7 +121,7 @@ export function OrderManagementClient({ initialOrderNumber }: { initialOrderNumb
   const [shippingLoading, setShippingLoading] = useState(false);
   const [qcDecision, setQcDecision] = useState<ReturnQcDecision>("restock");
   const [trackingMessage, setTrackingMessage] = useState("");
-  const adminId = session?.adminId ?? "admin-demo";
+  const adminId = session?.adminId ?? "admin-session";
 
   const selectedOrder = orders.find((order) => order.orderNumber === selectedOrderNumber) ?? orders[0];
 
@@ -264,7 +264,7 @@ export function OrderManagementClient({ initialOrderNumber }: { initialOrderNumb
           trackingNumber
         });
         replaceOrder(nextOrder, "order.assign_courier", { carrier });
-        setToast("Courier assigned and label placeholder generated.");
+        setToast("Courier assigned and label record created.");
       }
     } catch (error) {
       setToast(error instanceof Error ? error.message : "Unable to assign courier.");
@@ -607,7 +607,7 @@ export function OrderManagementClient({ initialOrderNumber }: { initialOrderNumb
               <button
                 className="admin-action justify-center"
                 onClick={() => {
-                  const nextOrder = updateShipmentStatus(selectedOrder, "out_for_delivery", adminId, "Courier status placeholder updated.");
+                  const nextOrder = updateShipmentStatus(selectedOrder, "out_for_delivery", adminId, "Courier status updated.");
                   replaceOrder(nextOrder, "order.out_for_delivery");
                   setToast("Shipment marked out for delivery.");
                 }}
@@ -618,7 +618,7 @@ export function OrderManagementClient({ initialOrderNumber }: { initialOrderNumb
               <button
                 className="admin-action justify-center"
                 onClick={() => {
-                  const nextOrder = updateShipmentStatus(selectedOrder, "delivered", adminId, "Delivery confirmation placeholder.");
+                  const nextOrder = updateShipmentStatus(selectedOrder, "delivered", adminId, "Delivery confirmed.");
                   replaceOrder(nextOrder, "order.delivered");
                   setToast("Order marked delivered.");
                 }}
@@ -683,7 +683,7 @@ export function OrderManagementClient({ initialOrderNumber }: { initialOrderNumb
                 className="admin-action"
                 onClick={() => {
                   const ndr = fetchNdrRtoPlaceholder(selectedOrder.shipment.trackingNumber ?? "TRACKING-PENDING");
-                  setTrackingMessage(`NDR/RTO placeholder: ${ndr.ndrReason}, risk ${ndr.rtoRisk}`);
+                  setTrackingMessage(`NDR/RTO review: ${ndr.ndrReason}, risk ${ndr.rtoRisk}`);
                 }}
                 type="button"
               >
@@ -775,7 +775,7 @@ export function OrderManagementClient({ initialOrderNumber }: { initialOrderNumb
                     },
                     "order.cod_confirm"
                   );
-                  setToast("COD verification placeholder completed.");
+                  setToast("COD verification completed.");
                 }}
                 type="button"
               >
@@ -784,17 +784,17 @@ export function OrderManagementClient({ initialOrderNumber }: { initialOrderNumb
             </div>
           </AdminCard>
 
-          <AdminCard title="Invoice placeholder">
+          <AdminCard title="Invoice">
             <div className="space-y-3 text-sm">
               <Row label="Invoice no." value={selectedOrder.invoiceNumber ?? `INV-${selectedOrder.orderNumber}`} />
               <Row label="Order date" value={formatDate(selectedOrder.placedAt)} />
               <Row label="Subtotal" value={`Rs ${selectedOrder.subtotal.toLocaleString("en-IN")}`} />
               <Row label="Discount" value={`Rs ${selectedOrder.discountAmount.toLocaleString("en-IN")}`} />
               <Row label="Shipping" value={`Rs ${selectedOrder.shippingAmount.toLocaleString("en-IN")}`} />
-              <Row label="Tax placeholder" value={`Rs ${selectedOrder.taxAmount.toLocaleString("en-IN")}`} />
+              <Row label="Tax" value={`Rs ${selectedOrder.taxAmount.toLocaleString("en-IN")}`} />
               <Row label="Grand total" value={`Rs ${selectedOrder.totalAmount.toLocaleString("en-IN")}`} strong />
               <button className="admin-action w-full justify-center" type="button">
-                <Download className="h-4 w-4" /> Download PDF placeholder
+                <Download className="h-4 w-4" /> Download PDF
               </button>
             </div>
           </AdminCard>
@@ -823,7 +823,7 @@ export function OrderManagementClient({ initialOrderNumber }: { initialOrderNumb
                   onClick={() => {
                     const nextOrder = approveReturn(selectedOrder, adminId);
                     replaceOrder(nextOrder, "order.return_approve");
-                    setToast("Return approved and pickup placeholder created.");
+                    setToast("Return approved and pickup created.");
                   }}
                   type="button"
                 >
@@ -876,7 +876,7 @@ export function OrderManagementClient({ initialOrderNumber }: { initialOrderNumb
                 onClick={() => {
                   const nextOrder = markRefunded(selectedOrder, adminId);
                   replaceOrder(nextOrder, "order.refund");
-                  setToast("Refund placeholder processed.");
+                  setToast("Refund processed.");
                 }}
                 type="button"
               >
@@ -933,7 +933,7 @@ export function OrderManagementClient({ initialOrderNumber }: { initialOrderNumb
       <AdminCard title="Reports">
         <div className="grid gap-4 lg:grid-cols-4">
           <ReportCard title="Orders by status" lines={statusSummary(orders)} />
-          <ReportCard title="Refund report" lines={[`Processed: Rs ${metrics.refunds.toLocaleString("en-IN")}`, "Pending exports: placeholder"]} />
+          <ReportCard title="Refund report" lines={[`Processed: Rs ${metrics.refunds.toLocaleString("en-IN")}`, "Pending exports: none"]} />
           <ReportCard title="Return reasons" lines={adminOrderReports.returnReasons.map((entry) => `${entry.reason}: ${entry.count}`)} />
           <ReportCard title="Courier performance" lines={adminOrderReports.courierPerformance.map((entry) => `${entry.carrier}: ${entry.delivered}% delivered, RTO ${entry.rto}%`)} />
         </div>

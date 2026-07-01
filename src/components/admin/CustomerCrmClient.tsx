@@ -51,7 +51,7 @@ export function CustomerCrmClient() {
       metadata: { note: noteDraft }
     });
     setNoteDraft("");
-    setToast("Support note saved to audit log placeholder.");
+    setToast("Support note saved to audit log.");
   }
 
   function exportCustomers() {
@@ -60,7 +60,7 @@ export function CustomerCrmClient() {
       entityType: "Customer",
       metadata: { count: filteredRows.length, segmentFilter }
     });
-    setToast("Customer export placeholder queued.");
+    setToast("Customer export queued.");
   }
 
   return (
@@ -139,7 +139,7 @@ export function CustomerCrmClient() {
           <ProfileBlock title="Wishlist" icon={<Users className="h-4 w-4" />}>
             {wishlistProducts.length > 0 ? wishlistProducts.map((product) => (
               <p className="rounded-md bg-mist p-3 text-sm font-bold text-ink" key={product.id}>{product.name}</p>
-            )) : <EmptyLine text="Wishlist placeholder is empty." />}
+            )) : <EmptyLine text="Wishlist is empty." />}
           </ProfileBlock>
 
           <ProfileBlock title="Reviews" icon={<FileText className="h-4 w-4" />}>

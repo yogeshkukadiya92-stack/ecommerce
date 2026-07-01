@@ -93,7 +93,7 @@ export function ProductDetailClient({
         alt: `${product.name} video`,
         label: "Video",
         type: "video" as const,
-        value: detail.videoUrl?.includes("placeholder") ? "Product routine guide" : detail.videoUrl ?? "Product routine guide"
+        value: detail.videoUrl ?? "Product routine guide"
       }
     ],
     [detail.videoUrl, product.images, product.name]

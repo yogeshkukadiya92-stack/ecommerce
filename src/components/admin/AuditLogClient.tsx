@@ -89,8 +89,8 @@ export function AuditLogClient() {
             <CodeValue key="old" value={log.oldValue} />,
             <CodeValue key="new" value={log.newValue ?? log.metadata} />,
             <div className="text-xs font-semibold text-slate" key="device">
-              <p>{log.ipAddress ?? "IP placeholder"}</p>
-              <p className="mt-1">{log.userAgent ?? "Device placeholder"}</p>
+              <p>{log.ipAddress ?? "Current session"}</p>
+              <p className="mt-1">{log.userAgent ?? "Browser device"}</p>
             </div>
           ])}
         />

@@ -177,7 +177,7 @@ function PromotionPanel() {
           <Badge key="status" tone={promotion.active ? "success" : "neutral"}>{promotion.active ? "Active" : "Inactive"}</Badge>
         ])}
       />
-      <p className="mt-4 text-sm text-slate">Promotion types covered: product, category, brand, flash sale, Buy X Get Y, bundle discount, gift placeholder, and free shipping rule.</p>
+      <p className="mt-4 text-sm text-slate">Promotion types covered: product, category, brand, flash sale, Buy X Get Y, bundle discount, gift with purchase, and free shipping rule.</p>
     </AdminCard>
   );
 }
@@ -192,7 +192,7 @@ function BundlePanel() {
           bundle.productIds.join(", "),
           formatRs(bundle.bundlePrice),
           formatRs(bundle.discountAmount),
-          "Upload/change placeholder",
+          "Upload or change image",
           `/bundles/${bundle.slug}`
         ])}
       />
@@ -225,7 +225,7 @@ function SubscriptionPanel({
           </div>
         ])}
       />
-      <p className="mt-4 text-sm text-slate">Customer controls supported in account UI: pause, resume, skip next delivery, change date/address/flavor, and cancel placeholders.</p>
+      <p className="mt-4 text-sm text-slate">Customer controls supported in account UI: pause, resume, skip next delivery, change date/address/flavor, and cancel.</p>
     </AdminCard>
   );
 }
@@ -237,8 +237,8 @@ function LoyaltyPanel() {
         columns={["Date", "Type", "Points", "Note"]}
         rows={loyaltyPointEntries.map((entry) => [entry.at, label(entry.type), entry.points, entry.note])}
       />
-      <button className="admin-action mt-4" type="button"><Save className="h-4 w-4" /> Admin points adjustment placeholder</button>
-      <p className="mt-3 text-sm text-slate">Rules: earn on purchase, review, and referral; redeem at checkout; expiry and VIP segment placeholders are modeled.</p>
+      <button className="admin-action mt-4" type="button"><Save className="h-4 w-4" /> Admin points adjustment</button>
+      <p className="mt-3 text-sm text-slate">Rules: earn on purchase, review, and referral; redeem at checkout; expiry and VIP segments are modeled.</p>
     </AdminCard>
   );
 }
@@ -263,7 +263,7 @@ function ReferralPanel() {
 function ReportsPanel() {
   return (
     <div className="grid gap-4 lg:grid-cols-3">
-      <AdminCard title="Coupon performance"><p className="text-sm text-slate">Usage, revenue, per-customer limits, and abuse flags placeholder.</p></AdminCard>
+      <AdminCard title="Coupon performance"><p className="text-sm text-slate">Usage, revenue, per-customer limits, and abuse flags.</p></AdminCard>
       <AdminCard title="Promotion performance"><p className="text-sm text-slate">Orders, conversion rate, revenue, and flash sale timer performance.</p></AdminCard>
       <AdminCard title="Referral report"><p className="text-sm text-slate">Invites, signups, first orders, rewards pending, and reward cost.</p></AdminCard>
     </div>

@@ -119,36 +119,21 @@ export const adminRoles: AdminRole[] = [
   }
 ];
 
-const mockAdmins = [
-  {
-    adminId: "admin-yogesh-owner",
-    email: "Yogeshkukadiya92@gmail.com",
-    fullName: "Yogesh Kukadiya",
-    password: "TCH123",
-    roles: [adminRoles[0]]
-  },
-  {
-    adminId: "admin-yogesh",
-    email: "admin@fitsupplement.local",
-    fullName: "FitSupplement Admin",
-    password: "admin123",
-    roles: [adminRoles[0]]
-  },
-  {
-    adminId: "admin-catalog",
-    email: "catalog@fitsupplement.local",
-    fullName: "Catalog Manager",
-    password: "catalog123",
-    roles: [adminRoles.find((role) => role.id === "role-catalog-manager") ?? adminRoles[0]]
-  },
-  {
-    adminId: "admin-auditor",
-    email: "auditor@fitsupplement.local",
-    fullName: "Read-only Auditor",
-    password: "auditor123",
-    roles: [adminRoles[adminRoles.length - 1]]
-  }
-];
+const configuredAdminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL?.trim() ?? "";
+const configuredAdminPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD ?? "";
+const configuredAdminName = process.env.NEXT_PUBLIC_ADMIN_NAME?.trim() || "Store Owner";
+
+const configuredAdmins = configuredAdminEmail && configuredAdminPassword
+  ? [
+      {
+        adminId: "admin-owner",
+        email: configuredAdminEmail,
+        fullName: configuredAdminName,
+        password: configuredAdminPassword,
+        roles: [adminRoles[0]]
+      }
+    ]
+  : [];
 
 function canUseStorage() {
   return typeof window !== "undefined" && Boolean(window.localStorage);
@@ -181,9 +166,9 @@ export function hasAdminPermission(session: AdminSession | null, permission: Adm
 }
 
 export function loginAdmin(email: string, password: string) {
-  const admin = mockAdmins.find((candidate) => candidate.email.toLowerCase() === email.trim().toLowerCase());
+  const admin = configuredAdmins.find((candidate) => candidate.email.toLowerCase() === email.trim().toLowerCase());
 
-  if (!admin || admin.password !== password) {
+  if (configuredAdmins.length === 0 || !admin || admin.password !== password) {
     writeAdminAuditLog(null, {
       action: "admin.login.failed",
       actorName: email.trim() || "Unknown admin",
@@ -197,7 +182,7 @@ export function loginAdmin(email: string, password: string) {
     });
 
     return {
-      message: "Invalid email or password.",
+      message: configuredAdmins.length === 0 ? "Admin login is not configured." : "Invalid email or password.",
       ok: false as const
     };
   }

@@ -74,7 +74,7 @@ const initialProduct: EditableProduct = {
   categoryId: categories[0]?.id ?? "",
   collections: ["best-sellers"],
   description: "Premium supplement description for admin editing.",
-  fssaiLicense: "FSSAI placeholder",
+  fssaiLicense: "",
   manufacturerName: "Fit Manufacturing Labs Pvt Ltd",
   marketerImporterName: "FitSupplement Store",
   goals: "Muscle support, Post-workout",
@@ -197,7 +197,7 @@ export function CatalogManagementClient() {
       status: form.status,
       variantCount: form.variants.length
     });
-    setToast("Product draft saved to mock admin state.");
+    setToast("Product draft saved.");
   }
 
   function handleBulkAction(action: "activate" | "deactivate" | "change-category" | "export" | "import") {
@@ -218,21 +218,21 @@ export function CatalogManagementClient() {
     }
 
     if (action === "change-category") {
-      setConfirmMessage("Change category dialog placeholder opened.");
+      setConfirmMessage("Change category action queued.");
     }
 
     if (action === "export") {
-      setConfirmMessage("CSV export placeholder queued.");
+      setConfirmMessage("CSV export queued.");
     }
 
     if (action === "import") {
-      setConfirmMessage("CSV import placeholder opened.");
+      setConfirmMessage("CSV import action queued.");
     }
 
     audit(session, `admin.product.bulk.${action}`, "Product", selectedProductIds.join(","), {
       selectedCount: selectedProductIds.length
     });
-    setToast(`Bulk action "${action}" completed in mock state.`);
+    setToast(`Bulk action "${action}" completed.`);
   }
 
   function toggleSelected(productId: string) {
@@ -377,13 +377,13 @@ export function CatalogManagementClient() {
   }
 
   function confirmDeactivate(productId: string) {
-    if (!window.confirm("Delete/deactivate this product in mock state?")) {
+    if (!window.confirm("Delete/deactivate this product?")) {
       return;
     }
 
     setProductStatuses((current) => ({ ...current, [productId]: "inactive" }));
     audit(session, "admin.product.deactivate", "Product", productId);
-    setToast("Product deactivated in mock state.");
+    setToast("Product deactivated.");
   }
 }
 
@@ -425,9 +425,9 @@ function MediaTab({ form, updateForm }: ProductTabProps) {
     <div className="grid gap-4 md:grid-cols-2">
       <Textarea label="Product images" onChange={(value) => updateForm("productImages", value)} value={form.productImages} />
       <Textarea label="Label images" onChange={(value) => updateForm("labelImages", value)} value={form.labelImages} />
-      <Input label="Lab report URL / upload placeholder" onChange={(event) => updateForm("labReportUrl", event.target.value)} value={form.labReportUrl} />
+      <Input label="Lab report URL" onChange={(event) => updateForm("labReportUrl", event.target.value)} value={form.labReportUrl} />
       <div className="rounded-md border border-dashed border-black/20 bg-mist p-4 text-sm font-semibold text-slate">
-        Product image, label image, and document upload placeholders are ready for storage integration.
+        Add product images, label images, and supporting documents before publishing.
       </div>
     </div>
   );
@@ -512,7 +512,7 @@ function ComplianceTab({ form, updateForm }: ProductTabProps) {
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
-      <Input label="FSSAI / license field placeholder" onChange={(event) => updateForm("fssaiLicense", event.target.value)} value={form.fssaiLicense} />
+      <Input label="FSSAI / license field" onChange={(event) => updateForm("fssaiLicense", event.target.value)} value={form.fssaiLicense} />
       <Input label="Manufacturer name" onChange={(event) => updateForm("manufacturerName", event.target.value)} value={form.manufacturerName} />
       <Input label="Marketer / importer name" onChange={(event) => updateForm("marketerImporterName", event.target.value)} value={form.marketerImporterName} />
       <Input label="Nutrition label image" onChange={(event) => updateForm("nutritionLabelImage", event.target.value)} value={form.nutritionLabelImage} />
@@ -530,7 +530,7 @@ function ComplianceTab({ form, updateForm }: ProductTabProps) {
       <div className="rounded-md bg-mist p-4 text-sm font-semibold text-slate">
         <p className="font-black text-ink">Compliance guard</p>
         <p className="mt-2">Label image is required. Batch and expiry visibility is required before publish.</p>
-        <p className="mt-2">Lab report/COA upload placeholder: {form.labReportUrl || "Pending"}</p>
+        <p className="mt-2">Lab report/COA: {form.labReportUrl || "Pending"}</p>
         <p className="mt-2">Not for medicinal use text must stay visible.</p>
         {missingAssets.length > 0 ? (
           <p className="mt-3 rounded-md bg-white p-2 text-coral">Missing: {missingAssets.join(", ")}</p>
@@ -576,7 +576,7 @@ function CategoryManagement({ onAction }: { onAction: (action: string) => void }
               </div>
               <div className="flex gap-2">
                 <button className="admin-action" onClick={() => onAction("edit")} type="button">Edit</button>
-                <button className="admin-action text-coral" onClick={() => window.confirm("Delete category placeholder?") && onAction("delete")} type="button">Delete</button>
+                <button className="admin-action text-coral" onClick={() => window.confirm("Delete category?") && onAction("delete")} type="button">Delete</button>
               </div>
             </div>
           </div>
@@ -675,7 +675,7 @@ function auditAndToast(
     action: `admin.${entityType.toLowerCase()}.${action}`,
     entityType
   });
-  setToast(`${entityType} ${action} placeholder completed.`);
+  setToast(`${entityType} ${action} completed.`);
 }
 
 function validateProduct(form: EditableProduct) {

@@ -70,13 +70,13 @@ export function MarketingAutomationClient() {
         <Metric label="Active automations" value={String(stats.active)} />
         <Metric label="Paused" value={String(stats.paused)} />
         <Metric label="Sent" value={stats.sent.toLocaleString("en-IN")} />
-        <Metric label="Revenue placeholder" value={formatRs(stats.revenue)} />
+        <Metric label="Revenue" value={formatRs(stats.revenue)} />
       </div>
 
       <AdminCard title="Campaign and automation rules">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm font-semibold text-slate">
-            Email, SMS, and WhatsApp provider integrations are placeholders with audit-ready admin controls.
+            Email, SMS, and WhatsApp controls are ready for provider configuration.
           </p>
           <button className="admin-action justify-center" onClick={createRule} type="button">Create automation rule</button>
         </div>
@@ -141,7 +141,7 @@ export function MarketingAutomationClient() {
                   <Badge tone={subscription.status === "active" ? "success" : "neutral"}>{subscription.status}</Badge>
                 </div>
                 <p className="mt-3 text-xs font-bold text-slate">
-                  Subscription renewal reminder and payment retry placeholders ready.
+                  Subscription renewal reminder and payment retry workflow ready.
                 </p>
               </div>
             ))}

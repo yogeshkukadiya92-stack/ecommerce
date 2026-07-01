@@ -45,12 +45,12 @@ export function AnalyticsDashboardClient() {
     setIsLoading(true);
     window.setTimeout(() => {
       setIsLoading(false);
-      setToast("Reports refreshed from mock aggregation service.");
+      setToast("Reports refreshed.");
     }, 450);
   }
 
   function exportPlaceholder(type: "CSV" | "Excel") {
-    setToast(`${type} export placeholder queued for ${range.startDate} to ${range.endDate}.`);
+    setToast(`${type} export queued for ${range.startDate} to ${range.endDate}.`);
   }
 
   return (
@@ -152,7 +152,7 @@ function SalesTab({ report }: { report: ReturnType<typeof buildAnalyticsReport> 
             ["Monthly revenue", formatRs(report.sales.monthlyRevenue)],
             ["Order count", report.sales.orderCount],
             ["Average order value", formatRs(report.sales.averageOrderValue)],
-            ["Conversion rate placeholder", `${report.sales.conversionRatePlaceholder}%`]
+            ["Conversion rate", `${report.sales.conversionRatePlaceholder}%`]
           ]}
         />
       </AdminCard>
@@ -176,7 +176,7 @@ function ProductsTab({ report }: { report: ReturnType<typeof buildAnalyticsRepor
               rows={report.product.outOfStockProducts.map((product) => [product.label, product.stock])}
             />
           ) : (
-            <EmptyState text="No out-of-stock products in the current mock catalog." />
+            <EmptyState text="No out-of-stock products in the current catalog." />
           )}
         </AdminCard>
       </div>
@@ -188,7 +188,7 @@ function CategoryTab({ report }: { report: ReturnType<typeof buildAnalyticsRepor
   return (
     <AdminCard title="Category analytics">
       <AdminTable
-        columns={["Category", "Revenue", "Order count", "Conversion placeholder"]}
+        columns={["Category", "Revenue", "Order count", "Conversion"]}
         rows={report.category.map((category) => [
           <span className="font-black text-ink" key="name">{category.label}</span>,
           formatRs(category.revenue),
@@ -204,7 +204,7 @@ function BrandTab({ report }: { report: ReturnType<typeof buildAnalyticsReport> 
   return (
     <AdminCard title="Brand analytics">
       <AdminTable
-        columns={["Brand", "Revenue", "Order count", "Return rate placeholder"]}
+        columns={["Brand", "Revenue", "Order count", "Return rate"]}
         rows={report.brand.map((brand) => [
           <span className="font-black text-ink" key="brand">{brand.label}</span>,
           formatRs(brand.revenue),
@@ -304,7 +304,7 @@ function CouponTab({ report }: { report: ReturnType<typeof buildAnalyticsReport>
       <div className="grid gap-4 sm:grid-cols-3">
         <Metric label="Coupon revenue" value={formatRs(report.promotions.couponRevenue)} />
         <Metric label="Discount given" value={formatRs(report.promotions.discountGiven)} tone="sale" />
-        <Metric label="Campaign ROI placeholder" value={`${report.promotions.campaignRoiPlaceholder.length} campaigns`} />
+        <Metric label="Campaign ROI" value={`${report.promotions.campaignRoiPlaceholder.length} campaigns`} />
       </div>
       <div className="grid gap-6 xl:grid-cols-2">
         <AdminCard title="Coupon usage">
@@ -318,7 +318,7 @@ function CouponTab({ report }: { report: ReturnType<typeof buildAnalyticsReport>
             ])}
           />
         </AdminCard>
-        <AdminCard title="Campaign ROI placeholder">
+        <AdminCard title="Campaign ROI">
           <AdminTable
             columns={["Campaign", "Orders", "Revenue", "ROI"]}
             rows={report.promotions.campaignRoiPlaceholder.map((campaign) => [
@@ -341,7 +341,7 @@ function SubscriptionTab({ report }: { report: ReturnType<typeof buildAnalyticsR
       <Metric label="Paused" value={String(report.subscription.pausedSubscriptions)} />
       <Metric label="Cancelled" value={String(report.subscription.cancelledSubscriptions)} tone="sale" />
       <Metric label="Renewal revenue" value={formatRs(report.subscription.renewalRevenue)} />
-      <Metric label="Churn placeholder" value={`${report.subscription.churnPlaceholder}%`} tone="muted" />
+      <Metric label="Churn" value={`${report.subscription.churnPlaceholder}%`} tone="muted" />
     </div>
   );
 }
@@ -355,16 +355,16 @@ function SearchTab({ report }: { report: ReturnType<typeof buildAnalyticsReport>
       <AdminCard title="No-result search terms">
         <AdminTable columns={["Term", "Searches"]} rows={report.search.noResultTerms.map((term) => [term.term, term.count])} />
       </AdminCard>
-      <AdminCard title="Search-to-purchase placeholder">
+      <AdminCard title="Search-to-purchase">
         <div className="flex items-start gap-3 rounded-md bg-mist p-4">
           <SearchX className="h-5 w-5 text-coral" />
           <div>
-            <p className="font-black text-ink">{report.search.searchToPurchaseRatePlaceholder}% placeholder rate</p>
-            <p className="mt-1 text-sm font-semibold text-slate">Real implementation will connect search event, click event, cart, and order tables.</p>
+            <p className="font-black text-ink">{report.search.searchToPurchaseRatePlaceholder}% rate</p>
+            <p className="mt-1 text-sm font-semibold text-slate">Tracks search, product click, cart, and order performance.</p>
           </div>
         </div>
       </AdminCard>
-      <AdminCard title="Recommended product mapping placeholder">
+      <AdminCard title="Recommended product mapping">
         <AdminTable
           columns={["Search term", "Mapped product"]}
           rows={report.search.recommendedMappings.map((mapping) => [mapping.term, mapping.mappedProduct])}

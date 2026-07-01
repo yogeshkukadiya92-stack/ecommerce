@@ -6,7 +6,7 @@ export default function SettingsAdminPage() {
     <AdminShell title="Settings">
       <AdminModulePlaceholder
         title="Platform settings"
-        description="Settings are prepared for RBAC, payment providers, courier providers, storage, search, SEO, and compliance controls."
+        description="Manage RBAC, payment providers, courier providers, storage, search, SEO, and compliance controls."
         modules={["Roles", "Permissions", "Payments", "Shipping", "Storage", "Search", "Compliance"]}
       />
     </AdminShell>

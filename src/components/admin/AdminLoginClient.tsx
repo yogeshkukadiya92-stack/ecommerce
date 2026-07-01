@@ -37,7 +37,7 @@ export function AdminLoginClient() {
           <p className="mt-5 text-xs font-extrabold uppercase tracking-[0.12em] text-forest">Admin authentication</p>
           <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-ink">Login to control catalog</h1>
           <p className="mt-3 text-sm leading-6 text-slate">
-            Admin access uses a local session, role list, permission set, and audit logging helper for this environment.
+            Sign in with the store owner credentials configured for this deployment.
           </p>
           <form autoComplete="off" className="mt-6 grid gap-4" onSubmit={handleLogin}>
             <Input autoComplete="off" label="Admin email" onChange={(event) => setEmail(event.target.value)} type="email" value={email} />
