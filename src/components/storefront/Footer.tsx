@@ -25,14 +25,20 @@ const footerGroups = [
     title: "Company",
     links: [
       { href: "/products", label: "All Products" },
-      { href: "/search", label: "Search" },
-      { href: "/admin", label: "Admin" }
+      { href: "/search", label: "Search" }
     ]
   }
 ];
 
 export function Footer({ config }: { config?: FooterCmsConfig }) {
-  const footerColumns = config?.footerColumns.filter((column) => column.enabled) ?? footerGroups;
+  const footerColumns = (config?.footerColumns.filter((column) => column.enabled) ?? footerGroups).map((column) => ({
+    ...column,
+    links: column.links.filter((link) => {
+      const href = "url" in link ? link.url : link.href;
+
+      return href !== "/admin" && link.label.toLowerCase() !== "admin";
+    })
+  }));
 
   return (
     <footer className="border-t border-black/10 bg-ink text-white">

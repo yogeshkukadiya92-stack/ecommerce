@@ -9,8 +9,8 @@ import { Input } from "@/components/ui/Input";
 
 export function AdminLoginClient() {
   const router = useRouter();
-  const [email, setEmail] = useState("Yogeshkukadiya92@gmail.com");
-  const [password, setPassword] = useState("TCH123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -39,9 +39,9 @@ export function AdminLoginClient() {
           <p className="mt-3 text-sm leading-6 text-slate">
             Admin access uses a local session, role list, permission set, and audit logging helper for this environment.
           </p>
-          <form className="mt-6 grid gap-4" onSubmit={handleLogin}>
-            <Input label="Admin email" onChange={(event) => setEmail(event.target.value)} type="email" value={email} />
-            <Input label="Password" onChange={(event) => setPassword(event.target.value)} type="password" value={password} />
+          <form autoComplete="off" className="mt-6 grid gap-4" onSubmit={handleLogin}>
+            <Input autoComplete="off" label="Admin email" onChange={(event) => setEmail(event.target.value)} type="email" value={email} />
+            <Input autoComplete="new-password" label="Password" onChange={(event) => setPassword(event.target.value)} type="password" value={password} />
             {error ? <p className="rounded-md bg-coral/10 p-3 text-sm font-bold text-coral">{error}</p> : null}
             {message ? <p className="rounded-md bg-mint p-3 text-sm font-bold text-forest">{message}</p> : null}
             <button className="focus-ring h-12 rounded-md bg-ink text-sm font-semibold text-white" type="submit">

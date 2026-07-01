@@ -197,7 +197,7 @@ export function loginAdmin(email: string, password: string) {
     });
 
     return {
-      message: "Use Yogeshkukadiya92@gmail.com / TCH123 or admin@fitsupplement.local / admin123 for the mock admin login.",
+      message: "Invalid email or password.",
       ok: false as const
     };
   }

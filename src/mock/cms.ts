@@ -82,8 +82,7 @@ export const websiteStudioData: WebsiteStudioData = {
         id: "footer-company",
         links: [
           { id: "footer-about", label: "About Us", url: "/pages/about-us" },
-          { id: "footer-contact", label: "Contact Us", url: "/pages/contact-us" },
-          { id: "footer-admin", label: "Admin", url: "/admin" }
+          { id: "footer-contact", label: "Contact Us", url: "/pages/contact-us" }
         ],
         title: "Company"
       }
