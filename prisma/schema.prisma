@@ -200,6 +200,21 @@ model WhatsAppLead {
   updatedAt        DateTime @updatedAt
 }
 
+model AttendanceEntry {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  attendanceDate String
+  name           String
+  phone          String
+  groupName      String?
+  note           String?
+  source         String   @default("attendance-page")
+  checkedInAt    DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([attendanceDate, phone])
+}
+
 model Address {
   id                String   @id @default(auto()) @map("_id") @db.ObjectId
   customerId        String   @db.ObjectId

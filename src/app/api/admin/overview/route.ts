@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db/prisma";
 
 export async function GET() {
   const [
+    attendance,
     brands,
     categories,
     customers,
@@ -12,6 +13,7 @@ export async function GET() {
     variants,
     warehouses
   ] = await Promise.all([
+    prisma.attendanceEntry.count(),
     prisma.brand.count(),
     prisma.category.count(),
     prisma.customer.count(),
@@ -26,6 +28,7 @@ export async function GET() {
     data: {
       brands,
       categories,
+      attendance,
       customers,
       leads,
       orders,
