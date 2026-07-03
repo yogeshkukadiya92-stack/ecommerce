@@ -9,7 +9,21 @@ The project includes a customer storefront, product discovery, product detail pa
 ```bash
 npm install
 cp .env.example .env
+```
+
+Set `DATABASE_URL` in `.env` to your MongoDB database. For a local database, use:
+
+```env
+DATABASE_URL="mongodb://localhost:27017/fitsupplement_store"
+```
+
+If Docker is installed, start the included MongoDB service:
+
+```bash
+docker compose up -d
+npm run db:push
 npm run db:generate
+npm run db:seed
 npm run dev
 ```
 
@@ -33,6 +47,7 @@ npm run start
 npm run db:generate
 npm run db:push
 npm run db:seed
+docker compose up -d
 ```
 
 ## Folder Structure
