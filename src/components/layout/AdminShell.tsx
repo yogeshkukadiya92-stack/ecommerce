@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import { Bell, ExternalLink, LogOut, Menu, Search, ShieldCheck } from "lucide-react";
 import { ADMIN_NAVIGATION } from "@/constants/navigation";
 import { logoutAdmin } from "@/lib/admin/adminAuth";
+import { liveDataModeLabel } from "@/lib/admin/liveData";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { Skeleton } from "@/components/ui/Skeleton";
 
@@ -53,19 +54,21 @@ export function AdminShell({
   return (
     <div className="min-h-screen bg-mist">
       <div className="grid min-h-screen w-full lg:grid-cols-[280px_1fr]">
-        <aside className="hidden border-r border-black/10 bg-ink p-5 text-white lg:block">
-          <Link href="/admin" className="text-lg font-extrabold tracking-tight">
-            FitSupplement Admin
+        <aside className="hidden border-r border-white/10 bg-ink p-5 text-white lg:block">
+          <Link href="/admin" className="flex items-center gap-3 text-lg font-extrabold tracking-tight">
+            <span className="grid h-10 w-10 place-items-center rounded-md bg-lime text-sm font-black text-ink">FS</span>
+            <span>FitSupplement</span>
           </Link>
-          <div className="mt-5 rounded-card border border-white/10 bg-white/10 p-3 text-xs leading-5 text-white/70">
-            {session.roles.map((role) => role.name).join(", ")} with {session.permissions.length} permissions.
+          <div className="mt-5 rounded-card border border-white/10 bg-white/10 p-4 text-xs leading-5 text-white/70">
+            <p className="font-black uppercase tracking-[0.1em] text-lime">{liveDataModeLabel()}</p>
+            <p className="mt-2">{session.roles.map((role) => role.name).join(", ")} with {session.permissions.length} permissions.</p>
           </div>
           <nav className="mt-6 grid gap-1">
             {ADMIN_NAVIGATION.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`rounded-md px-3 py-2 text-sm font-bold ${
+                className={`rounded-md px-3 py-2.5 text-sm font-bold transition ${
                   pathname === item.href ? "bg-white text-ink shadow-sm" : "text-white/70 hover:bg-white/10 hover:text-white"
                 }`}
               >
@@ -88,6 +91,9 @@ export function AdminShell({
                 <span className="text-sm font-medium text-slate">Search orders, SKUs, customers</span>
               </div>
               <div className="flex items-center gap-2">
+                <span className="hidden rounded-md border border-forest/10 bg-mint px-3 py-2 text-xs font-black text-forest md:inline-flex">
+                  {liveDataModeLabel()}
+                </span>
                 <span className="hidden items-center gap-2 rounded-md bg-mint px-3 py-2 text-xs font-black text-forest sm:flex">
                   <ShieldCheck className="h-4 w-4" /> {session.fullName}
                 </span>
@@ -101,7 +107,7 @@ export function AdminShell({
                   <ExternalLink className="h-4 w-4" />
                   <span className="hidden sm:inline">Website</span>
                 </Link>
-                <button className="focus-ring rounded-md border border-black/10 bg-white p-2 text-slate" type="button">
+                <button className="focus-ring rounded-md border border-black/10 bg-white p-2 text-slate transition hover:text-ink" type="button">
                   <Bell className="h-4 w-4" />
                 </button>
                 <button className="focus-ring inline-flex items-center gap-2 rounded-md bg-ink px-3 py-2 text-xs font-black text-white" onClick={handleLogout} type="button">
@@ -117,7 +123,7 @@ export function AdminShell({
               ))}
             </nav>
           </header>
-          <main className="px-4 py-6 sm:px-6 lg:px-8">
+          <main className="mx-auto w-full max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8">
             <div className="mb-6 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.14em] text-forest">

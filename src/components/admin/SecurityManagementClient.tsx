@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { securityChecklist } from "@/mock/security";
 import { adminRoles, sensitivePermissionMap } from "@/lib/admin/adminAuth";
 import { writeAdminAuditLog } from "@/lib/admin/auditLog";
+import { showDemoData } from "@/lib/admin/liveData";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { maskEmail, maskPhone, rolePermissionRows, validateSecureUpload } from "@/lib/security/securityService";
 import { customers } from "@/mock/customers";
@@ -86,11 +87,12 @@ export function SecurityManagementClient() {
             <Badge tone={uploadResult.ok ? "success" : "sale"}>{uploadResult.message}</Badge>
             <div className="rounded-md bg-mist p-4 text-sm font-semibold text-slate">
               <p className="font-black text-ink">Sensitive data masking examples</p>
-              {customers.slice(0, 2).map((customer) => (
+              {(showDemoData ? customers.slice(0, 2) : []).map((customer) => (
                 <p className="mt-2" key={customer.id}>
                   {customer.firstName}: {maskEmail(customer.email)} / {maskPhone(customer.phone)}
                 </p>
               ))}
+              {!showDemoData ? <p className="mt-2">Live customer examples are hidden.</p> : null}
             </div>
           </div>
         </AdminCard>

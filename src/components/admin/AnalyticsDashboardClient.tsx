@@ -7,10 +7,12 @@ import {
   databaseOptimizationNotes,
   defaultReportRange
 } from "@/lib/reports/reportingService";
+import { showDemoData } from "@/lib/admin/liveData";
 import type { ReportDateRange } from "@/types/reports";
 import { Badge } from "@/components/ui/Badge";
 import { AdminCard } from "./AdminCard";
 import { AdminTable } from "./AdminTable";
+import { LiveAdminEmptyState } from "./LiveAdminEmptyState";
 
 const tabs = [
   "Sales",
@@ -31,6 +33,21 @@ type AnalyticsTab = (typeof tabs)[number];
 const formatRs = (value: number) => `Rs ${Math.round(value).toLocaleString("en-IN")}`;
 
 export function AnalyticsDashboardClient() {
+  if (!showDemoData) {
+    return (
+      <LiveAdminEmptyState
+        actionHref="/admin/settings"
+        actionLabel="Configure reporting"
+        title="Analytics will populate from live store activity"
+        description="Sample revenue, customer, product, coupon, and search reports are hidden. After launch, connect reporting queries to MongoDB or your analytics provider."
+      />
+    );
+  }
+
+  return <DemoAnalyticsDashboardClient />;
+}
+
+function DemoAnalyticsDashboardClient() {
   const [range, setRange] = useState<ReportDateRange>(defaultReportRange);
   const [activeTab, setActiveTab] = useState<AnalyticsTab>("Sales");
   const [toast, setToast] = useState("");

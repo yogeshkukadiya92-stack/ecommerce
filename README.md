@@ -35,6 +35,8 @@ Configure admin access with environment variables before signing in:
 - `ADMIN_PASSWORD`
 - `ADMIN_NAME`
 
+Keep `NEXT_PUBLIC_SHOW_DEMO_DATA="false"` for live deployments so sample admin records stay hidden. Set it to `"true"` only when you intentionally want demo admin data during development.
+
 ## Useful Commands
 
 ```bash

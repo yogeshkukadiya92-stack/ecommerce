@@ -27,6 +27,7 @@ import type {
   ReturnStatus
 } from "@/types/orderOps";
 import { writeAdminAuditLog } from "@/lib/admin/auditLog";
+import { showDemoData } from "@/lib/admin/liveData";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import {
   addInternalNote,
@@ -48,6 +49,7 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { AdminCard } from "./AdminCard";
 import { AdminTable } from "./AdminTable";
+import { LiveAdminEmptyState } from "./LiveAdminEmptyState";
 
 const orderStatuses: Array<"all" | AdminOrderStatus> = [
   "all",
@@ -105,6 +107,21 @@ const initialFilters: OrderFilters = {
 };
 
 export function OrderManagementClient({ initialOrderNumber }: { initialOrderNumber?: string }) {
+  if (!showDemoData) {
+    return (
+      <LiveAdminEmptyState
+        actionHref="/admin/settings"
+        actionLabel="Configure order source"
+        title="Order management is clean for launch"
+        description="Demo orders, payments, shipments, returns, and fulfillment timelines are hidden in live mode. Once checkout creates real orders, this module can display operational queues."
+      />
+    );
+  }
+
+  return <DemoOrderManagementClient initialOrderNumber={initialOrderNumber} />;
+}
+
+function DemoOrderManagementClient({ initialOrderNumber }: { initialOrderNumber?: string }) {
   const { session } = useAdminSession();
   const [orders, setOrders] = useState(adminOrders);
   const [batches, setBatches] = useState<InventoryBatchRecord[]>(inventoryBatchRecords);

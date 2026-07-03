@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { seededAuditLogs } from "@/mock/security";
 import type { AdminAuditLogEntry } from "@/types/admin";
 import { readAdminAuditLogs } from "@/lib/admin/auditLog";
+import { showDemoData } from "@/lib/admin/liveData";
 import { Badge } from "@/components/ui/Badge";
 import { AdminCard } from "./AdminCard";
 import { AdminTable } from "./AdminTable";
@@ -29,7 +30,7 @@ export function AuditLogClient() {
     };
   }, []);
 
-  const allLogs = useMemo(() => [...storedLogs, ...seededAuditLogs], [storedLogs]);
+  const allLogs = useMemo(() => [...storedLogs, ...(showDemoData ? seededAuditLogs : [])], [storedLogs]);
   const modules = useMemo(() => [...new Set(allLogs.map((log) => log.module))].sort(), [allLogs]);
   const admins = useMemo(() => [...new Set(allLogs.map((log) => log.actorEmail))].sort(), [allLogs]);
   const filteredLogs = useMemo(
@@ -75,6 +76,7 @@ export function AuditLogClient() {
       <AdminCard title="Admin activity logs">
         <AdminTable
           columns={["Timestamp", "Admin", "Action", "Module", "Old value", "New value", "IP / device"]}
+          emptyText="No live admin activity has been recorded yet."
           rows={filteredLogs.map((log) => [
             new Date(log.at).toLocaleString("en-IN"),
             <div key="admin">

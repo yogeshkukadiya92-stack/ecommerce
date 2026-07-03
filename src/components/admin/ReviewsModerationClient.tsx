@@ -4,6 +4,7 @@ import { MessageSquareReply, Search, ShieldCheck, Star } from "lucide-react";
 import { useMemo, useState } from "react";
 import { productQuestions, productReviews } from "@/mock/engagement";
 import { writeAdminAuditLog } from "@/lib/admin/auditLog";
+import { showDemoData } from "@/lib/admin/liveData";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import {
   getQuestionModerationCounts,
@@ -14,8 +15,24 @@ import type { ProductQuestionThread, ProductReview, QuestionModerationStatus, Re
 import { Badge } from "@/components/ui/Badge";
 import { AdminCard } from "./AdminCard";
 import { AdminTable } from "./AdminTable";
+import { LiveAdminEmptyState } from "./LiveAdminEmptyState";
 
 export function ReviewsModerationClient() {
+  if (!showDemoData) {
+    return (
+      <LiveAdminEmptyState
+        actionHref="/admin/settings"
+        actionLabel="Configure reviews"
+        title="Review moderation is waiting for live feedback"
+        description="Sample product reviews and Q&A threads are hidden. Live customer reviews can be connected to this moderation workflow after launch."
+      />
+    );
+  }
+
+  return <DemoReviewsModerationClient />;
+}
+
+function DemoReviewsModerationClient() {
   const { session } = useAdminSession();
   const [activeTab, setActiveTab] = useState<"reviews" | "questions" | "summary">("reviews");
   const [reviewRows, setReviewRows] = useState(productReviews);

@@ -8,14 +8,31 @@ import { orders } from "@/mock/orders";
 import { productReviews } from "@/mock/engagement";
 import { storefrontProducts } from "@/mock/storefront";
 import { formatRs } from "@/lib/cart/cartPricing";
+import { showDemoData } from "@/lib/admin/liveData";
 import { getCrmRows, getCustomerProfile, getCustomerSegments } from "@/lib/engagement/engagementService";
 import { writeAdminAuditLog } from "@/lib/admin/auditLog";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { Badge } from "@/components/ui/Badge";
 import { AdminCard } from "./AdminCard";
 import { AdminTable } from "./AdminTable";
+import { LiveAdminEmptyState } from "./LiveAdminEmptyState";
 
 export function CustomerCrmClient() {
+  if (!showDemoData) {
+    return (
+      <LiveAdminEmptyState
+        actionHref="/admin/settings"
+        actionLabel="Configure CRM source"
+        title="Customer CRM is ready for live customers"
+        description="Demo customer profiles, wishlists, reviews, and order history are hidden on the live admin panel. Connect your production customer source before using CRM workflows."
+      />
+    );
+  }
+
+  return <DemoCustomerCrmClient />;
+}
+
+function DemoCustomerCrmClient() {
   const { session } = useAdminSession();
   const crmRows = getCrmRows();
   const [selectedCustomerId, setSelectedCustomerId] = useState(crmRows[0]?.customer.id ?? "");
@@ -133,7 +150,7 @@ export function CustomerCrmClient() {
                 <p className="font-black text-ink">{order.orderNumber}</p>
                 <p className="mt-1 font-semibold text-slate">{order.status} - {formatRs(order.totalAmount)}</p>
               </div>
-            )) : <EmptyLine text="No mock orders for this customer yet." />}
+            )) : <EmptyLine text="No live orders for this customer yet." />}
           </ProfileBlock>
 
           <ProfileBlock title="Wishlist" icon={<Users className="h-4 w-4" />}>

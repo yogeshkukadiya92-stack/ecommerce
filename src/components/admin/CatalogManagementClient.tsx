@@ -10,12 +10,14 @@ import { storefrontProducts } from "@/mock/storefront";
 import type { AdminSession } from "@/types/admin";
 import type { ProductStatus } from "@/types";
 import { writeAdminAuditLog } from "@/lib/admin/auditLog";
+import { showDemoData } from "@/lib/admin/liveData";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { scanClaimText } from "@/lib/compliance/complianceService";
 import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
 import { AdminCard } from "./AdminCard";
 import { AdminTable } from "./AdminTable";
+import { LiveAdminEmptyState } from "./LiveAdminEmptyState";
 
 type AdminProductStatus = ProductStatus | "inactive";
 
@@ -116,6 +118,21 @@ const initialProduct: EditableProduct = {
 };
 
 export function CatalogManagementClient() {
+  if (!showDemoData) {
+    return (
+      <LiveAdminEmptyState
+        actionHref="/admin/settings"
+        actionLabel="Configure catalog"
+        title="Catalog management is ready for your real products"
+        description="Demo products, brands, categories, pricing, media, and compliance records are hidden in live mode. Connect MongoDB-backed catalog actions before publishing inventory."
+      />
+    );
+  }
+
+  return <DemoCatalogManagementClient />;
+}
+
+function DemoCatalogManagementClient() {
   const { session } = useAdminSession();
   const [activeTab, setActiveTab] = useState<ProductFormTab>("Basic Info");
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);

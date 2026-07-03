@@ -22,6 +22,7 @@ import {
 import { websiteStudioData } from "@/mock/cms";
 import type { CmsMenuItem, CmsPublishStatus, CmsSectionAlignment, HomepageSection, HomepageSectionType, MenuLinkType, WebsiteStudioData } from "@/types/cms";
 import { writeAdminAuditLog } from "@/lib/admin/auditLog";
+import { showDemoData } from "@/lib/admin/liveData";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { readWebsiteStudioDraft, writeWebsiteStudioDraft } from "@/lib/cms/cmsLocalStorage";
 import { Badge } from "@/components/ui/Badge";
@@ -30,6 +31,7 @@ import { Select } from "@/components/ui/Select";
 import { HomepageSectionRenderer } from "@/components/cms/HomepageSectionRenderer";
 import { AdminCard } from "./AdminCard";
 import { AdminTable } from "./AdminTable";
+import { LiveAdminEmptyState } from "./LiveAdminEmptyState";
 
 const tabs = [
   "Homepage",
@@ -68,6 +70,29 @@ const statuses: CmsPublishStatus[] = ["draft", "scheduled", "published", "unpubl
 const alignments: CmsSectionAlignment[] = ["left", "center", "right"];
 
 export function WebsiteStudioClient({
+  autoSaveChanges = false,
+  initialTab = "Homepage",
+  tabsLocked = false
+}: {
+  autoSaveChanges?: boolean;
+  initialTab?: StudioTab;
+  tabsLocked?: boolean;
+} = {}) {
+  if (!showDemoData && !readWebsiteStudioDraft()) {
+    return (
+      <LiveAdminEmptyState
+        actionHref="/admin/settings"
+        actionLabel="Configure CMS"
+        title="Website Studio is ready for real content"
+        description="Sample homepage sections, banners, menus, policies, and blog content are hidden in live mode. Add production CMS records before publishing storefront content."
+      />
+    );
+  }
+
+  return <DemoWebsiteStudioClient autoSaveChanges={autoSaveChanges} initialTab={initialTab} tabsLocked={tabsLocked} />;
+}
+
+function DemoWebsiteStudioClient({
   autoSaveChanges = false,
   initialTab = "Homepage",
   tabsLocked = false

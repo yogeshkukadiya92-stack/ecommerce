@@ -11,11 +11,13 @@ import { subscriptions } from "@/mock/promotions";
 import { formatRs } from "@/lib/cart/cartPricing";
 import { getAutomationStats } from "@/lib/engagement/engagementService";
 import { writeAdminAuditLog } from "@/lib/admin/auditLog";
+import { showDemoData } from "@/lib/admin/liveData";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import type { MarketingAutomationRule } from "@/types/engagement";
 import { Badge } from "@/components/ui/Badge";
 import { AdminCard } from "./AdminCard";
 import { AdminTable } from "./AdminTable";
+import { LiveAdminEmptyState } from "./LiveAdminEmptyState";
 
 const triggerLabels: Record<MarketingAutomationRule["trigger"], string> = {
   abandoned_cart: "Abandoned cart",
@@ -32,6 +34,21 @@ const triggerLabels: Record<MarketingAutomationRule["trigger"], string> = {
 };
 
 export function MarketingAutomationClient() {
+  if (!showDemoData) {
+    return (
+      <LiveAdminEmptyState
+        actionHref="/admin/settings"
+        actionLabel="Configure messaging"
+        title="Marketing automation is ready for provider setup"
+        description="Sample campaigns, abandoned carts, alert signups, and subscription records are hidden. Connect email, SMS, or WhatsApp providers before sending live campaigns."
+      />
+    );
+  }
+
+  return <DemoMarketingAutomationClient />;
+}
+
+function DemoMarketingAutomationClient() {
   const { session } = useAdminSession();
   const [rules, setRules] = useState(marketingAutomationRules);
   const [toast, setToast] = useState("");

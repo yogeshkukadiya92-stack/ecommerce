@@ -5,6 +5,7 @@ import { Gift, Percent, Plus, RefreshCw, Save, Ticket, Users } from "lucide-reac
 import { bundleDeals, couponRules, loyaltyPointEntries, promotionRules, referralRecords, subscriptions } from "@/mock/promotions";
 import type { CouponRule, CustomerSubscription } from "@/types/promotions";
 import { writeAdminAuditLog } from "@/lib/admin/auditLog";
+import { showDemoData } from "@/lib/admin/liveData";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { formatRs } from "@/lib/cart/cartPricing";
 import { Badge } from "@/components/ui/Badge";
@@ -12,11 +13,27 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { AdminCard } from "./AdminCard";
 import { AdminTable } from "./AdminTable";
+import { LiveAdminEmptyState } from "./LiveAdminEmptyState";
 
 const tabs = ["Coupons", "Promotions", "Bundles", "Subscriptions", "Loyalty", "Referrals", "Reports"] as const;
 type PromoTab = (typeof tabs)[number];
 
 export function PromotionsManagementClient() {
+  if (!showDemoData) {
+    return (
+      <LiveAdminEmptyState
+        actionHref="/admin/settings"
+        actionLabel="Configure promotions"
+        title="Promotions are ready for real campaigns"
+        description="Demo coupons, bundles, referrals, subscriptions, and loyalty records are hidden in live mode so customers never see misleading operational data."
+      />
+    );
+  }
+
+  return <DemoPromotionsManagementClient />;
+}
+
+function DemoPromotionsManagementClient() {
   const { session } = useAdminSession();
   const [activeTab, setActiveTab] = useState<PromoTab>("Coupons");
   const [coupons, setCoupons] = useState(couponRules);
@@ -54,7 +71,7 @@ export function PromotionsManagementClient() {
       active: true,
       code: draft.code.trim().toUpperCase(),
       customerGroup: "all",
-      description: "Admin-created mock coupon.",
+      description: "Admin-created coupon.",
       discountType: draft.discountType,
       firstOrderOnly: false,
       id: `coupon-${Date.now()}`,

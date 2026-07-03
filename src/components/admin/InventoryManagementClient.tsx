@@ -18,6 +18,7 @@ import type {
   InventoryBatchRecord
 } from "@/types/inventory";
 import { writeAdminAuditLog } from "@/lib/admin/auditLog";
+import { showDemoData } from "@/lib/admin/liveData";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { reserveStockByFefo } from "@/lib/inventory/fefo";
 import { applyStockAdjustment, receivePurchaseOrderStock } from "@/lib/inventory/stockService";
@@ -25,6 +26,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
 import { AdminCard } from "./AdminCard";
 import { AdminTable } from "./AdminTable";
+import { LiveAdminEmptyState } from "./LiveAdminEmptyState";
 
 const tabs = [
   "Overview",
@@ -56,6 +58,21 @@ const movementTypes: AdvancedStockMovementType[] = [
 ];
 
 export function InventoryManagementClient() {
+  if (!showDemoData) {
+    return (
+      <LiveAdminEmptyState
+        actionHref="/admin/settings"
+        actionLabel="Configure inventory"
+        title="Inventory is clean and ready for live stock"
+        description="Demo warehouses, batches, stock movements, purchase orders, FEFO reservations, and expiry alerts are hidden. Connect real inventory records before launch operations."
+      />
+    );
+  }
+
+  return <DemoInventoryManagementClient />;
+}
+
+function DemoInventoryManagementClient() {
   const { session } = useAdminSession();
   const [activeTab, setActiveTab] = useState<InventoryTab>("Overview");
   const [warehouses, setWarehouses] = useState<AdvancedWarehouse[]>(advancedWarehouses);

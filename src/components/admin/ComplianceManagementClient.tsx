@@ -18,6 +18,7 @@ import type {
   ProductDelistRecord
 } from "@/types/compliance";
 import { writeAdminAuditLog } from "@/lib/admin/auditLog";
+import { showDemoData } from "@/lib/admin/liveData";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import {
   affectedOrdersForRecall,
@@ -30,11 +31,27 @@ import { canPerform } from "@/lib/security/securityService";
 import { Badge } from "@/components/ui/Badge";
 import { AdminCard } from "./AdminCard";
 import { AdminTable } from "./AdminTable";
+import { LiveAdminEmptyState } from "./LiveAdminEmptyState";
 
 const tabs = ["Products", "Claims", "Delist", "Recall"] as const;
 type ComplianceTab = (typeof tabs)[number];
 
 export function ComplianceManagementClient() {
+  if (!showDemoData) {
+    return (
+      <LiveAdminEmptyState
+        actionHref="/admin/settings"
+        actionLabel="Configure compliance"
+        title="Compliance review is ready for real products"
+        description="Sample product claims, recall records, delist cases, and compliance statuses are hidden in live mode. Add real catalog data before operating safety workflows."
+      />
+    );
+  }
+
+  return <DemoComplianceManagementClient />;
+}
+
+function DemoComplianceManagementClient() {
   const { session } = useAdminSession();
   const [activeTab, setActiveTab] = useState<ComplianceTab>("Products");
   const [records, setRecords] = useState<ProductComplianceRecord[]>(complianceRecords);

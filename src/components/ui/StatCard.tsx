@@ -10,7 +10,7 @@ export function StatCard({
   tone?: "neutral" | "forest" | "coral";
 }) {
   return (
-    <div className="rounded-card border border-black/10 bg-white p-5 shadow-sm">
+    <div className="rounded-card border border-black/10 bg-white p-5 shadow-sm transition-shadow hover:shadow-card">
       <p className="text-xs font-extrabold uppercase tracking-[0.1em] text-slate">{label}</p>
       <p
         className={cn(
