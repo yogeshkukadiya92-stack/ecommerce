@@ -5,9 +5,9 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null) as { email?: string; password?: string } | null;
   const email = body?.email?.trim() ?? "";
   const password = body?.password ?? "";
-  const adminEmail = (process.env.ADMIN_EMAIL ?? process.env.NEXT_PUBLIC_ADMIN_EMAIL ?? "").trim();
-  const adminPassword = process.env.ADMIN_PASSWORD ?? process.env.NEXT_PUBLIC_ADMIN_PASSWORD ?? "";
-  const adminName = (process.env.ADMIN_NAME ?? process.env.NEXT_PUBLIC_ADMIN_NAME ?? "Store Owner").trim();
+  const adminEmail = cleanEnvValue(process.env.ADMIN_EMAIL ?? process.env.NEXT_PUBLIC_ADMIN_EMAIL);
+  const adminPassword = cleanEnvValue(process.env.ADMIN_PASSWORD ?? process.env.NEXT_PUBLIC_ADMIN_PASSWORD);
+  const adminName = cleanEnvValue(process.env.ADMIN_NAME ?? process.env.NEXT_PUBLIC_ADMIN_NAME) || "Store Owner";
 
   if (!adminEmail || !adminPassword) {
     return NextResponse.json({ message: "Admin login is not configured." }, { status: 500 });
@@ -28,4 +28,8 @@ export async function POST(request: Request) {
     message: "Admin login successful.",
     session
   });
+}
+
+function cleanEnvValue(value?: string) {
+  return (value ?? "").trim().replace(/^['"]|['"]$/g, "");
 }
