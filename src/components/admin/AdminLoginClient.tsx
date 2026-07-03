@@ -4,8 +4,14 @@ import { useRouter } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
 import type { FormEvent } from "react";
 import { useState } from "react";
-import { adminRoles, loginAdmin } from "@/lib/admin/adminAuth";
+import type { AdminSession } from "@/types/admin";
+import { adminRoles, persistAdminSession } from "@/lib/admin/adminAuth";
 import { Input } from "@/components/ui/Input";
+
+type LoginResponse = {
+  message?: string;
+  session?: AdminSession;
+};
 
 export function AdminLoginClient() {
   const router = useRouter();
@@ -13,20 +19,36 @@ export function AdminLoginClient() {
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function handleLogin(event: FormEvent<HTMLFormElement>) {
+  async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const result = loginAdmin(email, password);
+    setIsSubmitting(true);
 
-    if (!result.ok) {
-      setError(result.message);
+    try {
+      const response = await fetch("/api/admin/login", {
+        body: JSON.stringify({ email, password }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST"
+      });
+      const result = (await response.json().catch(() => ({}))) as LoginResponse;
+
+      if (!response.ok || !result.session) {
+        setError(result.message ?? "Unable to login.");
+        setMessage("");
+        return;
+      }
+
+      persistAdminSession(result.session);
+      setError("");
+      setMessage(result.message ?? "Admin login successful.");
+      router.push("/admin");
+    } catch {
+      setError("Unable to login. Check the admin configuration and try again.");
       setMessage("");
-      return;
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setError("");
-    setMessage(result.message);
-    router.push("/admin");
   }
 
   return (
@@ -44,8 +66,8 @@ export function AdminLoginClient() {
             <Input autoComplete="new-password" label="Password" onChange={(event) => setPassword(event.target.value)} type="password" value={password} />
             {error ? <p className="rounded-md bg-coral/10 p-3 text-sm font-bold text-coral">{error}</p> : null}
             {message ? <p className="rounded-md bg-mint p-3 text-sm font-bold text-forest">{message}</p> : null}
-            <button className="focus-ring h-12 rounded-md bg-ink text-sm font-semibold text-white" type="submit">
-              Login
+            <button className="focus-ring h-12 rounded-md bg-ink text-sm font-semibold text-white disabled:opacity-60" disabled={isSubmitting} type="submit">
+              {isSubmitting ? "Logging in..." : "Login"}
             </button>
           </form>
         </div>

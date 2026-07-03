@@ -143,6 +143,31 @@ function permissionsForRoles(roles: AdminRole[]) {
   return [...new Set(roles.flatMap((role) => role.permissions))];
 }
 
+export function createAdminSession(admin: { adminId: string; email: string; fullName: string; roles: AdminRole[] }): AdminSession {
+  return {
+    adminId: admin.adminId,
+    email: admin.email,
+    fullName: admin.fullName,
+    lastLoginAt: new Date().toISOString(),
+    permissions: permissionsForRoles(admin.roles),
+    roles: admin.roles
+  };
+}
+
+export function persistAdminSession(session: AdminSession) {
+  if (!canUseStorage()) {
+    return;
+  }
+
+  window.localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(session));
+  window.dispatchEvent(new CustomEvent(ADMIN_EVENT_NAME, { detail: session }));
+  writeAdminAuditLog(session, {
+    action: "admin.login",
+    entityType: "AdminSession",
+    metadata: { roleNames: session.roles.map((role) => role.name) }
+  });
+}
+
 export function getCurrentAdminSession(): AdminSession | null {
   if (!canUseStorage()) {
     return null;
@@ -187,22 +212,8 @@ export function loginAdmin(email: string, password: string) {
     };
   }
 
-  const session: AdminSession = {
-    adminId: admin.adminId,
-    email: admin.email,
-    fullName: admin.fullName,
-    lastLoginAt: new Date().toISOString(),
-    permissions: permissionsForRoles(admin.roles),
-    roles: admin.roles
-  };
-
-  window.localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(session));
-  window.dispatchEvent(new CustomEvent(ADMIN_EVENT_NAME, { detail: session }));
-  writeAdminAuditLog(session, {
-    action: "admin.login",
-    entityType: "AdminSession",
-    metadata: { roleNames: session.roles.map((role) => role.name) }
-  });
+  const session = createAdminSession(admin);
+  persistAdminSession(session);
 
   return {
     message: "Admin login successful.",

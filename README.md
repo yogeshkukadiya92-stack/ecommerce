@@ -17,9 +17,9 @@ Open `http://localhost:3000`.
 
 Configure admin access with environment variables before signing in:
 
-- `NEXT_PUBLIC_ADMIN_EMAIL`
-- `NEXT_PUBLIC_ADMIN_PASSWORD`
-- `NEXT_PUBLIC_ADMIN_NAME`
+- `ADMIN_EMAIL`
+- `ADMIN_PASSWORD`
+- `ADMIN_NAME`
 
 ## Useful Commands
 
