@@ -1,18 +1,40 @@
 import { NextResponse } from "next/server";
-import { brands, categories, customers, inventoryBatches, orders, products } from "@/mock";
+import { prisma } from "@/lib/db/prisma";
 
-export function GET() {
+export async function GET() {
+  const [
+    brands,
+    categories,
+    customers,
+    leads,
+    orders,
+    products,
+    variants,
+    warehouses
+  ] = await Promise.all([
+    prisma.brand.count(),
+    prisma.category.count(),
+    prisma.customer.count(),
+    prisma.whatsAppLead.count(),
+    prisma.order.count(),
+    prisma.product.count(),
+    prisma.productVariant.count(),
+    prisma.warehouse.count()
+  ]);
+
   return NextResponse.json({
     data: {
-      brands: brands.length,
-      categories: categories.length,
-      products: products.length,
-      customers: customers.length,
-      orders: orders.length,
-      inventoryBatches: inventoryBatches.length
+      brands,
+      categories,
+      customers,
+      leads,
+      orders,
+      products,
+      variants,
+      warehouses
     },
     auth: {
-      protectedLaterBy: "role-based access control"
+      protectedBy: "admin session"
     }
   });
 }

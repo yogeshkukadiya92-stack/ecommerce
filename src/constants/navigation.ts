@@ -4,6 +4,7 @@ export const ADMIN_NAVIGATION = [
   { href: "/admin/inventory", label: "Inventory" },
   { href: "/admin/orders", label: "Orders" },
   { href: "/admin/customers", label: "Customers" },
+  { href: "/admin/leads", label: "WhatsApp Leads" },
   { href: "/admin/coupons", label: "Coupons" },
   { href: "/admin/reviews", label: "Reviews" },
   { href: "/admin/compliance", label: "Compliance" },
