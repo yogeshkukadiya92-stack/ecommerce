@@ -5,22 +5,42 @@ import {
   AlignCenter,
   AlignLeft,
   AlignRight,
+  AlertTriangle,
   ArrowDown,
   ArrowUp,
+  BarChart3,
+  CheckCircle2,
+  Clock,
   Copy,
   Eye,
   FileText,
   Globe,
   ImageIcon,
+  Layers3,
   LayoutTemplate,
+  Link2,
+  ListChecks,
   Megaphone,
+  MonitorSmartphone,
+  PanelTop,
   Plus,
   Save,
   Send,
+  Sparkles,
+  Target,
   Trash2
 } from "lucide-react";
 import { websiteStudioData } from "@/mock/cms";
-import type { CmsMenuItem, CmsPublishStatus, CmsSectionAlignment, HomepageSection, HomepageSectionType, MenuLinkType, WebsiteStudioData } from "@/types/cms";
+import type {
+  CmsContentReference,
+  CmsMenuItem,
+  CmsPublishStatus,
+  CmsSectionAlignment,
+  HomepageSection,
+  HomepageSectionType,
+  MenuLinkType,
+  WebsiteStudioData
+} from "@/types/cms";
 import { writeAdminAuditLog } from "@/lib/admin/auditLog";
 import { showDemoData } from "@/lib/admin/liveData";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
@@ -35,6 +55,7 @@ import { LiveAdminEmptyState } from "./LiveAdminEmptyState";
 
 const tabs = [
   "Homepage",
+  "Specifics",
   "Alignment",
   "Header",
   "Footer",
@@ -48,6 +69,7 @@ const tabs = [
 ] as const;
 
 type StudioTab = (typeof tabs)[number];
+type StudioHealth = ReturnType<typeof buildStudioHealth>;
 
 const sectionTypes: HomepageSectionType[] = [
   "hero_banner",
@@ -106,8 +128,10 @@ function DemoWebsiteStudioClient({
   const [studioData, setStudioData] = useState<WebsiteStudioData>(() => readWebsiteStudioDraft() ?? websiteStudioData);
   const [selectedSectionId, setSelectedSectionId] = useState(studioData.homepageSections[0]?.id ?? "");
   const [previewMode, setPreviewMode] = useState(false);
+  const [previewViewport, setPreviewViewport] = useState<"desktop" | "mobile">("desktop");
   const [toast, setToast] = useState("");
   const selectedSection = studioData.homepageSections.find((section) => section.id === selectedSectionId) ?? studioData.homepageSections[0];
+  const health = useMemo(() => buildStudioHealth(studioData), [studioData]);
 
   const publishedSections = useMemo(
     () =>
@@ -275,19 +299,16 @@ function DemoWebsiteStudioClient({
     <div className="space-y-6">
       {toast ? <div className="rounded-md bg-mint px-4 py-3 text-sm font-semibold text-forest">{toast}</div> : null}
 
+      <StudioCommandCenter
+        health={health}
+        previewMode={previewMode}
+        publish={publish}
+        saveDraft={saveDraft}
+        setPreviewMode={setPreviewMode}
+      />
+
       {tabsLocked ? null : (
-        <div className="flex flex-wrap gap-2">
-          {tabs.map((tab) => (
-            <button
-              className={`rounded-md px-4 py-2 text-sm font-black ${activeTab === tab ? "bg-ink text-white" : "bg-white text-ink"}`}
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              type="button"
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
+        <StudioTabs activeTab={activeTab} health={health} setActiveTab={setActiveTab} />
       )}
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_420px]">
@@ -301,6 +322,15 @@ function DemoWebsiteStudioClient({
               selectedSection={selectedSection}
               selectedSectionId={selectedSectionId}
               sections={studioData.homepageSections}
+              setSelectedSectionId={setSelectedSectionId}
+              updateSection={updateSection}
+            />
+          ) : null}
+          {activeTab === "Specifics" ? (
+            <SpecificsManager
+              data={studioData}
+              selectedSectionId={selectedSectionId}
+              setData={updateStudioData}
               setSelectedSectionId={setSelectedSectionId}
               updateSection={updateSection}
             />
@@ -325,7 +355,9 @@ function DemoWebsiteStudioClient({
         </div>
 
         <aside className="min-w-0 space-y-6">
-          <AdminCard title="Publishing workflow">
+          <ContentHealthCard health={health} />
+
+          <AdminCard description="Save drafts while editing, publish when every checklist item looks ready." title="Publishing workflow">
             <div className="grid gap-3">
               <button className="admin-action justify-center" onClick={saveDraft} type="button">
                 <Save className="h-4 w-4" /> Save draft
@@ -337,23 +369,20 @@ function DemoWebsiteStudioClient({
                 <Eye className="h-4 w-4" /> {previewMode ? "Exit preview" : "Preview mode"}
               </button>
             </div>
-            <p className="mt-3 text-xs leading-5 text-slate">
-              Save or publish your latest website content. Published homepage sections are reflected on the storefront in this browser.
-            </p>
           </AdminCard>
 
-          <AdminCard title="Homepage preview">
-            <div className="max-h-[720px] overflow-y-auto rounded-md border border-black/10 bg-mist">
-              <div className="origin-top scale-[0.78]">
+          <AdminCard action={<PreviewViewportControls previewViewport={previewViewport} setPreviewViewport={setPreviewViewport} />} title="Homepage preview">
+            <div className={`max-h-[720px] overflow-y-auto rounded-md border border-black/10 bg-mist ${previewViewport === "mobile" ? "p-3" : ""}`}>
+              <div className={`${previewViewport === "mobile" ? "mx-auto max-w-[390px] origin-top scale-[0.94]" : "origin-top scale-[0.78]"}`}>
                 <HomepageSectionRenderer preview sections={publishedSections.slice(0, 4)} />
               </div>
             </div>
           </AdminCard>
 
           {selectedSection ? (
-            <AdminCard title="Selected section live preview">
-              <div className="max-h-[520px] overflow-y-auto rounded-md border border-black/10 bg-mist">
-                <div className="origin-top scale-[0.78]">
+            <AdminCard action={<PreviewViewportControls previewViewport={previewViewport} setPreviewViewport={setPreviewViewport} />} title="Selected section live preview">
+              <div className={`max-h-[520px] overflow-y-auto rounded-md border border-black/10 bg-mist ${previewViewport === "mobile" ? "p-3" : ""}`}>
+                <div className={`${previewViewport === "mobile" ? "mx-auto max-w-[390px] origin-top scale-[0.94]" : "origin-top scale-[0.78]"}`}>
                   <HomepageSectionRenderer preview sections={[selectedSection]} />
                 </div>
               </div>
@@ -442,15 +471,276 @@ function HomepageBuilder({
             {alignments.map((alignment) => <option key={alignment} value={alignment}>{label(alignment)}</option>)}
           </Select>
           <Input label="Schedule publish date" onChange={(event) => updateSection(selectedSectionId, { publishAt: event.target.value })} type="datetime-local" value={selectedSection.publishAt ?? ""} />
+          <Input label="Video URL" onChange={(event) => updateSection(selectedSectionId, { videoUrl: event.target.value })} value={selectedSection.videoUrl ?? ""} />
         </div>
-        <div className="mt-4 rounded-md bg-mist p-4">
-          <p className="text-sm font-black text-ink">Selected carousel references</p>
-          <p className="mt-2 text-sm text-slate">
-            {selectedSection.references.map((reference) => reference.label).join(", ") || "No products/categories/brands selected yet."}
-          </p>
+        <div className="mt-4">
+          <Textarea
+            label="Preview note"
+            onChange={(value) => updateSection(selectedSectionId, { previewNote: value })}
+            value={selectedSection.previewNote ?? ""}
+          />
         </div>
+        <SectionSpecificsPanel selectedSection={selectedSection} selectedSectionId={selectedSectionId} updateSection={updateSection} />
       </AdminCard>
     </>
+  );
+}
+
+function SpecificsManager({
+  data,
+  selectedSectionId,
+  setData,
+  setSelectedSectionId,
+  updateSection
+}: {
+  data: WebsiteStudioData;
+  selectedSectionId: string;
+  setData: (data: WebsiteStudioData) => void;
+  setSelectedSectionId: (sectionId: string) => void;
+  updateSection: (sectionId: string, patch: Partial<HomepageSection>) => void;
+}) {
+  const health = buildStudioHealth(data);
+  const selectedSection = data.homepageSections.find((section) => section.id === selectedSectionId) ?? data.homepageSections[0];
+
+  function updateSeo(index: number, patch: Partial<WebsiteStudioData["seo"][number]>) {
+    setData({
+      ...data,
+      seo: data.seo.map((entry, entryIndex) => (entryIndex === index ? { ...entry, ...patch } : entry))
+    });
+  }
+
+  return (
+    <div className="space-y-6">
+      <AdminCard
+        action={<Badge tone={health.score >= 85 ? "success" : "sale"}>{health.score}% ready</Badge>}
+        description="Homepage, navigation, campaign, SEO, and compliance signals in one editing surface."
+        title="Website specifics"
+      >
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <StudioMetric icon={Layers3} label="Homepage sections" value={health.totalSections} />
+          <StudioMetric icon={PanelTop} label="Menu links" value={health.menuLinks} />
+          <StudioMetric icon={Target} label="Active banners" value={health.activeBanners} />
+          <StudioMetric icon={BarChart3} label="SEO pages" value={health.seoPages} />
+        </div>
+        <div className="mt-5 grid gap-3 md:grid-cols-2">
+          {health.checks.map((check) => (
+            <div
+              className={`flex items-start gap-3 rounded-md border p-3 ${
+                check.ok ? "border-forest/20 bg-mint/60 text-forest" : "border-coral/20 bg-coral/10 text-coral"
+              }`}
+              key={check.label}
+            >
+              {check.ok ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" /> : <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />}
+              <div>
+                <p className="text-sm font-black">{check.label}</p>
+                <p className="mt-1 text-xs leading-5 text-inherit opacity-80">{check.detail}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </AdminCard>
+
+      <AdminCard title="Homepage section specifics">
+        <AdminTable
+          columns={["Section", "Type", "Image", "CTA", "Status", "Action"]}
+          rows={[...data.homepageSections]
+            .sort((first, second) => first.order - second.order)
+            .map((section) => [
+              <button
+                className="text-left font-black text-ink"
+                key="section"
+                onClick={() => setSelectedSectionId(section.id)}
+                type="button"
+              >
+                {section.title || "Untitled section"}
+              </button>,
+              label(section.type),
+              <Badge key="image" tone={sectionNeedsImage(section) ? "sale" : "success"}>
+                {sectionNeedsImage(section) ? "Needs image" : "Ready"}
+              </Badge>,
+              <Badge key="cta" tone={sectionNeedsCta(section) ? "sale" : "success"}>
+                {sectionNeedsCta(section) ? "Needs CTA" : "Ready"}
+              </Badge>,
+              <Badge key="status" tone={section.status === "published" ? "success" : "neutral"}>{label(section.status)}</Badge>,
+              <button
+                className="admin-action"
+                key="action"
+                onClick={() => setSelectedSectionId(section.id)}
+                type="button"
+              >
+                <Eye className="h-4 w-4" /> Inspect
+              </button>
+            ])}
+        />
+        {selectedSection ? (
+          <div className="mt-5 rounded-md border border-black/10 bg-mist p-4">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-black text-ink">Focused section details</p>
+                <p className="mt-1 text-xs text-slate">{selectedSection.title}</p>
+              </div>
+              <Badge tone={selectedSection.enabled ? "success" : "neutral"}>{selectedSection.enabled ? "Visible" : "Hidden"}</Badge>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Input label="CTA label" onChange={(event) => updateSection(selectedSection.id, { ctaLabel: event.target.value })} value={selectedSection.ctaLabel ?? ""} />
+              <Input label="CTA link" onChange={(event) => updateSection(selectedSection.id, { ctaLink: event.target.value })} value={selectedSection.ctaLink ?? ""} />
+              <ImageUrlField label="Desktop image" onChange={(value) => updateSection(selectedSection.id, { desktopImageUrl: value })} value={selectedSection.desktopImageUrl ?? ""} />
+              <ImageUrlField label="Mobile image" onChange={(value) => updateSection(selectedSection.id, { mobileImageUrl: value })} value={selectedSection.mobileImageUrl ?? ""} />
+            </div>
+            <SectionSpecificsPanel selectedSection={selectedSection} selectedSectionId={selectedSection.id} updateSection={updateSection} />
+          </div>
+        ) : null}
+      </AdminCard>
+
+      <AdminCard title="Header, footer, and trust specifics">
+        <div className="grid gap-4 md:grid-cols-2">
+          <Input label="Logo text" onChange={(event) => setData({ ...data, header: { ...data.header, logoText: event.target.value } })} value={data.header.logoText} />
+          <Input label="Announcement text" onChange={(event) => setData({ ...data, header: { ...data.header, announcementText: event.target.value } })} value={data.header.announcementText} />
+          <Input label="Footer phone" onChange={(event) => setData({ ...data, footer: { ...data.footer, contactPhone: event.target.value } })} value={data.footer.contactPhone} />
+          <Input label="Footer email" onChange={(event) => setData({ ...data, footer: { ...data.footer, contactEmail: event.target.value } })} value={data.footer.contactEmail} />
+        </div>
+        <div className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          {(["enableSearch", "enableAccount", "enableWishlist", "enableCart"] as const).map((key) => (
+            <label className="flex items-center gap-2 rounded-md border border-black/10 bg-white p-3 text-sm font-bold text-ink" key={key}>
+              <input checked={data.header[key]} onChange={(event) => setData({ ...data, header: { ...data.header, [key]: event.target.checked } })} type="checkbox" />
+              {label(key.replace("enable", ""))}
+            </label>
+          ))}
+        </div>
+      </AdminCard>
+
+      <AdminCard title="SEO page specifics">
+        <div className="grid gap-4">
+          {data.seo.map((entry, index) => (
+            <div className="rounded-md border border-black/10 p-4" key={entry.pageKey}>
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <span className="inline-flex items-center gap-2 font-black text-ink">
+                  <Globe className="h-4 w-4" /> {label(entry.pageKey)}
+                </span>
+                <Badge tone={entry.noindex ? "sale" : "success"}>{entry.noindex ? "Noindex" : "Indexable"}</Badge>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <Input label="SEO title" onChange={(event) => updateSeo(index, { title: event.target.value })} value={entry.title} />
+                <Input label="Canonical URL" onChange={(event) => updateSeo(index, { canonicalUrl: event.target.value })} value={entry.canonicalUrl ?? ""} />
+                <div className="md:col-span-2">
+                  <Textarea label="Meta description" onChange={(value) => updateSeo(index, { metaDescription: value })} value={entry.metaDescription} />
+                </div>
+                <ImageUrlField label="Open Graph image" onChange={(value) => updateSeo(index, { ogImageUrl: value })} value={entry.ogImageUrl ?? ""} />
+                <label className="flex items-center gap-2 rounded-md border border-black/10 p-3 text-sm font-bold text-ink">
+                  <input checked={entry.noindex} onChange={(event) => updateSeo(index, { noindex: event.target.checked })} type="checkbox" />
+                  Noindex page
+                </label>
+              </div>
+            </div>
+          ))}
+        </div>
+      </AdminCard>
+    </div>
+  );
+}
+
+function SectionSpecificsPanel({
+  selectedSection,
+  selectedSectionId,
+  updateSection
+}: {
+  selectedSection: HomepageSection;
+  selectedSectionId: string;
+  updateSection: (sectionId: string, patch: Partial<HomepageSection>) => void;
+}) {
+  return (
+    <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
+      <ReferenceEditor
+        references={selectedSection.references}
+        sectionId={selectedSectionId}
+        updateSection={updateSection}
+      />
+      <div className="rounded-md border border-black/10 bg-white p-4">
+        <p className="text-sm font-black text-ink">Readiness</p>
+        <div className="mt-3 grid gap-2">
+          <ReadinessRow ok={Boolean(selectedSection.title.trim())} text="Section title" />
+          <ReadinessRow ok={!sectionNeedsImage(selectedSection)} text="Desktop image" />
+          <ReadinessRow ok={!sectionNeedsCta(selectedSection)} text="CTA action" />
+          <ReadinessRow ok={selectedSection.enabled} text="Visible toggle" />
+          <ReadinessRow ok={selectedSection.status === "published"} text="Published status" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ReferenceEditor({
+  references,
+  sectionId,
+  updateSection
+}: {
+  references: CmsContentReference[];
+  sectionId: string;
+  updateSection: (sectionId: string, patch: Partial<HomepageSection>) => void;
+}) {
+  function updateReference(referenceId: string, patch: Partial<CmsContentReference>) {
+    updateSection(sectionId, {
+      references: references.map((reference) => (reference.id === referenceId ? { ...reference, ...patch } : reference))
+    });
+  }
+
+  function addReference() {
+    updateSection(sectionId, {
+      references: [
+        ...references,
+        {
+          id: `ref-${Date.now()}`,
+          label: "New reference",
+          type: "custom_url",
+          url: "/products"
+        }
+      ]
+    });
+  }
+
+  function deleteReference(referenceId: string) {
+    updateSection(sectionId, {
+      references: references.filter((reference) => reference.id !== referenceId)
+    });
+  }
+
+  return (
+    <div className="rounded-md border border-black/10 bg-white p-4">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm font-black text-ink">Linked products, pages, and collections</p>
+        <button className="admin-action" onClick={addReference} type="button">
+          <Plus className="h-4 w-4" /> Add link
+        </button>
+      </div>
+      <div className="grid gap-3">
+        {references.map((reference) => (
+          <div className="grid gap-3 rounded-md bg-mist p-3 md:grid-cols-[1fr_160px_1fr_auto] md:items-end" key={reference.id}>
+            <Input label="Label" onChange={(event) => updateReference(reference.id, { label: event.target.value })} value={reference.label} />
+            <Select label="Type" onChange={(event) => updateReference(reference.id, { type: event.target.value as CmsContentReference["type"] })} value={reference.type}>
+              {["product", "category", "brand", "collection", "blog", "page", "custom_url"].map((type) => <option key={type} value={type}>{label(type)}</option>)}
+            </Select>
+            <Input label="URL" onChange={(event) => updateReference(reference.id, { url: event.target.value })} value={reference.url ?? ""} />
+            <button className="admin-action text-coral" onClick={() => deleteReference(reference.id)} type="button">
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
+        ))}
+        {references.length === 0 ? (
+          <div className="rounded-md bg-mist p-4 text-sm text-slate">
+            <Link2 className="mb-2 h-4 w-4" /> Add product, category, brand, page, or custom URL references for this section.
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function ReadinessRow({ ok, text }: { ok: boolean; text: string }) {
+  return (
+    <div className={`flex items-center gap-2 rounded-md px-3 py-2 text-xs font-black ${ok ? "bg-mint text-forest" : "bg-coral/10 text-coral"}`}>
+      {ok ? <CheckCircle2 className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}
+      {text}
+    </div>
   );
 }
 
@@ -1402,6 +1692,179 @@ function VersionHistory({ data }: { data: WebsiteStudioData }) {
   );
 }
 
+function StudioCommandCenter({
+  health,
+  previewMode,
+  publish,
+  saveDraft,
+  setPreviewMode
+}: {
+  health: StudioHealth;
+  previewMode: boolean;
+  publish: () => void;
+  saveDraft: () => void;
+  setPreviewMode: (updater: (value: boolean) => boolean) => void;
+}) {
+  return (
+    <section className="overflow-hidden rounded-card border border-black/10 bg-ink text-white shadow-card">
+      <div className="grid gap-5 p-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:p-6">
+        <div>
+          <div className="inline-flex items-center gap-2 rounded-md bg-white/10 px-3 py-2 text-xs font-black uppercase text-lime">
+            <Sparkles className="h-4 w-4" /> Website editor command center
+          </div>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+            <StudioMetric dark icon={Layers3} label="Sections" value={health.totalSections} />
+            <StudioMetric dark icon={CheckCircle2} label="Published" value={health.publishedSections} />
+            <StudioMetric dark icon={Clock} label="Scheduled" value={health.scheduledSections} />
+            <StudioMetric dark icon={Target} label="Campaigns" value={health.activeBanners} />
+            <StudioMetric dark icon={BarChart3} label="Readiness" value={`${health.score}%`} />
+          </div>
+        </div>
+        <div className="rounded-md border border-white/15 bg-white/10 p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-black">Publishing actions</p>
+              <p className="mt-1 text-xs leading-5 text-white/70">{health.warnings.length ? `${health.warnings.length} item needs attention` : "Everything important looks ready"}</p>
+            </div>
+            <Badge tone={health.score >= 85 ? "success" : "sale"}>{health.score}%</Badge>
+          </div>
+          <div className="mt-4 grid gap-2">
+            <button className="admin-action justify-center bg-white text-ink" onClick={saveDraft} type="button">
+              <Save className="h-4 w-4" /> Save draft
+            </button>
+            <button className="admin-action justify-center bg-lime text-ink" onClick={publish} type="button">
+              <Send className="h-4 w-4" /> Publish
+            </button>
+            <button className="admin-action justify-center border-white/20 bg-transparent text-white" onClick={() => setPreviewMode((value) => !value)} type="button">
+              <Eye className="h-4 w-4" /> {previewMode ? "Exit preview" : "Preview mode"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function StudioTabs({
+  activeTab,
+  health,
+  setActiveTab
+}: {
+  activeTab: StudioTab;
+  health: StudioHealth;
+  setActiveTab: (tab: StudioTab) => void;
+}) {
+  const tabCounts: Partial<Record<StudioTab, number>> = {
+    Banners: health.activeBanners,
+    Blog: health.blogPosts,
+    Footer: health.footerLinks,
+    Header: health.menuLinks,
+    Homepage: health.totalSections,
+    "Landing Pages": health.landingPages,
+    Policies: health.policies,
+    SEO: health.seoPages,
+    Specifics: health.warnings.length,
+    Versions: health.versionCount
+  };
+
+  return (
+    <div className="overflow-x-auto rounded-card border border-black/10 bg-white p-2 shadow-sm">
+      <div className="flex min-w-max gap-2">
+        {tabs.map((tab) => {
+          const active = activeTab === tab;
+          const count = tabCounts[tab];
+
+          return (
+            <button
+              className={`inline-flex h-11 items-center gap-2 rounded-md px-4 text-sm font-black transition ${
+                active ? "bg-ink text-white shadow-sm" : "text-slate hover:bg-mist hover:text-ink"
+              }`}
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              type="button"
+            >
+              {tab}
+              {typeof count === "number" ? (
+                <span className={`rounded-md px-2 py-0.5 text-[11px] ${active ? "bg-white/15 text-white" : "bg-mist text-slate"}`}>{count}</span>
+              ) : null}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function ContentHealthCard({ health }: { health: StudioHealth }) {
+  return (
+    <AdminCard action={<Badge tone={health.score >= 85 ? "success" : "sale"}>{health.score}% ready</Badge>} title="Content health">
+      <div className="grid gap-3">
+        {health.checks.map((check) => (
+          <div className="flex items-start gap-3 rounded-md border border-black/10 bg-mist p-3" key={check.label}>
+            <div className={`grid h-8 w-8 shrink-0 place-items-center rounded-md ${check.ok ? "bg-mint text-forest" : "bg-coral/10 text-coral"}`}>
+              {check.ok ? <CheckCircle2 className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}
+            </div>
+            <div>
+              <p className="text-sm font-black text-ink">{check.label}</p>
+              <p className="mt-1 text-xs leading-5 text-slate">{check.detail}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="mt-4 flex items-center gap-2 rounded-md bg-ink px-3 py-2 text-xs font-black text-white">
+        <ListChecks className="h-4 w-4" />
+        {health.warnings.length ? `${health.warnings.length} checklist item open` : "Ready for owner review"}
+      </div>
+    </AdminCard>
+  );
+}
+
+function PreviewViewportControls({
+  previewViewport,
+  setPreviewViewport
+}: {
+  previewViewport: "desktop" | "mobile";
+  setPreviewViewport: (viewport: "desktop" | "mobile") => void;
+}) {
+  return (
+    <div className="inline-flex rounded-md border border-black/10 bg-mist p-1">
+      {(["desktop", "mobile"] as const).map((viewport) => (
+        <button
+          aria-label={`${label(viewport)} preview`}
+          className={`grid h-8 w-9 place-items-center rounded-md ${previewViewport === viewport ? "bg-ink text-white" : "text-slate"}`}
+          key={viewport}
+          onClick={() => setPreviewViewport(viewport)}
+          type="button"
+        >
+          {viewport === "desktop" ? <PanelTop className="h-4 w-4" /> : <MonitorSmartphone className="h-4 w-4" />}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function StudioMetric({
+  dark = false,
+  icon: Icon,
+  label: metricLabel,
+  value
+}: {
+  dark?: boolean;
+  icon: typeof BarChart3;
+  label: string;
+  value: number | string;
+}) {
+  return (
+    <div className={`rounded-md border p-4 ${dark ? "border-white/15 bg-white/10" : "border-black/10 bg-mist"}`}>
+      <div className={`grid h-9 w-9 place-items-center rounded-md ${dark ? "bg-white text-ink" : "bg-ink text-white"}`}>
+        <Icon className="h-4 w-4" />
+      </div>
+      <p className={`mt-4 text-2xl font-black ${dark ? "text-white" : "text-ink"}`}>{value}</p>
+      <p className={`mt-1 text-xs font-bold uppercase ${dark ? "text-white/70" : "text-slate"}`}>{metricLabel}</p>
+    </div>
+  );
+}
+
 function Textarea({
   label: textareaLabel,
   onChange,
@@ -1478,6 +1941,91 @@ function ImageUrlField({
       </div>
     </div>
   );
+}
+
+function buildStudioHealth(data: WebsiteStudioData) {
+  const totalSections = data.homepageSections.length;
+  const enabledSections = data.homepageSections.filter((section) => section.enabled).length;
+  const publishedSections = data.homepageSections.filter((section) => section.status === "published").length;
+  const scheduledSections = data.homepageSections.filter((section) => Boolean(section.publishAt)).length;
+  const missingTitles = data.homepageSections.filter((section) => !section.title.trim());
+  const sectionsMissingImage = data.homepageSections.filter(sectionNeedsImage);
+  const sectionsNeedingCta = data.homepageSections.filter(sectionNeedsCta);
+  const seoMissingCopy = data.seo.filter((entry) => !entry.title.trim() || !entry.metaDescription.trim());
+  const seoNoindex = data.seo.filter((entry) => entry.noindex);
+  const activeBanners = data.banners.filter((banner) => banner.active).length;
+  const menuLinks = data.header.megaMenuItems.reduce((total, item) => total + 1 + (item.children?.length ?? 0), 0);
+  const footerLinks = data.footer.footerColumns.reduce((total, column) => total + column.links.length, 0);
+
+  const checks = [
+    {
+      detail: missingTitles.length ? `${missingTitles.length} section title missing` : "Every homepage section has a title",
+      label: "Homepage titles",
+      ok: missingTitles.length === 0
+    },
+    {
+      detail: sectionsMissingImage.length ? `${sectionsMissingImage.length} visual section needs a desktop image` : "Hero and image sections have desktop images",
+      label: "Visual assets",
+      ok: sectionsMissingImage.length === 0
+    },
+    {
+      detail: sectionsNeedingCta.length ? `${sectionsNeedingCta.length} conversion section needs CTA text or link` : "Conversion sections have CTA text and links",
+      label: "CTA coverage",
+      ok: sectionsNeedingCta.length === 0
+    },
+    {
+      detail: seoMissingCopy.length ? `${seoMissingCopy.length} SEO page needs title or meta description` : "SEO title and meta copy are ready",
+      label: "SEO copy",
+      ok: seoMissingCopy.length === 0
+    },
+    {
+      detail: menuLinks ? `${menuLinks} menu links configured` : "Add at least one header navigation link",
+      label: "Navigation",
+      ok: menuLinks > 0
+    },
+    {
+      detail: footerLinks ? `${footerLinks} footer links configured` : "Add footer links before launch",
+      label: "Footer trust links",
+      ok: footerLinks > 0
+    },
+    {
+      detail: activeBanners ? `${activeBanners} active campaign banner${activeBanners === 1 ? "" : "s"}` : "Activate at least one banner when a campaign is live",
+      label: "Campaign banners",
+      ok: activeBanners > 0
+    }
+  ];
+  const warnings = checks.filter((check) => !check.ok);
+  const score = Math.round((checks.filter((check) => check.ok).length / checks.length) * 100);
+
+  return {
+    activeBanners,
+    blogPosts: data.blogPosts.length,
+    checks,
+    enabledSections,
+    footerLinks,
+    landingPages: data.landingPages.length,
+    menuLinks,
+    policies: data.policies.length,
+    publishedSections,
+    scheduledSections,
+    score,
+    seoNoindex,
+    seoPages: data.seo.length,
+    totalSections,
+    versionCount: data.versionHistory.length,
+    warnings
+  };
+}
+
+function sectionNeedsCta(section: HomepageSection) {
+  return (
+    ["hero_banner", "image_banner", "flash_sale", "product_carousel", "collection_carousel", "newsletter"].includes(section.type) &&
+    (!section.ctaLabel?.trim() || !section.ctaLink?.trim())
+  );
+}
+
+function sectionNeedsImage(section: HomepageSection) {
+  return ["hero_banner", "image_banner"].includes(section.type) && !section.desktopImageUrl?.trim();
 }
 
 function label(value: string) {
