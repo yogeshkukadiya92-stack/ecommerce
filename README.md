@@ -40,7 +40,7 @@ Configure admin access with environment variables before signing in:
 - `ADMIN_PASSWORD`
 - `ADMIN_NAME`
 
-Production builds hide seeded/demo admin data by default. Use `NEXT_PUBLIC_ENABLE_DEMO_DATA="true"` only in local development when you intentionally want mock admin records visible.
+Admin modules stay usable in production while real database-backed screens are being connected. Set `NEXT_PUBLIC_HIDE_SEEDED_ADMIN_DATA="true"` only when you intentionally want to hide seeded admin fallback records and show live-empty states.
 
 ## Useful Commands
 
