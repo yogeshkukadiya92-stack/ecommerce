@@ -168,6 +168,131 @@ const liveInitialProduct: LiveProductForm = {
   weightInGrams: 100
 };
 
+const liveProductTemplates: Array<{ label: string; value: LiveProductForm }> = [
+  {
+    label: "Whey protein powder",
+    value: {
+      allergens: "Milk, Soy",
+      brandName: "NutraForge",
+      categoryName: "Protein Powders",
+      description: "Premium whey protein powder for daily protein intake and post-workout nutrition routines.",
+      goalTags: "Muscle support, Post-workout, Protein",
+      imageUrl: "",
+      ingredients: "Whey protein concentrate, Cocoa powder, Digestive enzymes, Sweetener",
+      mrp: 3499,
+      name: "Whey Protein Powder",
+      sellingPrice: 2999,
+      shortDescription: "Fast-mixing whey protein with clear nutrition and batch details.",
+      size: "1 kg",
+      sku: "WHEY-1KG",
+      slug: "whey-protein-powder",
+      status: "DRAFT",
+      stock: 0,
+      usageInstructions: "Mix one scoop with 180-220 ml water or milk after training or as needed.",
+      warningText: liveInitialProduct.warningText,
+      weightInGrams: 1000
+    }
+  },
+  {
+    label: "Creatine monohydrate",
+    value: {
+      allergens: "None declared",
+      brandName: "NutraForge",
+      categoryName: "Performance",
+      description: "Single-ingredient creatine monohydrate for strength training routines and everyday performance support.",
+      goalTags: "Strength, Performance, Training",
+      imageUrl: "",
+      ingredients: "Creatine monohydrate",
+      mrp: 1499,
+      name: "Creatine Monohydrate",
+      sellingPrice: 1099,
+      shortDescription: "Micronized unflavoured creatine monohydrate.",
+      size: "250 g",
+      sku: "CRTN-250G",
+      slug: "creatine-monohydrate",
+      status: "DRAFT",
+      stock: 0,
+      usageInstructions: "Mix 3 g with water once daily. Use consistently as part of a training routine.",
+      warningText: liveInitialProduct.warningText,
+      weightInGrams: 250
+    }
+  },
+  {
+    label: "Mass gainer",
+    value: {
+      allergens: "Milk, Soy",
+      brandName: "PureLift",
+      categoryName: "Protein Powders",
+      description: "Calorie-dense mass gainer with protein, carbohydrates, and vitamins for structured bulking plans.",
+      goalTags: "Weight gain, Bulking, Calories",
+      imageUrl: "",
+      ingredients: "Maltodextrin, Whey protein, MCT powder, Vitamin blend",
+      mrp: 4299,
+      name: "Mass Gainer",
+      sellingPrice: 3699,
+      shortDescription: "High-calorie nutrition support for bulking phases.",
+      size: "3 kg",
+      sku: "GAIN-3KG",
+      slug: "mass-gainer",
+      status: "DRAFT",
+      stock: 0,
+      usageInstructions: "Mix two scoops with 350 ml milk or water between meals.",
+      warningText: liveInitialProduct.warningText,
+      weightInGrams: 3000
+    }
+  },
+  {
+    label: "Daily multivitamin",
+    value: {
+      allergens: "None declared",
+      brandName: "VitalStack",
+      categoryName: "Vitamins & Wellness",
+      description: "Daily multivitamin tablets with essential vitamins and minerals for active lifestyles.",
+      goalTags: "Daily wellness, Vitamins, Health support",
+      imageUrl: "",
+      ingredients: "Vitamin blend, Mineral blend, Tablet excipients",
+      mrp: 899,
+      name: "Daily Multivitamin",
+      sellingPrice: 699,
+      shortDescription: "Everyday multivitamin support for active routines.",
+      size: "60 tablets",
+      sku: "MULTI-60TAB",
+      slug: "daily-multivitamin",
+      status: "DRAFT",
+      stock: 0,
+      usageInstructions: "Take one tablet daily with a meal or as directed on the product label.",
+      warningText: liveInitialProduct.warningText,
+      weightInGrams: 120
+    }
+  }
+];
+
+const brandPresets = ["NutraForge", "PureLift", "VitalStack", "FitSupplement", "Optimum Nutrition", "MuscleBlaze", "GNC"];
+const categoryPresets = ["Protein Powders", "Performance", "Vitamins & Wellness", "Mass Gainers", "Fitness Accessories", "Weight Management"];
+const sizePresets = ["250 g", "500 g", "1 kg", "2 kg", "3 kg", "30 servings", "60 tablets", "90 tablets", "Shaker"];
+const goalPresets = [
+  "Muscle support, Post-workout, Protein",
+  "Strength, Performance, Training",
+  "Weight gain, Bulking, Calories",
+  "Daily wellness, Vitamins, Health support",
+  "Fat loss, Low sugar, Lean routine"
+];
+const ingredientPresets = [
+  "Whey protein concentrate, Cocoa powder, Digestive enzymes, Sweetener",
+  "Creatine monohydrate",
+  "Maltodextrin, Whey protein, MCT powder, Vitamin blend",
+  "Vitamin blend, Mineral blend, Tablet excipients",
+  "Plant protein blend, Natural flavour, Sweetener"
+];
+const allergenPresets = ["None declared", "Milk", "Milk, Soy", "Soy", "Peanuts, Tree nuts", "Gluten"];
+const usagePresets = [
+  "Mix one scoop with 180-220 ml water or milk after training or as needed.",
+  "Mix 3 g with water once daily. Use consistently as part of a training routine.",
+  "Mix two scoops with 350 ml milk or water between meals.",
+  "Take one tablet daily with a meal or as directed on the product label.",
+  "Use as directed on the product label."
+];
+
 function LiveCatalogManagementClient() {
   const { session } = useAdminSession();
   const [form, setForm] = useState<LiveProductForm>(liveInitialProduct);
@@ -182,6 +307,22 @@ function LiveCatalogManagementClient() {
       ...(key === "name" && !current.slug ? { slug: slugFromName(String(value)) } : {})
     }));
     setError("");
+  }
+
+  function applyTemplate(templateLabel: string) {
+    const template = liveProductTemplates.find((item) => item.label === templateLabel);
+
+    if (!template) {
+      return;
+    }
+
+    const skuSuffix = Date.now().toString().slice(-5);
+    setForm({
+      ...template.value,
+      sku: `${template.value.sku}-${skuSuffix}`
+    });
+    setError("");
+    setMessage(`${template.label} template selected. Review price and stock, then add product.`);
   }
 
   async function saveProduct() {
@@ -224,13 +365,46 @@ function LiveCatalogManagementClient() {
         description="Add your real product here. Demo catalog records are hidden in live mode."
         title="Add product"
       >
+        <div className="mb-5 grid gap-4 rounded-md border border-black/10 bg-mist p-4 md:grid-cols-2 xl:grid-cols-4">
+          <SelectField label="Product template" onChange={applyTemplate} value="">
+            <option value="">Select product type</option>
+            {liveProductTemplates.map((template) => (
+              <option key={template.label} value={template.label}>{template.label}</option>
+            ))}
+          </SelectField>
+          <SelectField label="Brand" onChange={(value) => updateForm("brandName", value)} value={form.brandName}>
+            <option value="">Select brand</option>
+            {brandPresets.map((brand) => <option key={brand} value={brand}>{brand}</option>)}
+          </SelectField>
+          <SelectField label="Category" onChange={(value) => updateForm("categoryName", value)} value={form.categoryName}>
+            <option value="">Select category</option>
+            {categoryPresets.map((category) => <option key={category} value={category}>{category}</option>)}
+          </SelectField>
+          <SelectField label="Size" onChange={(value) => updateForm("size", value)} value={form.size}>
+            <option value="">Select size</option>
+            {sizePresets.map((size) => <option key={size} value={size}>{size}</option>)}
+          </SelectField>
+          <SelectField label="Goal tags" onChange={(value) => updateForm("goalTags", value)} value={form.goalTags}>
+            <option value="">Select goal group</option>
+            {goalPresets.map((goal) => <option key={goal} value={goal}>{goal}</option>)}
+          </SelectField>
+          <SelectField label="Ingredients" onChange={(value) => updateForm("ingredients", value)} value={form.ingredients}>
+            <option value="">Select ingredients</option>
+            {ingredientPresets.map((ingredient) => <option key={ingredient} value={ingredient}>{ingredient}</option>)}
+          </SelectField>
+          <SelectField label="Allergens" onChange={(value) => updateForm("allergens", value)} value={form.allergens}>
+            <option value="">Select allergens</option>
+            {allergenPresets.map((allergen) => <option key={allergen} value={allergen}>{allergen}</option>)}
+          </SelectField>
+          <SelectField label="Usage instructions" onChange={(value) => updateForm("usageInstructions", value)} value={form.usageInstructions}>
+            <option value="">Select usage</option>
+            {usagePresets.map((usage) => <option key={usage} value={usage}>{usage}</option>)}
+          </SelectField>
+        </div>
         <div className="grid gap-4 md:grid-cols-2">
           <Input label="Product name" onChange={(event) => updateForm("name", event.target.value)} value={form.name} />
           <Input label="Slug" onChange={(event) => updateForm("slug", slugFromName(event.target.value))} value={form.slug} />
-          <Input label="Brand name" onChange={(event) => updateForm("brandName", event.target.value)} value={form.brandName} />
-          <Input label="Category name" onChange={(event) => updateForm("categoryName", event.target.value)} value={form.categoryName} />
           <Input label="SKU" onChange={(event) => updateForm("sku", event.target.value)} value={form.sku} />
-          <Input label="Size" onChange={(event) => updateForm("size", event.target.value)} value={form.size} />
           <Input label="MRP" min={0} onChange={(event) => updateForm("mrp", Number(event.target.value))} type="number" value={form.mrp} />
           <Input label="Selling price" min={0} onChange={(event) => updateForm("sellingPrice", Number(event.target.value))} type="number" value={form.sellingPrice} />
           <Input label="Opening stock" min={0} onChange={(event) => updateForm("stock", Number(event.target.value))} type="number" value={form.stock} />
