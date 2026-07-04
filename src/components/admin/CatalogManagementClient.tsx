@@ -17,7 +17,6 @@ import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
 import { AdminCard } from "./AdminCard";
 import { AdminTable } from "./AdminTable";
-import { LiveAdminEmptyState } from "./LiveAdminEmptyState";
 
 type AdminProductStatus = ProductStatus | "inactive";
 
@@ -119,17 +118,149 @@ const initialProduct: EditableProduct = {
 
 export function CatalogManagementClient() {
   if (!showDemoData) {
-    return (
-      <LiveAdminEmptyState
-        actionHref="/admin/settings"
-        actionLabel="Configure catalog"
-        title="Catalog management is ready for your real products"
-        description="Demo products, brands, categories, pricing, media, and compliance records are hidden in live mode. Connect MongoDB-backed catalog actions before publishing inventory."
-      />
-    );
+    return <LiveCatalogManagementClient />;
   }
 
   return <DemoCatalogManagementClient />;
+}
+
+type LiveProductForm = {
+  allergens: string;
+  brandName: string;
+  categoryName: string;
+  description: string;
+  goalTags: string;
+  imageUrl: string;
+  ingredients: string;
+  mrp: number;
+  name: string;
+  sellingPrice: number;
+  shortDescription: string;
+  size: string;
+  sku: string;
+  slug: string;
+  status: "DRAFT" | "ACTIVE";
+  stock: number;
+  usageInstructions: string;
+  warningText: string;
+  weightInGrams: number;
+};
+
+const liveInitialProduct: LiveProductForm = {
+  allergens: "",
+  brandName: "",
+  categoryName: "",
+  description: "",
+  goalTags: "",
+  imageUrl: "",
+  ingredients: "",
+  mrp: 0,
+  name: "",
+  sellingPrice: 0,
+  shortDescription: "",
+  size: "",
+  sku: "",
+  slug: "",
+  status: "DRAFT",
+  stock: 0,
+  usageInstructions: "",
+  warningText: "This product is not intended to diagnose, treat, cure, or prevent any disease. Not for medicinal use.",
+  weightInGrams: 100
+};
+
+function LiveCatalogManagementClient() {
+  const { session } = useAdminSession();
+  const [form, setForm] = useState<LiveProductForm>(liveInitialProduct);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  function updateForm<K extends keyof LiveProductForm>(key: K, value: LiveProductForm[K]) {
+    setForm((current) => ({
+      ...current,
+      [key]: value,
+      ...(key === "name" && !current.slug ? { slug: slugFromName(String(value)) } : {})
+    }));
+    setError("");
+  }
+
+  async function saveProduct() {
+    setIsSaving(true);
+    setError("");
+    setMessage("");
+
+    try {
+      const response = await fetch("/api/admin/products", {
+        body: JSON.stringify(form),
+        headers: { "Content-Type": "application/json" },
+        method: "POST"
+      });
+      const result = (await response.json().catch(() => ({}))) as { message?: string };
+
+      if (!response.ok) {
+        setError(result.message ?? "Unable to create product.");
+        return;
+      }
+
+      writeAdminAuditLog(session, {
+        action: "admin.product.create",
+        entityId: form.slug,
+        entityType: "Product",
+        metadata: { sku: form.sku, status: form.status }
+      });
+      setMessage(result.message ?? "Product created successfully.");
+      setForm(liveInitialProduct);
+    } catch {
+      setError("Unable to connect to catalog API.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <div className="grid gap-6">
+      <AdminCard
+        action={<Badge tone="success">MongoDB live catalog</Badge>}
+        description="Add your real product here. Demo catalog records are hidden in live mode."
+        title="Add product"
+      >
+        <div className="grid gap-4 md:grid-cols-2">
+          <Input label="Product name" onChange={(event) => updateForm("name", event.target.value)} value={form.name} />
+          <Input label="Slug" onChange={(event) => updateForm("slug", slugFromName(event.target.value))} value={form.slug} />
+          <Input label="Brand name" onChange={(event) => updateForm("brandName", event.target.value)} value={form.brandName} />
+          <Input label="Category name" onChange={(event) => updateForm("categoryName", event.target.value)} value={form.categoryName} />
+          <Input label="SKU" onChange={(event) => updateForm("sku", event.target.value)} value={form.sku} />
+          <Input label="Size" onChange={(event) => updateForm("size", event.target.value)} value={form.size} />
+          <Input label="MRP" min={0} onChange={(event) => updateForm("mrp", Number(event.target.value))} type="number" value={form.mrp} />
+          <Input label="Selling price" min={0} onChange={(event) => updateForm("sellingPrice", Number(event.target.value))} type="number" value={form.sellingPrice} />
+          <Input label="Opening stock" min={0} onChange={(event) => updateForm("stock", Number(event.target.value))} type="number" value={form.stock} />
+          <Input label="Weight in grams" min={1} onChange={(event) => updateForm("weightInGrams", Number(event.target.value))} type="number" value={form.weightInGrams} />
+          <Input label="Image URL" onChange={(event) => updateForm("imageUrl", event.target.value)} value={form.imageUrl} />
+          <SelectField label="Status" onChange={(value) => updateForm("status", value as LiveProductForm["status"])} value={form.status}>
+            <option value="DRAFT">Draft</option>
+            <option value="ACTIVE">Active</option>
+          </SelectField>
+          <Input className="md:col-span-2" label="Short description" onChange={(event) => updateForm("shortDescription", event.target.value)} value={form.shortDescription} />
+          <Textarea label="Description" onChange={(value) => updateForm("description", value)} value={form.description} />
+          <Textarea label="Ingredients" onChange={(value) => updateForm("ingredients", value)} value={form.ingredients} />
+          <Textarea label="Allergens" onChange={(value) => updateForm("allergens", value)} value={form.allergens} />
+          <Textarea label="Goal tags" onChange={(value) => updateForm("goalTags", value)} value={form.goalTags} />
+          <Textarea label="Usage instructions" onChange={(value) => updateForm("usageInstructions", value)} value={form.usageInstructions} />
+          <Textarea label="Warning text" onChange={(value) => updateForm("warningText", value)} value={form.warningText} />
+        </div>
+        {error ? <p className="mt-4 rounded-md bg-coral/10 p-3 text-sm font-bold text-coral">{error}</p> : null}
+        {message ? <p className="mt-4 rounded-md bg-mint p-3 text-sm font-bold text-forest">{message}</p> : null}
+        <div className="mt-5 flex flex-wrap justify-end gap-3">
+          <button className="admin-action" onClick={() => setForm(liveInitialProduct)} type="button">
+            Reset
+          </button>
+          <button className="admin-action bg-ink text-white" disabled={isSaving} onClick={saveProduct} type="button">
+            <Plus className="h-4 w-4" /> {isSaving ? "Saving..." : "Add product"}
+          </button>
+        </div>
+      </AdminCard>
+    </div>
+  );
 }
 
 function DemoCatalogManagementClient() {
@@ -709,4 +840,12 @@ function validateProduct(form: EditableProduct) {
   }
 
   return errors;
+}
+
+function slugFromName(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
