@@ -19,8 +19,9 @@ export function AuthFormClient({ mode }: { mode: AuthMode }) {
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
     setMessage("");
@@ -35,18 +36,26 @@ export function AuthFormClient({ mode }: { mode: AuthMode }) {
       return;
     }
 
-    const result =
-      mode === "login"
-        ? loginCustomer(email, password)
-        : signupCustomer({ email, fullName, password, phone });
+    setIsSubmitting(true);
 
-    if (!result.ok) {
-      setError(result.message);
-      return;
+    try {
+      const result =
+        mode === "login"
+          ? await loginCustomer(email, password)
+          : await signupCustomer({ email, fullName, password, phone });
+
+      if (!result.ok) {
+        setError(result.message);
+        return;
+      }
+
+      setMessage(result.message);
+      router.push("/account");
+    } catch {
+      setError("Unable to connect to account services. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setMessage(result.message);
-    router.push("/account");
   }
 
   function handleLogout() {
@@ -88,8 +97,8 @@ export function AuthFormClient({ mode }: { mode: AuthMode }) {
             <Input label="Password" onChange={(event) => setPassword(event.target.value)} required type="password" value={password} />
             {error ? <p className="rounded-md bg-coral/10 p-3 text-sm font-bold text-coral">{error}</p> : null}
             {message ? <p className="rounded-md bg-mint p-3 text-sm font-bold text-forest">{message}</p> : null}
-            <button className="focus-ring h-12 rounded-md bg-ink text-sm font-black text-white" type="submit">
-              {mode === "login" ? "Login" : "Create account"}
+            <button className="focus-ring h-12 rounded-md bg-ink text-sm font-black text-white disabled:opacity-60" disabled={isSubmitting} type="submit">
+              {isSubmitting ? "Please wait..." : mode === "login" ? "Login" : "Create account"}
             </button>
           </form>
 

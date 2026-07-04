@@ -11,7 +11,13 @@ npm install
 cp .env.example .env
 ```
 
-Set `DATABASE_URL` in `.env` to your MongoDB database. For a local database, use:
+Set `DATABASE_URL` in `.env` to your MongoDB database. For Railway MongoDB, include the app database name and auth source:
+
+```env
+DATABASE_URL="mongodb://USER:PASSWORD@HOST:27017/fitsupplement_store?authSource=admin"
+```
+
+For a local database, use:
 
 ```env
 DATABASE_URL="mongodb://localhost:27017/fitsupplement_store"
@@ -23,7 +29,6 @@ If Docker is installed, start the included MongoDB service:
 docker compose up -d
 npm run db:push
 npm run db:generate
-npm run db:seed
 npm run dev
 ```
 
@@ -35,7 +40,7 @@ Configure admin access with environment variables before signing in:
 - `ADMIN_PASSWORD`
 - `ADMIN_NAME`
 
-Keep `NEXT_PUBLIC_HIDE_SEEDED_ADMIN_DATA="false"` so admin tools stay usable with seeded workspace data while real MongoDB-backed modules are connected. Set it to `"true"` only if you intentionally want to hide seeded admin fallback data.
+Production builds hide seeded/demo admin data by default. Use `NEXT_PUBLIC_ENABLE_DEMO_DATA="true"` only in local development when you intentionally want mock admin records visible.
 
 ## Useful Commands
 
@@ -48,7 +53,6 @@ npm run build
 npm run start
 npm run db:generate
 npm run db:push
-npm run db:seed
 docker compose up -d
 ```
 

@@ -8,6 +8,7 @@ Required:
 - `NEXT_PUBLIC_APP_NAME`
 - `NEXT_PUBLIC_APP_URL`
 - `NEXT_PUBLIC_SITE_URL`
+- `NEXT_PUBLIC_ENABLE_DEMO_DATA=false`
 - `DATABASE_URL`
 - `AUTH_SECRET`
 - `AUTH_SESSION_COOKIE_NAME`
@@ -56,10 +57,16 @@ Monitoring and backup:
 - `BACKUP_PROVIDER`
 - `BACKUP_BUCKET`
 
-## Database Migration Instructions
+## Database Setup Instructions
 
-1. Create a PostgreSQL database in Supabase, Neon, Railway, Render, AWS RDS, or another managed provider.
+1. Create a MongoDB database in Railway, MongoDB Atlas, Render, DigitalOcean, AWS, or another managed provider.
 2. Set `DATABASE_URL` in the deployment provider.
+   - Railway MongoDB with root credentials should usually include the app database and auth source:
+
+```env
+DATABASE_URL="mongodb://USER:PASSWORD@HOST:27017/fitsupplement_store?authSource=admin"
+```
+
 3. Generate Prisma client during build:
 
 ```bash
@@ -72,22 +79,17 @@ npm run db:generate
 npm run db:push
 ```
 
-5. Before real production data, switch to migration files:
-
-```bash
-npx prisma migrate dev --name init
-npx prisma migrate deploy
-```
+5. Prisma MongoDB uses `db push`; do not run destructive reset commands against production.
 
 ## Seed Data Instructions
 
-Local:
+Local development only:
 
 ```bash
 npm run db:seed
 ```
 
-Seed only the data you want to keep in the target environment. Confirm the production schema and destructive-reset policy before running seed commands.
+Do not run `npm run db:seed` against production unless the seed file has been reviewed and contains only real launch data.
 
 ## Build and Start
 

@@ -119,22 +119,6 @@ export const adminRoles: AdminRole[] = [
   }
 ];
 
-const configuredAdminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL?.trim() ?? "";
-const configuredAdminPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD ?? "";
-const configuredAdminName = process.env.NEXT_PUBLIC_ADMIN_NAME?.trim() || "Store Owner";
-
-const configuredAdmins = configuredAdminEmail && configuredAdminPassword
-  ? [
-      {
-        adminId: "admin-owner",
-        email: configuredAdminEmail,
-        fullName: configuredAdminName,
-        password: configuredAdminPassword,
-        roles: [adminRoles[0]]
-      }
-    ]
-  : [];
-
 function canUseStorage() {
   return typeof window !== "undefined" && Boolean(window.localStorage);
 }
@@ -190,38 +174,6 @@ export function hasAdminPermission(session: AdminSession | null, permission: Adm
   return Boolean(session?.permissions.includes(permission));
 }
 
-export function loginAdmin(email: string, password: string) {
-  const admin = configuredAdmins.find((candidate) => candidate.email.toLowerCase() === email.trim().toLowerCase());
-
-  if (configuredAdmins.length === 0 || !admin || admin.password !== password) {
-    writeAdminAuditLog(null, {
-      action: "admin.login.failed",
-      actorName: email.trim() || "Unknown admin",
-      entityType: "AdminSession",
-      metadata: {
-        email: maskEmail(email),
-        reason: "Invalid email or password",
-        rateLimitChecked: true
-      },
-      module: "security"
-    });
-
-    return {
-      message: configuredAdmins.length === 0 ? "Admin login is not configured." : "Invalid email or password.",
-      ok: false as const
-    };
-  }
-
-  const session = createAdminSession(admin);
-  persistAdminSession(session);
-
-  return {
-    message: "Admin login successful.",
-    ok: true as const,
-    session
-  };
-}
-
 export const sensitivePermissionMap = {
   "product:create": "Product create",
   "product:edit": "Product edit",
@@ -233,16 +185,6 @@ export const sensitivePermissionMap = {
   "cms:publish": "CMS publish",
   "user:manage": "User management"
 } satisfies Partial<Record<AdminPermission, string>>;
-
-function maskEmail(email: string) {
-  const [name, domain] = email.split("@");
-
-  if (!name || !domain) {
-    return "masked";
-  }
-
-  return `${name.slice(0, 2)}***@${domain}`;
-}
 
 export function logoutAdmin() {
   const session = getCurrentAdminSession();

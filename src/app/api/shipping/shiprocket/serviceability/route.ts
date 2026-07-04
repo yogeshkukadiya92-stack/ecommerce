@@ -14,6 +14,17 @@ export async function POST(request: Request) {
     const body = requestSchema.parse(await request.json());
 
     if (!isShiprocketConfigured()) {
+      if (process.env.NODE_ENV === "production") {
+        return NextResponse.json(
+          {
+            configured: false,
+            error: "shiprocket_not_configured",
+            message: "Shiprocket credentials are required before checking live courier serviceability."
+          },
+          { status: 503 }
+        );
+      }
+
       const fallback = checkPincodeServiceability({
         carrier: "shiprocket",
         pincode: body.deliveryPostcode,

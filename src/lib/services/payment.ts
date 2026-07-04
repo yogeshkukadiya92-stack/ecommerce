@@ -10,6 +10,10 @@ export type PaymentIntentInput = {
 };
 
 export async function createPaymentIntent(input: PaymentIntentInput) {
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(`${input.provider} payment intent creation is not configured.`);
+  }
+
   return {
     provider: input.provider,
     orderId: input.orderId,
@@ -33,6 +37,10 @@ export async function processMockCheckoutPayment(input: {
       status: "cod_pending" as const,
       transactionId: `cod_${input.orderNumber.toLowerCase()}`
     };
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("Online payments must use a configured payment gateway in production.");
   }
 
   return {

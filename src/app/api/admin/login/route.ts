@@ -5,9 +5,9 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null) as { email?: string; password?: string } | null;
   const email = body?.email?.trim() ?? "";
   const password = body?.password ?? "";
-  const adminEmail = cleanEnvValue(process.env.ADMIN_EMAIL ?? process.env.NEXT_PUBLIC_ADMIN_EMAIL);
-  const adminPassword = cleanEnvValue(process.env.ADMIN_PASSWORD ?? process.env.NEXT_PUBLIC_ADMIN_PASSWORD);
-  const adminName = cleanEnvValue(process.env.ADMIN_NAME ?? process.env.NEXT_PUBLIC_ADMIN_NAME) || "Store Owner";
+  const adminEmail = cleanEnvValue(process.env.ADMIN_EMAIL);
+  const adminPassword = cleanEnvValue(process.env.ADMIN_PASSWORD);
+  const adminName = cleanEnvValue(process.env.ADMIN_NAME) || "Store Owner";
 
   if (!adminEmail || !adminPassword) {
     return NextResponse.json({ message: "Admin login is not configured." }, { status: 500 });

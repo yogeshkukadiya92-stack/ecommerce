@@ -15,6 +15,8 @@ RAZORPAY_WEBHOOK_SECRET="webhook_secret_xxxxx"
 RAZORPAY_TEST_MODE="true"
 ```
 
+For production, use live Razorpay keys and set `RAZORPAY_TEST_MODE="false"`.
+
 Do not expose `RAZORPAY_KEY_SECRET` or `RAZORPAY_WEBHOOK_SECRET` to the frontend. The frontend receives only the public `keyId` returned by the payment initialization API.
 
 ## Payment Flow
@@ -57,7 +59,7 @@ The webhook handler verifies the Razorpay webhook signature and returns a placeh
 
 ## Production Notes
 
-- Move order persistence from localStorage to the database before real launch.
+- Confirm checkout order persistence is database-backed before accepting real paid orders.
 - Verify the Razorpay webhook signature before trusting asynchronous payment events.
 - Reconcile payments by provider order id and provider payment id.
 - Never mark an online order as paid from the client alone.

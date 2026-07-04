@@ -5,6 +5,7 @@ import type { CheckoutOrder, PlaceOrderInput } from "@/types/checkout";
 import { processMockCheckoutPayment } from "@/lib/services/payment";
 
 const ORDERS_KEY = "fitsupplement.orders.v1";
+const canSeedDemoOrders = process.env.NODE_ENV !== "production" && process.env.NEXT_PUBLIC_ENABLE_DEMO_DATA !== "false";
 
 function canUseStorage() {
   return typeof window !== "undefined" && Boolean(window.localStorage);
@@ -77,12 +78,16 @@ function seedCheckoutOrders(): CheckoutOrder[] {
 
 export function readLocalOrders() {
   if (!canUseStorage()) {
-    return seedCheckoutOrders();
+    return canSeedDemoOrders ? seedCheckoutOrders() : [];
   }
 
   const rawOrders = window.localStorage.getItem(ORDERS_KEY);
 
   if (!rawOrders) {
+    if (!canSeedDemoOrders) {
+      return [];
+    }
+
     const seeded = seedCheckoutOrders();
     window.localStorage.setItem(ORDERS_KEY, JSON.stringify(seeded));
     return seeded;
@@ -90,9 +95,9 @@ export function readLocalOrders() {
 
   try {
     const parsed = JSON.parse(rawOrders);
-    return Array.isArray(parsed) ? (parsed as CheckoutOrder[]) : seedCheckoutOrders();
+    return Array.isArray(parsed) ? (parsed as CheckoutOrder[]) : [];
   } catch {
-    return seedCheckoutOrders();
+    return [];
   }
 }
 
