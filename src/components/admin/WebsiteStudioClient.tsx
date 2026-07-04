@@ -318,6 +318,7 @@ function DemoWebsiteStudioClient({
               addSection={addHomepageSection}
               deleteSection={deleteHomepageSection}
               duplicateSection={duplicateHomepageSection}
+              health={health}
               moveSection={moveSection}
               selectedSection={selectedSection}
               selectedSectionId={selectedSectionId}
@@ -398,6 +399,7 @@ function HomepageBuilder({
   addSection,
   deleteSection,
   duplicateSection,
+  health,
   moveSection,
   selectedSection,
   selectedSectionId,
@@ -408,6 +410,7 @@ function HomepageBuilder({
   addSection: () => void;
   deleteSection: (sectionId: string) => void;
   duplicateSection: (sectionId: string) => void;
+  health: StudioHealth;
   moveSection: (sectionId: string, direction: -1 | 1) => void;
   selectedSection?: HomepageSection;
   selectedSectionId: string;
@@ -419,6 +422,8 @@ function HomepageBuilder({
 
   return (
     <>
+      <WebsiteBuilderChecklist health={health} sections={sections} setSelectedSectionId={setSelectedSectionId} />
+
       <AdminCard title="Homepage builder">
         <div className="mb-4 flex flex-wrap justify-end gap-2">
           <button className="admin-action" onClick={addSection} type="button">
@@ -483,6 +488,117 @@ function HomepageBuilder({
         <SectionSpecificsPanel selectedSection={selectedSection} selectedSectionId={selectedSectionId} updateSection={updateSection} />
       </AdminCard>
     </>
+  );
+}
+
+function WebsiteBuilderChecklist({
+  health,
+  sections,
+  setSelectedSectionId
+}: {
+  health: StudioHealth;
+  sections: HomepageSection[];
+  setSelectedSectionId: (sectionId: string) => void;
+}) {
+  const missingTitles = sections.filter((section) => !section.title.trim());
+  const missingDesktopImages = sections.filter(sectionNeedsImage);
+  const missingMobileImages = sections.filter(sectionNeedsMobileImage);
+  const missingCtas = sections.filter(sectionNeedsCta);
+  const notPublished = sections.filter((section) => section.enabled && section.status !== "published");
+  const hiddenSections = sections.filter((section) => !section.enabled);
+
+  const checklist = [
+    {
+      detail: "Every section should have a clear owner-facing title.",
+      icon: Layers3,
+      items: missingTitles,
+      label: "Section titles"
+    },
+    {
+      detail: "Hero and image sections need desktop artwork before launch.",
+      icon: ImageIcon,
+      items: missingDesktopImages,
+      label: "Desktop images"
+    },
+    {
+      detail: "Mobile hero images keep the storefront clean on phones.",
+      icon: MonitorSmartphone,
+      items: missingMobileImages,
+      label: "Mobile images"
+    },
+    {
+      detail: "Conversion sections need button text and a working link.",
+      icon: Target,
+      items: missingCtas,
+      label: "CTA buttons"
+    },
+    {
+      detail: "Visible sections should be published when content is final.",
+      icon: Send,
+      items: notPublished,
+      label: "Publish status"
+    },
+    {
+      detail: "Review hidden sections and enable only the ones needed on the live site.",
+      icon: Eye,
+      items: hiddenSections,
+      label: "Visibility"
+    }
+  ];
+  const completed = checklist.filter((item) => item.items.length === 0).length;
+  const checklistScore = Math.round((completed / checklist.length) * 100);
+  const combinedScore = Math.round((checklistScore + health.score) / 2);
+
+  return (
+    <AdminCard
+      action={<Badge tone={combinedScore >= 85 ? "success" : "sale"}>{combinedScore}% score</Badge>}
+      description="Use this launch checklist to see exactly which homepage changes are still pending."
+      title="Website builder checklist"
+    >
+      <div className="grid gap-4 lg:grid-cols-[260px_minmax(0,1fr)]">
+        <div className="rounded-md border border-black/10 bg-ink p-4 text-white">
+          <div className="flex items-center justify-between gap-3">
+            <div className="grid h-11 w-11 place-items-center rounded-md bg-lime text-ink">
+              <ListChecks className="h-5 w-5" />
+            </div>
+            <span className="text-3xl font-black">{combinedScore}%</span>
+          </div>
+          <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/15">
+            <div className="h-full rounded-full bg-lime" style={{ width: `${combinedScore}%` }} />
+          </div>
+          <p className="mt-4 text-sm font-black">{completed} of {checklist.length} checks complete</p>
+          <p className="mt-1 text-xs leading-5 text-white/70">
+            {checklist.length - completed ? `${checklist.length - completed} improvement area${checklist.length - completed === 1 ? "" : "s"} left` : "Homepage is ready for owner review"}
+          </p>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-2">
+          {checklist.map((item) => {
+            const Icon = item.icon;
+            const firstSection = item.items[0];
+            const ok = item.items.length === 0;
+
+            return (
+              <div className="rounded-md border border-black/10 bg-mist p-4" key={item.label}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className={`grid h-9 w-9 shrink-0 place-items-center rounded-md ${ok ? "bg-mint text-forest" : "bg-coral/10 text-coral"}`}>
+                    {ok ? <CheckCircle2 className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
+                  </div>
+                  <Badge tone={ok ? "success" : "sale"}>{ok ? "Done" : `${item.items.length} pending`}</Badge>
+                </div>
+                <p className="mt-3 text-sm font-black text-ink">{item.label}</p>
+                <p className="mt-1 text-xs leading-5 text-slate">{item.detail}</p>
+                {firstSection ? (
+                  <button className="admin-action mt-3" onClick={() => setSelectedSectionId(firstSection.id)} type="button">
+                    <Eye className="h-4 w-4" /> Inspect {firstSection.title || "section"}
+                  </button>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </AdminCard>
   );
 }
 
@@ -1950,7 +2066,9 @@ function buildStudioHealth(data: WebsiteStudioData) {
   const scheduledSections = data.homepageSections.filter((section) => Boolean(section.publishAt)).length;
   const missingTitles = data.homepageSections.filter((section) => !section.title.trim());
   const sectionsMissingImage = data.homepageSections.filter(sectionNeedsImage);
+  const sectionsMissingMobileImage = data.homepageSections.filter(sectionNeedsMobileImage);
   const sectionsNeedingCta = data.homepageSections.filter(sectionNeedsCta);
+  const sectionsNotPublished = data.homepageSections.filter((section) => section.enabled && section.status !== "published");
   const seoMissingCopy = data.seo.filter((entry) => !entry.title.trim() || !entry.metaDescription.trim());
   const seoNoindex = data.seo.filter((entry) => entry.noindex);
   const activeBanners = data.banners.filter((banner) => banner.active).length;
@@ -1969,9 +2087,19 @@ function buildStudioHealth(data: WebsiteStudioData) {
       ok: sectionsMissingImage.length === 0
     },
     {
+      detail: sectionsMissingMobileImage.length ? `${sectionsMissingMobileImage.length} visual section needs a mobile image` : "Hero and image sections have mobile images",
+      label: "Mobile assets",
+      ok: sectionsMissingMobileImage.length === 0
+    },
+    {
       detail: sectionsNeedingCta.length ? `${sectionsNeedingCta.length} conversion section needs CTA text or link` : "Conversion sections have CTA text and links",
       label: "CTA coverage",
       ok: sectionsNeedingCta.length === 0
+    },
+    {
+      detail: sectionsNotPublished.length ? `${sectionsNotPublished.length} visible section needs publish status` : "Visible sections are marked published",
+      label: "Publish readiness",
+      ok: sectionsNotPublished.length === 0
     },
     {
       detail: seoMissingCopy.length ? `${seoMissingCopy.length} SEO page needs title or meta description` : "SEO title and meta copy are ready",
@@ -2026,6 +2154,10 @@ function sectionNeedsCta(section: HomepageSection) {
 
 function sectionNeedsImage(section: HomepageSection) {
   return ["hero_banner", "image_banner"].includes(section.type) && !section.desktopImageUrl?.trim();
+}
+
+function sectionNeedsMobileImage(section: HomepageSection) {
+  return ["hero_banner", "image_banner"].includes(section.type) && !section.mobileImageUrl?.trim();
 }
 
 function label(value: string) {
