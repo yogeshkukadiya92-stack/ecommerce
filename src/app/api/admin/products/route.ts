@@ -42,6 +42,15 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const input = productInputSchema.parse(await request.json());
+    const slug = input.slug.trim().toLowerCase();
+    const sku = input.sku.trim().toUpperCase();
+    const existingProduct = await prisma.product.findUnique({ where: { slug } });
+    const existingVariant = await prisma.productVariant.findUnique({ where: { sku } });
+
+    if (existingProduct || existingVariant) {
+      return NextResponse.json({ message: "Product slug or SKU already exists." }, { status: 409 });
+    }
+
     const brand = await getOrCreateBrand(input.brandName);
     const category = await getOrCreateCategory(input.categoryName);
     const discountPercent = Math.max(0, Math.round(((input.mrp - input.sellingPrice) / input.mrp) * 100));
@@ -69,7 +78,7 @@ export async function POST(request: Request) {
         name: input.name.trim(),
         nutritionFacts: [],
         shortDescription: input.shortDescription.trim(),
-        slug: input.slug.trim().toLowerCase(),
+        slug,
         status: input.status,
         usageInstructions: input.usageInstructions?.trim() || "Use as directed on the product label.",
         variants: {
@@ -80,20 +89,32 @@ export async function POST(request: Request) {
             mrp: input.mrp,
             sellingPrice: input.sellingPrice,
             size: input.size?.trim() || undefined,
-            sku: input.sku.trim().toUpperCase(),
+            sku,
             stock: input.stock,
             weightInGrams: input.weightInGrams
           }
         },
         warningText:
           input.warningText?.trim() ||
-          "This product is not intended to diagnose, treat, cure, or prevent any disease. Not for medicinal use."
+          "This product is not intended to diagnose, treat, cure, or prevent any disease. Not for medicinal use.",
+        wishlistIds: []
       },
       include: {
         brand: true,
         categories: true,
         images: true,
         variants: true
+      }
+    });
+
+    await prisma.category.update({
+      data: {
+        productIds: {
+          push: product.id
+        }
+      },
+      where: {
+        id: category.id
       }
     });
 
@@ -109,20 +130,26 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Product slug or SKU already exists." }, { status: 409 });
     }
 
-    const message = error instanceof z.ZodError ? "Enter valid product details." : "Unable to create product.";
-    return NextResponse.json({ message }, { status: 400 });
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ message: "Enter valid product details." }, { status: 400 });
+    }
+
+    console.error("Catalog product create failed", error);
+    return NextResponse.json({ message: "Unable to create product. Check database setup and required catalog fields." }, { status: 500 });
   }
 }
 
 async function getOrCreateBrand(name: string) {
   const normalizedName = name.trim();
   const slug = slugify(normalizedName);
-  const existing = await prisma.brand.findUnique({ where: { slug } });
-
-  return existing ?? prisma.brand.create({
-    data: {
+  return prisma.brand.upsert({
+    create: {
       description: `${normalizedName} products`,
       name: normalizedName,
+      slug
+    },
+    update: {},
+    where: {
       slug
     }
   });
@@ -131,12 +158,15 @@ async function getOrCreateBrand(name: string) {
 async function getOrCreateCategory(name: string) {
   const normalizedName = name.trim();
   const slug = slugify(normalizedName);
-  const existing = await prisma.category.findUnique({ where: { slug } });
-
-  return existing ?? prisma.category.create({
-    data: {
+  return prisma.category.upsert({
+    create: {
       description: `${normalizedName} category`,
       name: normalizedName,
+      productIds: [],
+      slug
+    },
+    update: {},
+    where: {
       slug
     }
   });
