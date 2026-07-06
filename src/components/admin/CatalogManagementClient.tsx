@@ -299,6 +299,9 @@ function LiveCatalogManagementClient() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState("");
+  const missingRequiredFields = useMemo(() => getMissingLiveProductFields(form), [form]);
+  const canSaveProduct = missingRequiredFields.length === 0 && !isSaving;
 
   function updateForm<K extends keyof LiveProductForm>(key: K, value: LiveProductForm[K]) {
     setForm((current) => ({
@@ -313,10 +316,12 @@ function LiveCatalogManagementClient() {
     const template = liveProductTemplates.find((item) => item.label === templateLabel);
 
     if (!template) {
+      setSelectedTemplate("");
       return;
     }
 
     const skuSuffix = Date.now().toString().slice(-5);
+    setSelectedTemplate(templateLabel);
     setForm({
       ...template.value,
       sku: `${template.value.sku}-${skuSuffix}`
@@ -326,6 +331,11 @@ function LiveCatalogManagementClient() {
   }
 
   async function saveProduct() {
+    if (missingRequiredFields.length > 0) {
+      setError(`Complete required fields before saving: ${missingRequiredFields.join(", ")}.`);
+      return;
+    }
+
     setIsSaving(true);
     setError("");
     setMessage("");
@@ -351,6 +361,7 @@ function LiveCatalogManagementClient() {
       });
       setMessage(result.message ?? "Product created successfully.");
       setForm(liveInitialProduct);
+      setSelectedTemplate("");
     } catch {
       setError("Unable to connect to catalog API.");
     } finally {
@@ -358,15 +369,22 @@ function LiveCatalogManagementClient() {
     }
   }
 
+  function resetForm() {
+    setForm(liveInitialProduct);
+    setSelectedTemplate("");
+    setError("");
+    setMessage("");
+  }
+
   return (
     <div className="grid gap-6">
       <AdminCard
         action={<Badge tone="success">MongoDB live catalog</Badge>}
-        description="Add your real product here. Demo catalog records are hidden in live mode."
+        description="Add production products directly to the live catalog. Use a template, review the fields, then publish when ready."
         title="Add product"
       >
         <div className="mb-5 grid gap-4 rounded-md border border-black/10 bg-mist p-4 md:grid-cols-2 xl:grid-cols-4">
-          <SelectField label="Product template" onChange={applyTemplate} value="">
+          <SelectField label="Product template" onChange={applyTemplate} value={selectedTemplate}>
             <option value="">Select product type</option>
             {liveProductTemplates.map((template) => (
               <option key={template.label} value={template.label}>{template.label}</option>
@@ -402,19 +420,19 @@ function LiveCatalogManagementClient() {
           </SelectField>
         </div>
         <div className="grid gap-4 md:grid-cols-2">
-          <Input label="Product name" onChange={(event) => updateForm("name", event.target.value)} value={form.name} />
-          <Input label="Slug" onChange={(event) => updateForm("slug", slugFromName(event.target.value))} value={form.slug} />
-          <Input label="SKU" onChange={(event) => updateForm("sku", event.target.value)} value={form.sku} />
-          <Input label="MRP" min={0} onChange={(event) => updateForm("mrp", Number(event.target.value))} type="number" value={form.mrp} />
-          <Input label="Selling price" min={0} onChange={(event) => updateForm("sellingPrice", Number(event.target.value))} type="number" value={form.sellingPrice} />
+          <Input label="Product name" onChange={(event) => updateForm("name", event.target.value)} required value={form.name} />
+          <Input helperText="Lowercase letters, numbers, and hyphens only." label="Slug" onChange={(event) => updateForm("slug", slugFromName(event.target.value))} required value={form.slug} />
+          <Input label="SKU" onChange={(event) => updateForm("sku", event.target.value)} required value={form.sku} />
+          <Input label="MRP" min={1} onChange={(event) => updateForm("mrp", Number(event.target.value))} required type="number" value={form.mrp} />
+          <Input label="Selling price" min={1} onChange={(event) => updateForm("sellingPrice", Number(event.target.value))} required type="number" value={form.sellingPrice} />
           <Input label="Opening stock" min={0} onChange={(event) => updateForm("stock", Number(event.target.value))} type="number" value={form.stock} />
-          <Input label="Weight in grams" min={1} onChange={(event) => updateForm("weightInGrams", Number(event.target.value))} type="number" value={form.weightInGrams} />
-          <Input label="Image URL" onChange={(event) => updateForm("imageUrl", event.target.value)} value={form.imageUrl} />
+          <Input label="Weight in grams" min={1} onChange={(event) => updateForm("weightInGrams", Number(event.target.value))} required type="number" value={form.weightInGrams} />
+          <Input helperText="Optional, but recommended before publishing active products." label="Image URL" onChange={(event) => updateForm("imageUrl", event.target.value)} value={form.imageUrl} />
           <SelectField label="Status" onChange={(value) => updateForm("status", value as LiveProductForm["status"])} value={form.status}>
             <option value="DRAFT">Draft</option>
             <option value="ACTIVE">Active</option>
           </SelectField>
-          <Input className="md:col-span-2" label="Short description" onChange={(event) => updateForm("shortDescription", event.target.value)} value={form.shortDescription} />
+          <Input className="md:col-span-2" label="Short description" onChange={(event) => updateForm("shortDescription", event.target.value)} required value={form.shortDescription} />
           <Textarea label="Description" onChange={(value) => updateForm("description", value)} value={form.description} />
           <Textarea label="Ingredients" onChange={(value) => updateForm("ingredients", value)} value={form.ingredients} />
           <Textarea label="Allergens" onChange={(value) => updateForm("allergens", value)} value={form.allergens} />
@@ -422,13 +440,18 @@ function LiveCatalogManagementClient() {
           <Textarea label="Usage instructions" onChange={(value) => updateForm("usageInstructions", value)} value={form.usageInstructions} />
           <Textarea label="Warning text" onChange={(value) => updateForm("warningText", value)} value={form.warningText} />
         </div>
-        {error ? <p className="mt-4 rounded-md bg-coral/10 p-3 text-sm font-bold text-coral">{error}</p> : null}
-        {message ? <p className="mt-4 rounded-md bg-mint p-3 text-sm font-bold text-forest">{message}</p> : null}
+        {missingRequiredFields.length > 0 ? (
+          <p className="mt-4 rounded-md border border-black/10 bg-white p-3 text-sm font-semibold text-slate">
+            Required before saving: {missingRequiredFields.join(", ")}.
+          </p>
+        ) : null}
+        {error ? <p className="mt-4 rounded-md bg-coral/10 p-3 text-sm font-bold text-coral" role="alert">{error}</p> : null}
+        {message ? <p className="mt-4 rounded-md bg-mint p-3 text-sm font-bold text-forest" role="status">{message}</p> : null}
         <div className="mt-5 flex flex-wrap justify-end gap-3">
-          <button className="admin-action" onClick={() => setForm(liveInitialProduct)} type="button">
+          <button className="admin-action" onClick={resetForm} type="button">
             Reset
           </button>
-          <button className="admin-action bg-ink text-white" disabled={isSaving} onClick={saveProduct} type="button">
+          <button className="admin-action bg-ink text-white disabled:cursor-not-allowed disabled:opacity-60" disabled={!canSaveProduct} onClick={saveProduct} type="button">
             <Plus className="h-4 w-4" /> {isSaving ? "Saving..." : "Add product"}
           </button>
         </div>
@@ -1022,4 +1045,21 @@ function slugFromName(value: string) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+function getMissingLiveProductFields(form: LiveProductForm) {
+  const missing: string[] = [];
+
+  if (form.brandName.trim().length < 2) missing.push("brand");
+  if (form.categoryName.trim().length < 2) missing.push("category");
+  if (form.name.trim().length < 3) missing.push("product name");
+  if (!/^[a-z0-9-]{3,}$/.test(form.slug)) missing.push("valid slug");
+  if (form.sku.trim().length < 3) missing.push("SKU");
+  if (form.mrp <= 0) missing.push("MRP");
+  if (form.sellingPrice <= 0) missing.push("selling price");
+  if (form.weightInGrams <= 0) missing.push("weight");
+  if (form.shortDescription.trim().length < 8) missing.push("short description");
+  if (form.description.trim().length < 10) missing.push("description");
+
+  return missing;
 }

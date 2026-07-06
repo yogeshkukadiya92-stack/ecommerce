@@ -135,7 +135,18 @@ export async function POST(request: Request) {
     }
 
     console.error("Catalog product create failed", error);
-    return NextResponse.json({ message: "Unable to create product. Check database setup and required catalog fields." }, { status: 500 });
+
+    if (isMongoAuthenticationError(error)) {
+      return NextResponse.json(
+        {
+          message:
+            "MongoDB login failed. Update Railway DATABASE_URL to use the current MongoDB service username and password, then redeploy."
+        },
+        { status: 503 }
+      );
+    }
+
+    return NextResponse.json({ message: "Unable to create product. Check catalog database setup and try again." }, { status: 500 });
   }
 }
 
@@ -185,4 +196,10 @@ function slugify(value: string) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+function isMongoAuthenticationError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+
+  return message.includes("AuthenticationFailed") || message.includes("SCRAM failure") || message.includes("storedKey mismatch");
 }
