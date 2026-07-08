@@ -1,14 +1,10 @@
-import { AdminModulePlaceholder } from "@/components/admin/AdminModulePlaceholder";
+import { AdminAccessSettingsClient } from "@/components/admin/AdminAccessSettingsClient";
 import { AdminShell } from "@/components/layout/AdminShell";
 
 export default function SettingsAdminPage() {
   return (
     <AdminShell title="Settings">
-      <AdminModulePlaceholder
-        title="Platform settings"
-        description="Manage RBAC, payment providers, courier providers, storage, search, SEO, and compliance controls."
-        modules={["Roles", "Permissions", "Payments", "Shipping", "Storage", "Search", "Compliance"]}
-      />
+      <AdminAccessSettingsClient />
     </AdminShell>
   );
 }
