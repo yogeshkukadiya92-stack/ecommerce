@@ -133,18 +133,18 @@ type LiveProductForm = {
   goalTags: string;
   imageUrl: string;
   ingredients: string;
-  mrp: number;
+  mrp: number | "";
   name: string;
-  sellingPrice: number;
+  sellingPrice: number | "";
   shortDescription: string;
   size: string;
   sku: string;
   slug: string;
   status: "DRAFT" | "ACTIVE";
-  stock: number;
+  stock: number | "";
   usageInstructions: string;
   warningText: string;
-  weightInGrams: number;
+  weightInGrams: number | "";
 };
 
 type LiveCatalogProduct = {
@@ -181,18 +181,18 @@ const liveInitialProduct: LiveProductForm = {
   goalTags: "",
   imageUrl: "",
   ingredients: "",
-  mrp: 0,
+  mrp: "",
   name: "",
-  sellingPrice: 0,
+  sellingPrice: "",
   shortDescription: "",
   size: "",
   sku: "",
   slug: "",
   status: "DRAFT",
-  stock: 0,
+  stock: "",
   usageInstructions: "",
   warningText: "This product is not intended to diagnose, treat, cure, or prevent any disease. Not for medicinal use.",
-  weightInGrams: 100
+  weightInGrams: ""
 };
 
 const liveProductTemplates: Array<{ label: string; value: LiveProductForm }> = [
@@ -422,11 +422,11 @@ function LiveCatalogManagementClient() {
         if (defaults) {
           nextForm.weightInGrams = defaults.weightInGrams;
 
-          if (current.mrp <= 0) {
+          if (current.mrp === "" || current.mrp <= 0) {
             nextForm.mrp = defaults.mrp;
           }
 
-          if (current.sellingPrice <= 0) {
+          if (current.sellingPrice === "" || current.sellingPrice <= 0) {
             nextForm.sellingPrice = defaults.sellingPrice;
           }
         }
@@ -722,10 +722,10 @@ function LiveCatalogManagementClient() {
             setIsSkuManual(true);
             updateForm("sku", event.target.value);
           }} required value={form.sku} />
-          <Input label="MRP" min={1} onChange={(event) => updateForm("mrp", Number(event.target.value))} required type="number" value={form.mrp} />
-          <Input label="Selling price" min={1} onChange={(event) => updateForm("sellingPrice", Number(event.target.value))} required type="number" value={form.sellingPrice} />
-          <Input label="Opening stock" min={0} onChange={(event) => updateForm("stock", Number(event.target.value))} type="number" value={form.stock} />
-          <Input label="Weight in grams" min={1} onChange={(event) => updateForm("weightInGrams", Number(event.target.value))} required type="number" value={form.weightInGrams} />
+          <Input label="MRP" min={1} onChange={(event) => updateForm("mrp", parseOptionalNumberInput(event.target.value))} required type="number" value={form.mrp} />
+          <Input label="Selling price" min={1} onChange={(event) => updateForm("sellingPrice", parseOptionalNumberInput(event.target.value))} required type="number" value={form.sellingPrice} />
+          <Input label="Opening stock" min={0} onChange={(event) => updateForm("stock", parseOptionalNumberInput(event.target.value))} type="number" value={form.stock} />
+          <Input label="Weight in grams" min={1} onChange={(event) => updateForm("weightInGrams", parseOptionalNumberInput(event.target.value))} required type="number" value={form.weightInGrams} />
           <SelectField label="Status" onChange={(value) => updateForm("status", value as LiveProductForm["status"])} value={form.status}>
             <option value="DRAFT">Draft</option>
             <option value="ACTIVE">Active</option>
@@ -1457,9 +1457,9 @@ function getMissingLiveProductFields(form: LiveProductForm) {
   if (form.name.trim().length < 3) missing.push("product name");
   if (!/^[a-z0-9-]{3,}$/.test(form.slug)) missing.push("valid slug");
   if (form.sku.trim().length < 3) missing.push("SKU");
-  if (form.mrp <= 0) missing.push("MRP");
-  if (form.sellingPrice <= 0) missing.push("selling price");
-  if (form.weightInGrams <= 0) missing.push("weight");
+  if (!form.mrp || form.mrp <= 0) missing.push("MRP");
+  if (!form.sellingPrice || form.sellingPrice <= 0) missing.push("selling price");
+  if (!form.weightInGrams || form.weightInGrams <= 0) missing.push("weight");
 
   return missing;
 }
@@ -1478,10 +1478,23 @@ function buildLiveProductPayload(form: LiveProductForm): LiveProductForm {
   return {
     ...form,
     description,
+    mrp: Number(form.mrp),
     shortDescription,
+    sellingPrice: Number(form.sellingPrice),
+    stock: form.stock === "" ? 0 : Number(form.stock),
     usageInstructions: form.usageInstructions.trim() || "Use as directed on the product label.",
     warningText:
       form.warningText.trim() ||
-      "This product is not intended to diagnose, treat, cure, or prevent any disease. Not for medicinal use."
+      "This product is not intended to diagnose, treat, cure, or prevent any disease. Not for medicinal use.",
+    weightInGrams: Number(form.weightInGrams)
   };
+}
+
+function parseOptionalNumberInput(value: string) {
+  if (!value.trim()) {
+    return "";
+  }
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : "";
 }
