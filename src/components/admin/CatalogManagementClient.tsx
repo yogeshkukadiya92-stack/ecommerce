@@ -294,6 +294,18 @@ const usagePresets = [
   "Use as directed on the product label."
 ];
 
+const sizeDefaults: Record<string, { mrp: number; sellingPrice: number; weightInGrams: number }> = {
+  "250 g": { mrp: 1499, sellingPrice: 1099, weightInGrams: 250 },
+  "500 g": { mrp: 2199, sellingPrice: 1799, weightInGrams: 500 },
+  "1 kg": { mrp: 3499, sellingPrice: 2999, weightInGrams: 1000 },
+  "2 kg": { mrp: 5999, sellingPrice: 5199, weightInGrams: 2000 },
+  "3 kg": { mrp: 4299, sellingPrice: 3699, weightInGrams: 3000 },
+  "30 servings": { mrp: 1299, sellingPrice: 999, weightInGrams: 450 },
+  "60 tablets": { mrp: 899, sellingPrice: 699, weightInGrams: 120 },
+  "90 tablets": { mrp: 1199, sellingPrice: 949, weightInGrams: 180 },
+  Shaker: { mrp: 499, sellingPrice: 349, weightInGrams: 150 }
+};
+
 type SavedProductTemplate = {
   data: LiveProductForm;
   id: string;
@@ -310,6 +322,7 @@ function LiveCatalogManagementClient() {
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [savedTemplates, setSavedTemplates] = useState<SavedProductTemplate[]>([]);
   const [showAdvancedDetails, setShowAdvancedDetails] = useState(false);
+  const [isSkuManual, setIsSkuManual] = useState(false);
   const missingRequiredFields = useMemo(() => getMissingLiveProductFields(form), [form]);
   const canSaveProduct = missingRequiredFields.length === 0 && !isSaving;
   const selectedSavedTemplate = savedTemplates.find((template) => template.label === selectedTemplate) ?? null;
@@ -336,11 +349,38 @@ function LiveCatalogManagementClient() {
   }, []);
 
   function updateForm<K extends keyof LiveProductForm>(key: K, value: LiveProductForm[K]) {
-    setForm((current) => ({
-      ...current,
-      [key]: value,
-      ...(key === "name" && !current.slug ? { slug: slugFromName(String(value)) } : {})
-    }));
+    setForm((current) => {
+      const nextForm = {
+        ...current,
+        [key]: value,
+        ...(key === "name" && !current.slug ? { slug: slugFromName(String(value)) } : {})
+      };
+
+      if (!isSkuManual && (key === "name" || key === "size")) {
+        nextForm.sku = skuFromNameAndSize(
+          key === "name" ? String(value) : nextForm.name,
+          key === "size" ? String(value) : nextForm.size
+        );
+      }
+
+      if (key === "size") {
+        const defaults = sizeDefaults[String(value)];
+
+        if (defaults) {
+          nextForm.weightInGrams = defaults.weightInGrams;
+
+          if (current.mrp <= 0) {
+            nextForm.mrp = defaults.mrp;
+          }
+
+          if (current.sellingPrice <= 0) {
+            nextForm.sellingPrice = defaults.sellingPrice;
+          }
+        }
+      }
+
+      return nextForm;
+    });
     setError("");
   }
 
@@ -356,6 +396,7 @@ function LiveCatalogManagementClient() {
 
     const skuSuffix = Date.now().toString().slice(-5);
     setSelectedTemplate(templateLabel);
+    setIsSkuManual(false);
     setForm({
       ...templateForm,
       sku: templateForm.sku ? `${templateForm.sku}-${skuSuffix}` : ""
@@ -471,6 +512,7 @@ function LiveCatalogManagementClient() {
       setForm(liveInitialProduct);
       setSelectedTemplate("");
       setShowAdvancedDetails(false);
+      setIsSkuManual(false);
     } catch {
       setError("Unable to connect to catalog API.");
     } finally {
@@ -482,6 +524,7 @@ function LiveCatalogManagementClient() {
     setForm(liveInitialProduct);
     setSelectedTemplate("");
     setShowAdvancedDetails(false);
+    setIsSkuManual(false);
     setError("");
     setMessage("");
   }
@@ -493,10 +536,13 @@ function LiveCatalogManagementClient() {
         description="Add production products directly to the live catalog. Use a template, review the fields, then publish when ready."
         title="Add product"
       >
-        <div className="mb-4 rounded-md border border-forest/20 bg-mint/60 p-4 text-sm text-ink">
+      <div className="mb-4 rounded-md border border-forest/20 bg-mint/60 p-4 text-sm text-ink">
           <p className="font-bold text-forest">Quick add mode</p>
           <p className="mt-1">
             Only the main product fields are needed now. Description, short description, usage, and warning text can be left to auto-fill or edited later in advanced details.
+          </p>
+          <p className="mt-1">
+            Choosing a size now also fills the common weight and price defaults automatically.
           </p>
         </div>
         <div className="mb-5 grid gap-4 rounded-md border border-black/10 bg-mist p-4 md:grid-cols-2 xl:grid-cols-4">
@@ -547,7 +593,10 @@ function LiveCatalogManagementClient() {
         <div className="grid gap-4 md:grid-cols-2">
           <Input label="Product name" onChange={(event) => updateForm("name", event.target.value)} required value={form.name} />
           <Input helperText="Auto-created from product name. You can still edit it." label="Slug" onChange={(event) => updateForm("slug", slugFromName(event.target.value))} required value={form.slug} />
-          <Input label="SKU" onChange={(event) => updateForm("sku", event.target.value)} required value={form.sku} />
+          <Input helperText="Auto-created from product name + size. Edit once if you want your own SKU." label="SKU" onChange={(event) => {
+            setIsSkuManual(true);
+            updateForm("sku", event.target.value);
+          }} required value={form.sku} />
           <Input label="MRP" min={1} onChange={(event) => updateForm("mrp", Number(event.target.value))} required type="number" value={form.mrp} />
           <Input label="Selling price" min={1} onChange={(event) => updateForm("sellingPrice", Number(event.target.value))} required type="number" value={form.sellingPrice} />
           <Input label="Opening stock" min={0} onChange={(event) => updateForm("stock", Number(event.target.value))} type="number" value={form.stock} />
@@ -1215,6 +1264,24 @@ function slugFromName(value: string) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+function skuFromNameAndSize(name: string, size: string) {
+  const normalizedName = name
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  const normalizedSize = size
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "");
+
+  if (!normalizedName) {
+    return "";
+  }
+
+  return normalizedSize ? `${normalizedName}-${normalizedSize}` : normalizedName;
 }
 
 function getMissingLiveProductFields(form: LiveProductForm) {
