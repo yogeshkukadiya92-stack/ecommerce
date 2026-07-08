@@ -1,13 +1,15 @@
 import type { MetadataRoute } from "next";
 import { brands } from "@/mock/brands";
 import { categories } from "@/mock/categories";
-import { collectionDefinitions, storefrontProducts } from "@/mock/storefront";
+import { collectionDefinitions } from "@/mock/storefront";
 import { getPublishedBlogPosts, getPublishedPolicyPages } from "@/lib/cms/cmsRepository";
 import { absoluteUrl } from "@/lib/seo/seo";
+import { getLiveStorefrontProducts } from "@/lib/storefront/liveCatalog";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes = ["", "/products", "/search", "/blog"].map((path) => sitemapEntry(path));
-  const productRoutes = storefrontProducts.map((product) => sitemapEntry(`/products/${product.slug}`, "daily"));
+  const liveProducts = await getLiveStorefrontProducts().catch(() => []);
+  const productRoutes = liveProducts.map((product) => sitemapEntry(`/products/${product.slug}`, "daily"));
   const categoryRoutes = categories.map((category) => sitemapEntry(`/categories/${category.slug}`, "weekly"));
   const brandRoutes = brands.map((brand) => sitemapEntry(`/brands/${brand.slug}`, "weekly"));
   const collectionRoutes = collectionDefinitions.map((collection) => sitemapEntry(`/collections/${collection.slug}`, "weekly"));

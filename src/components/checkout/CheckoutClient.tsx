@@ -2,9 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { customers } from "@/mock/customers";
-import { storefrontProducts } from "@/mock/storefront";
+import { storefrontProducts, type StorefrontProduct } from "@/mock/storefront";
 import type { CartLineItem, CouponResult } from "@/types/cart";
 import type { CheckoutAddress, CheckoutMode, DeliveryMethod, PaymentMethod } from "@/types/checkout";
 import { calculateCartTotals, applyCoupon, formatRs } from "@/lib/cart/cartPricing";
@@ -112,7 +112,8 @@ export function CheckoutClient() {
   const [errors, setErrors] = useState<Partial<Record<keyof CheckoutAddress, string>>>({});
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [notice, setNotice] = useState("");
-  const enrichedItems = useMemo(() => cart.items.map(enrichCartItem), [cart.items]);
+  const [catalogProducts, setCatalogProducts] = useState<StorefrontProduct[]>(storefrontProducts);
+  const enrichedItems = useMemo(() => cart.items.map((item) => enrichCartItem(item, catalogProducts)), [cart.items, catalogProducts]);
   const totals = useMemo(
     () =>
       calculateCartTotals(enrichedItems, couponResult?.ok ? couponResult.code : undefined, {
@@ -127,6 +128,23 @@ export function CheckoutClient() {
 
     return customers.find((customer) => customer.id === session.customerId)?.addresses[0];
   }, [session]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    fetch("/api/products")
+      .then((response) => response.json())
+      .then((result: { data?: StorefrontProduct[] }) => {
+        if (isMounted && result.data?.length) {
+          setCatalogProducts(result.data);
+        }
+      })
+      .catch(() => undefined);
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   function updateAddress(key: keyof CheckoutAddress, value: string) {
     setAddress((current) => ({ ...current, [key]: value }));
@@ -541,8 +559,8 @@ function validateAddress(address: CheckoutAddress) {
   return errors;
 }
 
-function enrichCartItem(item: CartLineItem): CartLineItem {
-  const product = storefrontProducts.find((candidate) => candidate.id === item.productId);
+function enrichCartItem(item: CartLineItem, products: StorefrontProduct[]): CartLineItem {
+  const product = products.find((candidate) => candidate.id === item.productId) ?? storefrontProducts.find((candidate) => candidate.id === item.productId);
   const variant = product?.variants.find((candidate) => candidate.id === item.variantId);
 
   if (!product || !variant) {

@@ -3,8 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Minus, Plus, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
-import { storefrontProducts } from "@/mock/storefront";
+import { useEffect, useMemo, useState } from "react";
+import { storefrontProducts, type StorefrontProduct } from "@/mock/storefront";
 import { bundleDeals } from "@/mock/promotions";
 import type { AddToCartPayload, CartLineItem } from "@/types/cart";
 import { applyCoupon, calculateCartTotals, formatRs } from "@/lib/cart/cartPricing";
@@ -66,8 +66,26 @@ export function CartClient() {
   const [couponInput, setCouponInput] = useState("");
   const [couponCode, setCouponCode] = useState<string | undefined>();
   const [couponMessage, setCouponMessage] = useState("");
-  const enrichedItems = useMemo(() => cart.items.map(enrichCartItem), [cart.items]);
+  const [catalogProducts, setCatalogProducts] = useState<StorefrontProduct[]>(storefrontProducts);
+  const enrichedItems = useMemo(() => cart.items.map((item) => enrichCartItem(item, catalogProducts)), [cart.items, catalogProducts]);
   const totals = useMemo(() => calculateCartTotals(enrichedItems, couponCode), [couponCode, enrichedItems]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    fetch("/api/products")
+      .then((response) => response.json())
+      .then((result: { data?: StorefrontProduct[] }) => {
+        if (isMounted && result.data?.length) {
+          setCatalogProducts(result.data);
+        }
+      })
+      .catch(() => undefined);
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   function handleApplyCoupon() {
     const result = applyCoupon(enrichedItems, couponInput);
@@ -81,7 +99,7 @@ export function CartClient() {
     if ("payload" in addOn) {
       payload = { ...addOn.payload, addedAt: new Date().toISOString() };
     } else {
-      payload = createPayloadFromProduct(addOn.productId);
+      payload = createPayloadFromProduct(addOn.productId, catalogProducts);
     }
 
     if (payload) {
@@ -94,7 +112,7 @@ export function CartClient() {
     if (!bundle) return;
 
     bundle.productIds.forEach((productId) => {
-      const payload = createPayloadFromProduct(productId);
+      const payload = createPayloadFromProduct(productId, catalogProducts);
       if (payload) {
         cart.addItem({
           ...payload,
@@ -193,7 +211,7 @@ export function CartClient() {
             <p className="mt-1 text-sm text-slate">Complete the stack with useful accessories and daily essentials.</p>
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
               {addOns.map((addOn) => {
-                const product = "productId" in addOn ? storefrontProducts.find((item) => item.id === addOn.productId) : undefined;
+                const product = "productId" in addOn ? catalogProducts.find((item) => item.id === addOn.productId) : undefined;
                 return (
                   <div className="rounded-md border border-black/10 p-3" key={"productId" in addOn ? addOn.productId : addOn.title}>
                     <p className="font-black text-ink">{"title" in addOn ? addOn.title : product?.name}</p>
@@ -259,8 +277,8 @@ export function CartClient() {
   );
 }
 
-function createPayloadFromProduct(productId: string): AddToCartPayload | null {
-  const product = storefrontProducts.find((item) => item.id === productId);
+function createPayloadFromProduct(productId: string, products: StorefrontProduct[]): AddToCartPayload | null {
+  const product = products.find((item) => item.id === productId) ?? storefrontProducts.find((item) => item.id === productId);
   const variant = product?.variants[0];
 
   if (!product || !variant) {
@@ -286,8 +304,8 @@ function createPayloadFromProduct(productId: string): AddToCartPayload | null {
   };
 }
 
-function enrichCartItem(item: CartLineItem): CartLineItem {
-  const product = storefrontProducts.find((candidate) => candidate.id === item.productId);
+function enrichCartItem(item: CartLineItem, products: StorefrontProduct[]): CartLineItem {
+  const product = products.find((candidate) => candidate.id === item.productId) ?? storefrontProducts.find((candidate) => candidate.id === item.productId);
   const variant = product?.variants.find((candidate) => candidate.id === item.variantId);
 
   if (!product || !variant) {

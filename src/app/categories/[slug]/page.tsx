@@ -5,6 +5,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { ProductListingShell } from "@/components/storefront/ProductListingShell";
 import { getCategoryBySlug, getProductsByCategory } from "@/mock/storefront";
 import { breadcrumbSchema, buildSeoMetadata, collectionSchema } from "@/lib/seo/seo";
+import { getLiveStorefrontProductsByCategory } from "@/lib/storefront/liveCatalog";
 
 type CategoryPageProps = {
   params: Promise<{ slug: string }>;
@@ -41,6 +42,8 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     notFound();
   }
 
+  const liveProducts = await getLiveStorefrontProductsByCategory(slug);
+
   return (
     <SiteShell>
       <JsonLd data={collectionSchema(category.name, category.description, `/categories/${category.slug}`)} />
@@ -52,7 +55,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         ])}
       />
       <ProductListingShell
-        baseProducts={getProductsByCategory(slug)}
+        baseProducts={liveProducts.length > 0 ? liveProducts : getProductsByCategory(slug)}
         breadcrumbs={[
           { href: "/", label: "Home" },
           { href: "/products", label: "Products" },

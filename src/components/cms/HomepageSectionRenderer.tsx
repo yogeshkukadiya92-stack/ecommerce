@@ -3,7 +3,8 @@ import Image from "next/image";
 import Link from "next/link";
 import type { HomepageSection } from "@/types/cms";
 import { cn } from "@/lib/utils/cn";
-import { brands, categories, featuredProducts, getProductsByCollection, goalCards, testimonials } from "@/mock";
+import { brands, categories, featuredProducts, goalCards, testimonials } from "@/mock";
+import { storefrontProducts, type StorefrontProduct } from "@/mock/storefront";
 import { bundleDeals } from "@/mock/promotions";
 import { getPublishedBlogPosts } from "@/lib/cms/cmsRepository";
 import { BrandCard } from "@/components/storefront/BrandCard";
@@ -14,17 +15,35 @@ import { TrustBadge } from "@/components/storefront/TrustBadge";
 import { Button } from "@/components/ui/Button";
 import { SectionTitle } from "@/components/ui/SectionTitle";
 
-export function HomepageSectionRenderer({ preview = false, sections }: { preview?: boolean; sections: HomepageSection[] }) {
+export function HomepageSectionRenderer({
+  preview = false,
+  products,
+  sections
+}: {
+  preview?: boolean;
+  products?: StorefrontProduct[];
+  sections: HomepageSection[];
+}) {
+  const displayProducts = products?.length ? products : storefrontProducts;
+
   return (
     <>
       {sections.map((section) => (
-        <RenderedSection key={section.id} preview={preview} section={section} />
+        <RenderedSection displayProducts={displayProducts} key={section.id} preview={preview} section={section} />
       ))}
     </>
   );
 }
 
-function RenderedSection({ preview, section }: { preview: boolean; section: HomepageSection }) {
+function RenderedSection({
+  displayProducts,
+  preview,
+  section
+}: {
+  displayProducts: StorefrontProduct[];
+  preview: boolean;
+  section: HomepageSection;
+}) {
   if (!section.enabled && !preview) return null;
 
   const alignment = section.contentAlignment ?? "left";
@@ -75,7 +94,7 @@ function RenderedSection({ preview, section }: { preview: boolean; section: Home
                 className="aspect-[4/3] w-full rounded-md object-cover"
                 height={640}
                 priority
-                src={section.desktopImageUrl ?? featuredProducts[0].images[0]?.url}
+                src={section.desktopImageUrl ?? displayProducts[0]?.images[0]?.url ?? featuredProducts[0].images[0]?.url}
                 width={840}
               />
               <div className="grid gap-2 px-1 pb-1 pt-3 sm:grid-cols-3">
@@ -153,9 +172,6 @@ function RenderedSection({ preview, section }: { preview: boolean; section: Home
       );
     case "product_carousel":
     case "collection_carousel": {
-      const collectionId = section.references.find((reference) => reference.type === "collection")?.id ?? "best-sellers";
-      const products = getProductsByCollection(collectionId);
-
       return (
         <section className="container-page py-8">
           <SectionTitle
@@ -170,7 +186,7 @@ function RenderedSection({ preview, section }: { preview: boolean; section: Home
             description={section.subtitle}
             title={section.title}
           />
-          <ProductCarousel products={products.length ? products : featuredProducts} />
+          <ProductCarousel products={displayProducts} />
         </section>
       );
     }

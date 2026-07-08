@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import type { HomepageSection } from "@/types/cms";
+import type { StorefrontProduct } from "@/mock/storefront";
 import { getPublishedLocalHomepageSections } from "@/lib/cms/cmsLocalStorage";
 import { HomepageSectionRenderer } from "./HomepageSectionRenderer";
 
-export function CmsHomepageRuntime({ sections }: { sections: HomepageSection[] }) {
+export function CmsHomepageRuntime({ products, sections }: { products: StorefrontProduct[]; sections: HomepageSection[] }) {
   const [runtimeSections, setRuntimeSections] = useState(sections);
 
   useEffect(() => {
@@ -23,5 +24,5 @@ export function CmsHomepageRuntime({ sections }: { sections: HomepageSection[] }
     };
   }, [sections]);
 
-  return <HomepageSectionRenderer sections={runtimeSections} />;
+  return <HomepageSectionRenderer products={products} sections={runtimeSections} />;
 }

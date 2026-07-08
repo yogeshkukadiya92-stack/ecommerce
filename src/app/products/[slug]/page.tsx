@@ -3,14 +3,15 @@ import { notFound } from "next/navigation";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { ProductDetailClient } from "@/components/storefront/ProductDetailClient";
-import {
-  getProductBySlug,
-  getProductDetailContent,
-  getProductsByIds,
-  getRelatedProducts,
-  storefrontProducts
-} from "@/mock/storefront";
+import { storefrontProducts } from "@/mock/storefront";
 import { breadcrumbSchema, buildSeoMetadata, faqSchema, productSchema } from "@/lib/seo/seo";
+import {
+  buildLiveProductDetailContent,
+  getLiveRelatedProducts,
+  getLiveStorefrontProductBySlug,
+  getLiveStorefrontProducts
+} from "@/lib/storefront/liveCatalog";
+import { getProductBySlug, getProductDetailContent, getProductsByIds, getRelatedProducts } from "@/mock/storefront";
 
 type ProductDetailPageProps = {
   params: Promise<{ slug: string }>;
@@ -22,7 +23,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: ProductDetailPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = (await getLiveStorefrontProductBySlug(slug)) ?? getProductBySlug(slug);
 
   if (!product) {
     return {
@@ -40,17 +41,20 @@ export async function generateMetadata({ params }: ProductDetailPageProps): Prom
 
 export default async function ProductDetailPage({ params }: ProductDetailPageProps) {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const liveProduct = await getLiveStorefrontProductBySlug(slug);
+  const product = liveProduct ?? getProductBySlug(slug);
 
   if (!product) {
     notFound();
   }
 
-  const detail = getProductDetailContent(product.id);
+  const detail = liveProduct ? buildLiveProductDetailContent() : getProductDetailContent(product.id);
 
   if (!detail) {
     notFound();
   }
+  const relatedProducts = liveProduct ? await getLiveRelatedProducts(product) : getRelatedProducts(product);
+  const liveProducts = liveProduct ? await getLiveStorefrontProducts() : [];
 
   return (
     <SiteShell>
@@ -64,12 +68,12 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
         ])}
       />
       <ProductDetailClient
-        compareProducts={getProductsByIds(detail.compareProductIds)}
+        compareProducts={liveProduct ? liveProducts.filter((item) => detail.compareProductIds.includes(item.id)) : getProductsByIds(detail.compareProductIds)}
         detail={detail}
-        frequentlyBoughtTogether={getProductsByIds(detail.frequentlyBoughtTogetherIds)}
+        frequentlyBoughtTogether={liveProduct ? liveProducts.filter((item) => detail.frequentlyBoughtTogetherIds.includes(item.id)) : getProductsByIds(detail.frequentlyBoughtTogetherIds)}
         product={product}
-        recommendedStack={getProductsByIds(detail.recommendedStackIds)}
-        relatedProducts={getRelatedProducts(product)}
+        recommendedStack={liveProduct ? liveProducts.filter((item) => detail.recommendedStackIds.includes(item.id)) : getProductsByIds(detail.recommendedStackIds)}
+        relatedProducts={relatedProducts}
       />
     </SiteShell>
   );

@@ -4,7 +4,7 @@ import { SlidersHorizontal, X } from "lucide-react";
 import { useDeferredValue, useEffect, useMemo, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { StorefrontProduct } from "@/mock/storefront";
-import { popularSearches, storefrontProducts } from "@/mock/storefront";
+import { popularSearches } from "@/mock/storefront";
 import {
   defaultFilters,
   filterProducts,
@@ -47,7 +47,7 @@ export function ProductListingShell({
   baseProducts,
   breadcrumbs,
   description,
-  recommendations = storefrontProducts,
+  recommendations = baseProducts,
   seoContent,
   title
 }: ProductListingShellProps) {
@@ -60,7 +60,7 @@ export function ProductListingShell({
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [filters, setFilters] = useState<ProductFilterState>(() => parseFilters(searchParams));
   const deferredQuery = useDeferredValue(query);
-  const options = useMemo(() => getFilterOptions(storefrontProducts), []);
+  const options = useMemo(() => getFilterOptions(baseProducts), [baseProducts]);
   const activeFilterCount = getActiveFilterCount(filters);
 
   const filteredProducts = useMemo(() => {
@@ -96,11 +96,11 @@ export function ProductListingShell({
       return popularSearches.slice(0, 5);
     }
 
-    return storefrontProducts
+    return baseProducts
       .filter((product) => product.name.toLowerCase().includes(normalizedQuery))
       .map((product) => product.name)
       .slice(0, 5);
-  }, [query]);
+  }, [baseProducts, query]);
 
   function commitUrl(nextFilters: ProductFilterState, nextQuery: string) {
     const params = serializeFilters(nextFilters, nextQuery);

@@ -9,6 +9,7 @@ import {
   getProductsByCollection
 } from "@/mock/storefront";
 import { breadcrumbSchema, buildSeoMetadata, collectionSchema } from "@/lib/seo/seo";
+import { getLiveStorefrontProductsByCollection } from "@/lib/storefront/liveCatalog";
 
 type CollectionPageProps = {
   params: Promise<{ slug: string }>;
@@ -43,6 +44,8 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
     notFound();
   }
 
+  const liveProducts = await getLiveStorefrontProductsByCollection(slug);
+
   return (
     <SiteShell>
       <JsonLd data={collectionSchema(collection.title, collection.description, `/collections/${collection.slug}`)} />
@@ -54,7 +57,7 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
         ])}
       />
       <ProductListingShell
-        baseProducts={getProductsByCollection(slug)}
+        baseProducts={liveProducts.length > 0 ? liveProducts : getProductsByCollection(slug)}
         breadcrumbs={[
           { href: "/", label: "Home" },
           { href: "/products", label: "Products" },

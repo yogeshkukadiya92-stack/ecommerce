@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { ProductListingShell } from "@/components/storefront/ProductListingShell";
-import { storefrontProducts } from "@/mock/storefront";
 import { breadcrumbSchema, buildSeoMetadata, collectionSchema } from "@/lib/seo/seo";
+import { getLiveStorefrontProducts } from "@/lib/storefront/liveCatalog";
 
 export const metadata: Metadata = buildSeoMetadata({
   canonicalPath: "/products",
@@ -12,13 +12,15 @@ export const metadata: Metadata = buildSeoMetadata({
   title: "Shop Supplements"
 });
 
-export default function ProductsPage() {
+export default async function ProductsPage() {
+  const products = await getLiveStorefrontProducts();
+
   return (
     <SiteShell>
       <JsonLd data={collectionSchema("Shop supplements", metadata.description as string, "/products")} />
       <JsonLd data={breadcrumbSchema([{ href: "/", label: "Home" }, { href: "/products", label: "Products" }])} />
       <ProductListingShell
-        baseProducts={storefrontProducts}
+        baseProducts={products}
         breadcrumbs={[
           { href: "/", label: "Home" },
           { href: "/products", label: "Products" }

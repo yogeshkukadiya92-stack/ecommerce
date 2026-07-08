@@ -4,6 +4,7 @@ import { SiteShell } from "@/components/layout/SiteShell";
 import { StickyMobileCTA } from "@/components/storefront/StickyMobileCTA";
 import { getPublishedHomepageSections, getWebsiteStudioData } from "@/lib/cms/cmsRepository";
 import { buildSeoMetadata } from "@/lib/seo/seo";
+import { getLiveStorefrontProducts } from "@/lib/storefront/liveCatalog";
 
 export function generateMetadata(): Metadata {
   const seo = getWebsiteStudioData().seo.find((entry) => entry.pageKey === "homepage");
@@ -19,13 +20,14 @@ export function generateMetadata(): Metadata {
   });
 }
 
-export default function HomePage() {
+export default async function HomePage() {
   const sections = getPublishedHomepageSections();
+  const products = await getLiveStorefrontProducts();
 
   return (
     <SiteShell>
       <main>
-        <CmsHomepageRuntime sections={sections} />
+        <CmsHomepageRuntime products={products} sections={sections} />
         <StickyMobileCTA />
       </main>
     </SiteShell>

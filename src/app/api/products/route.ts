@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { listActiveProducts } from "@/lib/catalog/productRepository";
+import { getLiveStorefrontProducts } from "@/lib/storefront/liveCatalog";
 import { products } from "@/mock";
 
 export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get("q");
 
   try {
-    const data = await listActiveProducts(query);
+    const data = await getLiveStorefrontProducts(query);
 
     return NextResponse.json({
       data,
