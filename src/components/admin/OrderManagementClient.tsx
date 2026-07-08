@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Ban,
   ClipboardCheck,
@@ -49,7 +49,6 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { AdminCard } from "./AdminCard";
 import { AdminTable } from "./AdminTable";
-import { LiveAdminEmptyState } from "./LiveAdminEmptyState";
 
 const orderStatuses: Array<"all" | AdminOrderStatus> = [
   "all",
@@ -108,17 +107,190 @@ const initialFilters: OrderFilters = {
 
 export function OrderManagementClient({ initialOrderNumber }: { initialOrderNumber?: string }) {
   if (!showDemoData) {
-    return (
-      <LiveAdminEmptyState
-        actionHref="/admin/settings"
-        actionLabel="Configure order source"
-        title="Order management is clean for launch"
-        description="Demo orders, payments, shipments, returns, and fulfillment timelines are hidden in live mode. Once checkout creates real orders, this module can display operational queues."
-      />
-    );
+    return <LiveOrderManagementClient />;
   }
 
   return <DemoOrderManagementClient initialOrderNumber={initialOrderNumber} />;
+}
+
+type LiveOrder = {
+  createdAt: string;
+  customerEmail: string;
+  customerName: string;
+  discountAmount: number;
+  id: string;
+  itemCount: number;
+  items: Array<{ id: string; productName: string; quantity: number; sku: string; totalAmount: number; unitPrice: number }>;
+  orderNumber: string;
+  paymentProvider: string;
+  paymentStatus: string;
+  shippingAmount: number;
+  status: string;
+  subtotal: number;
+  totalAmount: number;
+  trackingNumber: string | null;
+};
+
+const liveOrderStatuses = ["PENDING", "CONFIRMED", "PACKED", "SHIPPED", "DELIVERED", "CANCELLED", "REFUNDED"] as const;
+
+function LiveOrderManagementClient() {
+  const { session } = useAdminSession();
+  const [orders, setOrders] = useState<LiveOrder[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [expandedOrderId, setExpandedOrderId] = useState("");
+
+  async function loadOrders() {
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("/api/admin/orders");
+      const result = (await response.json().catch(() => ({}))) as { data?: LiveOrder[] };
+      setOrders(Array.isArray(result.data) ? result.data : []);
+      setError("");
+    } catch {
+      setError("Unable to load orders from the database.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void loadOrders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function updateStatus(order: LiveOrder, status: string) {
+    try {
+      const response = await fetch(`/api/admin/orders/${order.id}`, {
+        body: JSON.stringify({ status }),
+        headers: { "Content-Type": "application/json" },
+        method: "PATCH"
+      });
+      const result = (await response.json().catch(() => ({}))) as { message?: string };
+
+      if (!response.ok) {
+        setError(result.message ?? "Unable to update order status.");
+        return;
+      }
+
+      setOrders((current) => current.map((item) => (item.id === order.id ? { ...item, status } : item)));
+      setMessage(result.message ?? "Order status updated.");
+      setError("");
+      writeAdminAuditLog(session, {
+        action: "admin.order.status.update",
+        entityId: order.orderNumber,
+        entityType: "Order",
+        metadata: { status }
+      });
+    } catch {
+      setError("Unable to update order status.");
+    }
+  }
+
+  const filteredOrders = orders.filter((order) => {
+    const matchesQuery =
+      !query.trim() ||
+      order.orderNumber.toLowerCase().includes(query.trim().toLowerCase()) ||
+      order.customerName.toLowerCase().includes(query.trim().toLowerCase()) ||
+      order.customerEmail.toLowerCase().includes(query.trim().toLowerCase());
+    const matchesStatus = statusFilter === "all" || order.status === statusFilter;
+    return matchesQuery && matchesStatus;
+  });
+
+  return (
+    <div className="grid gap-6">
+      <AdminCard
+        action={<Badge tone="success">MongoDB live orders</Badge>}
+        description="Orders placed on the storefront checkout appear here with payment and fulfilment status."
+        title={`Orders (${orders.length})`}
+      >
+        <div className="mb-4 grid gap-3 md:grid-cols-3">
+          <Input label="Search" onChange={(event) => setQuery(event.target.value)} placeholder="Order number, customer name, or email" value={query} />
+          <Select label="Status" onChange={(event) => setStatusFilter(event.target.value)} value={statusFilter}>
+            <option value="all">All statuses</option>
+            {liveOrderStatuses.map((status) => (
+              <option key={status} value={status}>{status}</option>
+            ))}
+          </Select>
+          <div className="flex items-end">
+            <button className="admin-action" onClick={() => void loadOrders()} type="button">
+              <RefreshCcw className="h-4 w-4" /> Refresh
+            </button>
+          </div>
+        </div>
+        {error ? <p className="mb-4 rounded-md bg-coral/10 p-3 text-sm font-bold text-coral" role="alert">{error}</p> : null}
+        {message ? <p className="mb-4 rounded-md bg-mint p-3 text-sm font-bold text-forest" role="status">{message}</p> : null}
+        {isLoading ? (
+          <p className="rounded-md bg-mist p-4 text-sm font-semibold text-slate">Loading orders...</p>
+        ) : filteredOrders.length === 0 ? (
+          <p className="rounded-md bg-mist p-4 text-sm font-semibold text-slate">
+            {orders.length === 0
+              ? "No orders yet. Orders placed on the storefront checkout will appear here automatically."
+              : "No orders match the current filters."}
+          </p>
+        ) : (
+          <AdminTable
+            columns={["Order", "Date", "Customer", "Items", "Total", "Payment", "Status", "Update"]}
+            rows={filteredOrders.map((order) => [
+              <button className="font-black text-ink underline" key="number" onClick={() => setExpandedOrderId((current) => (current === order.id ? "" : order.id))} type="button">
+                {order.orderNumber}
+              </button>,
+              new Date(order.createdAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }),
+              <span key="customer">
+                <span className="font-bold text-ink">{order.customerName}</span>
+                <span className="block text-xs text-slate">{order.customerEmail}</span>
+              </span>,
+              order.itemCount,
+              `Rs ${order.totalAmount.toLocaleString("en-IN")}`,
+              <Badge key="payment" tone={order.paymentStatus === "PAID" ? "success" : "neutral"}>
+                {order.paymentProvider} / {order.paymentStatus}
+              </Badge>,
+              <Badge key="status" tone={order.status === "DELIVERED" ? "success" : order.status === "CANCELLED" || order.status === "REFUNDED" ? "sale" : "neutral"}>
+                {order.status}
+              </Badge>,
+              <select
+                className="focus-ring h-9 rounded-md border border-black/10 bg-white px-2 text-xs font-bold text-ink"
+                key="update"
+                onChange={(event) => void updateStatus(order, event.target.value)}
+                value={order.status}
+              >
+                {liveOrderStatuses.map((status) => (
+                  <option key={status} value={status}>{status}</option>
+                ))}
+              </select>
+            ])}
+          />
+        )}
+        {expandedOrderId ? (
+          <div className="mt-4 rounded-md border border-black/10 bg-mist p-4">
+            {filteredOrders
+              .filter((order) => order.id === expandedOrderId)
+              .map((order) => (
+                <div key={order.id}>
+                  <p className="font-black text-ink">{order.orderNumber} items</p>
+                  <ul className="mt-2 grid gap-2 text-sm font-semibold text-graphite">
+                    {order.items.map((item) => (
+                      <li className="flex flex-wrap justify-between gap-2 rounded-md bg-white p-3" key={item.id}>
+                        <span>{item.productName} ({item.sku}) x {item.quantity}</span>
+                        <span>Rs {item.totalAmount.toLocaleString("en-IN")}</span>
+                      </li>
+                    ))}
+                    {order.items.length === 0 ? <li className="rounded-md bg-white p-3">No line items recorded.</li> : null}
+                  </ul>
+                  <p className="mt-3 text-sm font-semibold text-slate">
+                    Subtotal Rs {order.subtotal.toLocaleString("en-IN")} | Shipping Rs {order.shippingAmount.toLocaleString("en-IN")} | Discount Rs {order.discountAmount.toLocaleString("en-IN")} | Total Rs {order.totalAmount.toLocaleString("en-IN")}
+                  </p>
+                </div>
+              ))}
+          </div>
+        ) : null}
+      </AdminCard>
+    </div>
+  );
 }
 
 function DemoOrderManagementClient({ initialOrderNumber }: { initialOrderNumber?: string }) {

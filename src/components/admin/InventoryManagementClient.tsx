@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { AlertTriangle, ClipboardList, PackageCheck, Plus, RotateCw, Save } from "lucide-react";
 import {
@@ -26,7 +26,6 @@ import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
 import { AdminCard } from "./AdminCard";
 import { AdminTable } from "./AdminTable";
-import { LiveAdminEmptyState } from "./LiveAdminEmptyState";
 
 const tabs = [
   "Overview",
@@ -59,17 +58,185 @@ const movementTypes: AdvancedStockMovementType[] = [
 
 export function InventoryManagementClient() {
   if (!showDemoData) {
-    return (
-      <LiveAdminEmptyState
-        actionHref="/admin/settings"
-        actionLabel="Configure inventory"
-        title="Inventory is clean and ready for live stock"
-        description="Demo warehouses, batches, stock movements, purchase orders, FEFO reservations, and expiry alerts are hidden. Connect real inventory records before launch operations."
-      />
-    );
+    return <LiveInventoryManagementClient />;
   }
 
   return <DemoInventoryManagementClient />;
+}
+
+type LiveInventoryVariant = {
+  id: string;
+  isActive: boolean;
+  mrp: number;
+  productName: string;
+  productSlug: string;
+  productStatus: string;
+  sellingPrice: number;
+  size: string | null;
+  sku: string;
+  stock: number;
+  updatedAt: string;
+};
+
+function LiveInventoryManagementClient() {
+  const { session } = useAdminSession();
+  const [variants, setVariants] = useState<LiveInventoryVariant[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [query, setQuery] = useState("");
+  const [stockDrafts, setStockDrafts] = useState<Record<string, number>>({});
+
+  async function loadInventory() {
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("/api/admin/inventory");
+      const result = (await response.json().catch(() => ({}))) as { data?: LiveInventoryVariant[] };
+      setVariants(Array.isArray(result.data) ? result.data : []);
+      setError("");
+    } catch {
+      setError("Unable to load inventory from the database.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void loadInventory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function saveStock(variant: LiveInventoryVariant) {
+    const nextStock = stockDrafts[variant.id];
+
+    if (nextStock === undefined || nextStock === variant.stock) {
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/admin/inventory", {
+        body: JSON.stringify({ stock: nextStock, variantId: variant.id }),
+        headers: { "Content-Type": "application/json" },
+        method: "PATCH"
+      });
+      const result = (await response.json().catch(() => ({}))) as { message?: string };
+
+      if (!response.ok) {
+        setError(result.message ?? "Unable to update stock.");
+        return;
+      }
+
+      setVariants((current) => current.map((item) => (item.id === variant.id ? { ...item, stock: nextStock } : item)));
+      setStockDrafts((current) => {
+        const next = { ...current };
+        delete next[variant.id];
+        return next;
+      });
+      setMessage(result.message ?? "Stock updated.");
+      setError("");
+      writeAdminAuditLog(session, {
+        action: "admin.inventory.stock.adjust",
+        entityId: variant.sku,
+        entityType: "ProductVariant",
+        metadata: { from: variant.stock, to: nextStock }
+      });
+    } catch {
+      setError("Unable to update stock.");
+    }
+  }
+
+  const filteredVariants = variants.filter(
+    (variant) =>
+      !query.trim() ||
+      variant.productName.toLowerCase().includes(query.trim().toLowerCase()) ||
+      variant.sku.toLowerCase().includes(query.trim().toLowerCase())
+  );
+  const lowStockVariants = variants.filter((variant) => variant.stock <= 5);
+  const totalUnits = variants.reduce((total, variant) => total + variant.stock, 0);
+
+  return (
+    <div className="grid gap-6">
+      <div className="grid gap-4 md:grid-cols-3">
+        {[
+          { label: "SKUs tracked", value: variants.length },
+          { label: "Units in stock", value: totalUnits },
+          { label: "Low stock (5 or less)", value: lowStockVariants.length }
+        ].map((stat) => (
+          <div className="rounded-card border border-black/10 bg-white p-5 shadow-card" key={stat.label}>
+            <p className="text-xs font-black uppercase tracking-[0.08em] text-slate">{stat.label}</p>
+            <p className="mt-2 text-3xl font-extrabold text-ink">{stat.value.toLocaleString("en-IN")}</p>
+          </div>
+        ))}
+      </div>
+      <AdminCard
+        action={<Badge tone="success">MongoDB live stock</Badge>}
+        description="Live stock per SKU. Checkout automatically reduces stock; edit the quantity and save to adjust it manually."
+        title="Stock by SKU"
+      >
+        <div className="mb-4 grid gap-3 md:grid-cols-3">
+          <Input label="Search" onChange={(event) => setQuery(event.target.value)} placeholder="Product name or SKU" value={query} />
+          <div className="flex items-end">
+            <button className="admin-action" onClick={() => void loadInventory()} type="button">
+              <RotateCw className="h-4 w-4" /> Refresh
+            </button>
+          </div>
+        </div>
+        {error ? <p className="mb-4 rounded-md bg-coral/10 p-3 text-sm font-bold text-coral" role="alert">{error}</p> : null}
+        {message ? <p className="mb-4 rounded-md bg-mint p-3 text-sm font-bold text-forest" role="status">{message}</p> : null}
+        {isLoading ? (
+          <p className="rounded-md bg-mist p-4 text-sm font-semibold text-slate">Loading inventory...</p>
+        ) : filteredVariants.length === 0 ? (
+          <p className="rounded-md bg-mist p-4 text-sm font-semibold text-slate">
+            {variants.length === 0 ? "No products in the catalog yet. Add products from the Catalog module first." : "No SKUs match this search."}
+          </p>
+        ) : (
+          <AdminTable
+            columns={["Product", "SKU", "Size", "Price", "Stock", "New stock", "Action", "Status"]}
+            rows={filteredVariants.map((variant) => [
+              <span className="font-black text-ink" key="name">{variant.productName}</span>,
+              variant.sku,
+              variant.size ?? "-",
+              `Rs ${variant.sellingPrice.toLocaleString("en-IN")}`,
+              <Badge key="stock" tone={variant.stock === 0 ? "sale" : variant.stock <= 5 ? "neutral" : "success"}>
+                {variant.stock}
+              </Badge>,
+              <input
+                className="focus-ring h-9 w-24 rounded-md border border-black/10 bg-white px-2 text-sm text-ink"
+                key="draft"
+                min={0}
+                onChange={(event) => setStockDrafts((current) => ({ ...current, [variant.id]: Math.max(0, Number(event.target.value)) }))}
+                type="number"
+                value={stockDrafts[variant.id] ?? variant.stock}
+              />,
+              <button
+                className="admin-action disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={stockDrafts[variant.id] === undefined || stockDrafts[variant.id] === variant.stock}
+                key="save"
+                onClick={() => void saveStock(variant)}
+                type="button"
+              >
+                <Save className="h-4 w-4" /> Save
+              </button>,
+              <Badge key="status" tone={variant.productStatus === "ACTIVE" ? "success" : "neutral"}>{variant.productStatus}</Badge>
+            ])}
+          />
+        )}
+      </AdminCard>
+      {lowStockVariants.length > 0 ? (
+        <AdminCard description="These SKUs have 5 or fewer units left." title="Low stock alerts">
+          <AdminTable
+            columns={["Product", "SKU", "Stock"]}
+            rows={lowStockVariants.map((variant) => [
+              <span className="font-black text-ink" key="name">{variant.productName}</span>,
+              variant.sku,
+              <Badge key="stock" tone="sale">{variant.stock}</Badge>
+            ])}
+          />
+        </AdminCard>
+      ) : null}
+    </div>
+  );
 }
 
 function DemoInventoryManagementClient() {

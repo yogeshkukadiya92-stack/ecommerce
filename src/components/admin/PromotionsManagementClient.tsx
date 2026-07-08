@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Gift, Percent, Plus, RefreshCw, Save, Ticket, Users } from "lucide-react";
 import { bundleDeals, couponRules, loyaltyPointEntries, promotionRules, referralRecords, subscriptions } from "@/mock/promotions";
 import type { CouponRule, CustomerSubscription } from "@/types/promotions";
@@ -13,24 +13,213 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { AdminCard } from "./AdminCard";
 import { AdminTable } from "./AdminTable";
-import { LiveAdminEmptyState } from "./LiveAdminEmptyState";
 
 const tabs = ["Coupons", "Promotions", "Bundles", "Subscriptions", "Loyalty", "Referrals", "Reports"] as const;
 type PromoTab = (typeof tabs)[number];
 
 export function PromotionsManagementClient() {
   if (!showDemoData) {
-    return (
-      <LiveAdminEmptyState
-        actionHref="/admin/settings"
-        actionLabel="Configure promotions"
-        title="Promotions are ready for real campaigns"
-        description="Demo coupons, bundles, referrals, subscriptions, and loyalty records are hidden in live mode so customers never see misleading operational data."
-      />
-    );
+    return <LiveCouponManagementClient />;
   }
 
   return <DemoPromotionsManagementClient />;
+}
+
+type LiveCoupon = {
+  code: string;
+  endsAt: string | null;
+  id: string;
+  isActive: boolean;
+  minimumOrderAmount: number | null;
+  startsAt: string;
+  timesUsed: number;
+  type: "PERCENTAGE" | "FIXED_AMOUNT" | "FREE_SHIPPING";
+  usageLimit: number | null;
+  value: number;
+};
+
+const liveCouponDraftInitial = {
+  code: "",
+  endsAt: "",
+  minimumOrderAmount: 0,
+  type: "PERCENTAGE" as LiveCoupon["type"],
+  usageLimit: 0,
+  value: 10
+};
+
+function LiveCouponManagementClient() {
+  const { session } = useAdminSession();
+  const [coupons, setCoupons] = useState<LiveCoupon[]>([]);
+  const [draft, setDraft] = useState(liveCouponDraftInitial);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
+  async function loadCoupons() {
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("/api/admin/coupons");
+      const result = (await response.json().catch(() => ({}))) as { data?: LiveCoupon[] };
+      setCoupons(Array.isArray(result.data) ? result.data : []);
+      setError("");
+    } catch {
+      setError("Unable to load coupons from the database.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void loadCoupons();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function createCoupon() {
+    setIsSaving(true);
+    setError("");
+
+    try {
+      const response = await fetch("/api/admin/coupons", {
+        body: JSON.stringify({
+          code: draft.code,
+          endsAt: draft.endsAt || undefined,
+          minimumOrderAmount: draft.minimumOrderAmount > 0 ? draft.minimumOrderAmount : undefined,
+          type: draft.type,
+          usageLimit: draft.usageLimit > 0 ? draft.usageLimit : undefined,
+          value: draft.type === "FREE_SHIPPING" ? 0 : draft.value
+        }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST"
+      });
+      const result = (await response.json().catch(() => ({}))) as { message?: string };
+
+      if (!response.ok) {
+        setError(result.message ?? "Unable to create coupon.");
+        return;
+      }
+
+      setMessage(result.message ?? "Coupon created.");
+      setDraft(liveCouponDraftInitial);
+      writeAdminAuditLog(session, {
+        action: "admin.coupon.create",
+        entityId: draft.code.toUpperCase(),
+        entityType: "Coupon"
+      });
+      await loadCoupons();
+    } catch {
+      setError("Unable to create coupon.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function toggleCoupon(coupon: LiveCoupon) {
+    try {
+      const response = await fetch(`/api/admin/coupons/${coupon.id}`, {
+        body: JSON.stringify({ isActive: !coupon.isActive }),
+        headers: { "Content-Type": "application/json" },
+        method: "PATCH"
+      });
+      const result = (await response.json().catch(() => ({}))) as { message?: string };
+
+      if (!response.ok) {
+        setError(result.message ?? "Unable to update coupon.");
+        return;
+      }
+
+      setCoupons((current) => current.map((item) => (item.id === coupon.id ? { ...item, isActive: !coupon.isActive } : item)));
+      setMessage(result.message ?? "Coupon updated.");
+    } catch {
+      setError("Unable to update coupon.");
+    }
+  }
+
+  async function deleteCoupon(coupon: LiveCoupon) {
+    if (!window.confirm(`Delete coupon ${coupon.code}?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/admin/coupons/${coupon.id}`, { method: "DELETE" });
+      const result = (await response.json().catch(() => ({}))) as { message?: string };
+
+      if (!response.ok) {
+        setError(result.message ?? "Unable to delete coupon.");
+        return;
+      }
+
+      setCoupons((current) => current.filter((item) => item.id !== coupon.id));
+      setMessage(`Coupon ${coupon.code} deleted.`);
+    } catch {
+      setError("Unable to delete coupon.");
+    }
+  }
+
+  return (
+    <div className="grid gap-6">
+      <AdminCard
+        action={<Badge tone="success">MongoDB live coupons</Badge>}
+        description="Create discount codes for the storefront checkout."
+        title="Create coupon"
+      >
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <Input label="Coupon code" onChange={(event) => setDraft((current) => ({ ...current, code: event.target.value.toUpperCase() }))} placeholder="WELCOME10" value={draft.code} />
+          <Select label="Discount type" onChange={(event) => setDraft((current) => ({ ...current, type: event.target.value as LiveCoupon["type"] }))} value={draft.type}>
+            <option value="PERCENTAGE">Percentage off</option>
+            <option value="FIXED_AMOUNT">Fixed amount off</option>
+            <option value="FREE_SHIPPING">Free shipping</option>
+          </Select>
+          {draft.type !== "FREE_SHIPPING" ? (
+            <Input label={draft.type === "PERCENTAGE" ? "Discount %" : "Discount amount (Rs)"} min={0} onChange={(event) => setDraft((current) => ({ ...current, value: Number(event.target.value) }))} type="number" value={draft.value} />
+          ) : null}
+          <Input helperText="0 means no minimum." label="Minimum order amount (Rs)" min={0} onChange={(event) => setDraft((current) => ({ ...current, minimumOrderAmount: Number(event.target.value) }))} type="number" value={draft.minimumOrderAmount} />
+          <Input helperText="0 means unlimited." label="Usage limit" min={0} onChange={(event) => setDraft((current) => ({ ...current, usageLimit: Number(event.target.value) }))} type="number" value={draft.usageLimit} />
+          <Input label="Expires on (optional)" onChange={(event) => setDraft((current) => ({ ...current, endsAt: event.target.value }))} type="date" value={draft.endsAt} />
+        </div>
+        {error ? <p className="mt-4 rounded-md bg-coral/10 p-3 text-sm font-bold text-coral" role="alert">{error}</p> : null}
+        {message ? <p className="mt-4 rounded-md bg-mint p-3 text-sm font-bold text-forest" role="status">{message}</p> : null}
+        <div className="mt-5 flex justify-end">
+          <button
+            className="admin-action bg-ink text-white disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={isSaving || draft.code.trim().length < 3}
+            onClick={() => void createCoupon()}
+            type="button"
+          >
+            <Plus className="h-4 w-4" /> {isSaving ? "Creating..." : "Create coupon"}
+          </button>
+        </div>
+      </AdminCard>
+      <AdminCard description="All storefront discount codes with usage." title={`Coupons (${coupons.length})`}>
+        {isLoading ? (
+          <p className="rounded-md bg-mist p-4 text-sm font-semibold text-slate">Loading coupons...</p>
+        ) : coupons.length === 0 ? (
+          <p className="rounded-md bg-mist p-4 text-sm font-semibold text-slate">No coupons yet. Create your first discount code above.</p>
+        ) : (
+          <AdminTable
+            columns={["Code", "Discount", "Min order", "Used", "Expires", "Status", "Actions"]}
+            rows={coupons.map((coupon) => [
+              <span className="font-black text-ink" key="code">{coupon.code}</span>,
+              coupon.type === "PERCENTAGE" ? `${coupon.value}%` : coupon.type === "FIXED_AMOUNT" ? formatRs(coupon.value) : "Free shipping",
+              coupon.minimumOrderAmount ? formatRs(coupon.minimumOrderAmount) : "-",
+              `${coupon.timesUsed}${coupon.usageLimit ? ` / ${coupon.usageLimit}` : ""}`,
+              coupon.endsAt ? new Date(coupon.endsAt).toLocaleDateString("en-IN", { dateStyle: "medium" }) : "Never",
+              <Badge key="status" tone={coupon.isActive ? "success" : "neutral"}>{coupon.isActive ? "Active" : "Inactive"}</Badge>,
+              <div className="flex gap-2" key="actions">
+                <button className="admin-action" onClick={() => void toggleCoupon(coupon)} type="button">
+                  {coupon.isActive ? "Deactivate" : "Activate"}
+                </button>
+                <button className="admin-action text-coral" onClick={() => void deleteCoupon(coupon)} type="button">
+                  Delete
+                </button>
+              </div>
+            ])}
+          />
+        )}
+      </AdminCard>
+    </div>
+  );
 }
 
 function DemoPromotionsManagementClient() {

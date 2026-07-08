@@ -1,7 +1,7 @@
 "use client";
 
 import { FileCheck2, Search, ShieldAlert } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { adminOrders } from "@/mock/adminOrders";
 import {
   batchRecallRecords,
@@ -31,24 +31,121 @@ import { canPerform } from "@/lib/security/securityService";
 import { Badge } from "@/components/ui/Badge";
 import { AdminCard } from "./AdminCard";
 import { AdminTable } from "./AdminTable";
-import { LiveAdminEmptyState } from "./LiveAdminEmptyState";
 
 const tabs = ["Products", "Claims", "Delist", "Recall"] as const;
 type ComplianceTab = (typeof tabs)[number];
 
 export function ComplianceManagementClient() {
   if (!showDemoData) {
-    return (
-      <LiveAdminEmptyState
-        actionHref="/admin/settings"
-        actionLabel="Configure compliance"
-        title="Compliance review is ready for real products"
-        description="Sample product claims, recall records, delist cases, and compliance statuses are hidden in live mode. Add real catalog data before operating safety workflows."
-      />
-    );
+    return <LiveComplianceManagementClient />;
   }
 
   return <DemoComplianceManagementClient />;
+}
+
+type LiveComplianceProduct = {
+  id: string;
+  images: Array<{ url: string }>;
+  labReportUrl: string | null;
+  labelImageUrls: string[];
+  name: string;
+  slug: string;
+  status: string;
+  warningText: string;
+};
+
+function LiveComplianceManagementClient() {
+  const [products, setProducts] = useState<LiveComplianceProduct[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let isMounted = true;
+
+    fetch("/api/admin/products")
+      .then((response) => response.json())
+      .then((result: { data?: LiveComplianceProduct[] }) => {
+        if (isMounted) {
+          setProducts(Array.isArray(result.data) ? result.data : []);
+        }
+      })
+      .catch(() => isMounted && setError("Unable to load products from the database."))
+      .finally(() => isMounted && setIsLoading(false));
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  function checklist(product: LiveComplianceProduct) {
+    return {
+      imageOk: product.images.length > 0,
+      labReportOk: Boolean(product.labReportUrl),
+      labelOk: product.labelImageUrls.length > 0,
+      warningOk: Boolean(product.warningText?.trim())
+    };
+  }
+
+  const incompleteActive = products.filter((product) => {
+    if (product.status !== "ACTIVE") return false;
+    const checks = checklist(product);
+    return !checks.warningOk || !checks.imageOk;
+  });
+
+  return (
+    <div className="grid gap-6">
+      <AdminCard
+        action={<Badge tone="success">MongoDB live compliance</Badge>}
+        description="Compliance readiness per catalog product: warning text, product image, label images, and lab report / COA."
+        title={`Product compliance (${products.length})`}
+      >
+        {error ? <p className="mb-4 rounded-md bg-coral/10 p-3 text-sm font-bold text-coral" role="alert">{error}</p> : null}
+        {isLoading ? (
+          <p className="rounded-md bg-mist p-4 text-sm font-semibold text-slate">Loading products...</p>
+        ) : products.length === 0 ? (
+          <p className="rounded-md bg-mist p-4 text-sm font-semibold text-slate">No products in the catalog yet. Add products from the Catalog module first.</p>
+        ) : (
+          <AdminTable
+            columns={["Product", "Status", "Warning text", "Product image", "Label images", "Lab report", "Readiness"]}
+            rows={products.map((product) => {
+              const checks = checklist(product);
+              const done = [checks.warningOk, checks.imageOk, checks.labelOk, checks.labReportOk].filter(Boolean).length;
+              return [
+                <span className="font-black text-ink" key="name">{product.name}</span>,
+                <Badge key="status" tone={product.status === "ACTIVE" ? "success" : "neutral"}>{product.status}</Badge>,
+                checks.warningOk ? "Ready" : "Missing",
+                checks.imageOk ? "Ready" : "Missing",
+                checks.labelOk ? "Ready" : "Pending",
+                checks.labReportOk ? "Ready" : "Pending",
+                <Badge key="readiness" tone={done === 4 ? "success" : done >= 2 ? "neutral" : "sale"}>{done}/4</Badge>
+              ];
+            })}
+          />
+        )}
+      </AdminCard>
+      {incompleteActive.length > 0 ? (
+        <AdminCard description="Active products missing warning text or a product image. Fix these first." title={`Attention needed (${incompleteActive.length})`}>
+          <AdminTable
+            columns={["Product", "Missing"]}
+            rows={incompleteActive.map((product) => {
+              const checks = checklist(product);
+              const missing = [
+                !checks.warningOk ? "warning text" : "",
+                !checks.imageOk ? "product image" : ""
+              ].filter(Boolean);
+              return [
+                <span className="font-black text-ink" key="name">{product.name}</span>,
+                <span className="font-bold text-coral" key="missing">{missing.join(", ")}</span>
+              ];
+            })}
+          />
+        </AdminCard>
+      ) : null}
+      <div className="rounded-card border border-black/10 bg-mist p-4 text-sm font-semibold text-slate">
+        Reminder: keep the &quot;not intended to diagnose, treat, cure, or prevent any disease&quot; disclaimer visible on supplement products, and store batch and expiry details before publishing.
+      </div>
+    </div>
+  );
 }
 
 function DemoComplianceManagementClient() {

@@ -1,7 +1,7 @@
 "use client";
 
 import { BellRing, Mail, MessageCircle, Smartphone } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   abandonedCartLeads,
   marketingAutomationRules,
@@ -17,7 +17,6 @@ import type { MarketingAutomationRule } from "@/types/engagement";
 import { Badge } from "@/components/ui/Badge";
 import { AdminCard } from "./AdminCard";
 import { AdminTable } from "./AdminTable";
-import { LiveAdminEmptyState } from "./LiveAdminEmptyState";
 
 const triggerLabels: Record<MarketingAutomationRule["trigger"], string> = {
   abandoned_cart: "Abandoned cart",
@@ -35,17 +34,82 @@ const triggerLabels: Record<MarketingAutomationRule["trigger"], string> = {
 
 export function MarketingAutomationClient() {
   if (!showDemoData) {
-    return (
-      <LiveAdminEmptyState
-        actionHref="/admin/settings"
-        actionLabel="Configure messaging"
-        title="Marketing automation is ready for provider setup"
-        description="Sample campaigns, abandoned carts, alert signups, and subscription records are hidden. Connect email, SMS, or WhatsApp providers before sending live campaigns."
-      />
-    );
+    return <LiveMarketingAutomationClient />;
   }
 
   return <DemoMarketingAutomationClient />;
+}
+
+function LiveMarketingAutomationClient() {
+  const [audience, setAudience] = useState({ coupons: 0, customers: 0, leadGroups: 0, leads: 0 });
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    Promise.all([
+      fetch("/api/admin/analytics").then((response) => response.json()).catch(() => ({})),
+      fetch("/api/admin/leads").then((response) => response.json()).catch(() => ({}))
+    ])
+      .then(([analytics, leads]: [{ data?: { couponCount?: number; customerCount?: number } }, { meta?: { groups?: number; total?: number } }]) => {
+        if (!isMounted) return;
+        setAudience({
+          coupons: analytics.data?.couponCount ?? 0,
+          customers: analytics.data?.customerCount ?? 0,
+          leadGroups: leads.meta?.groups ?? 0,
+          leads: leads.meta?.total ?? 0
+        });
+      })
+      .finally(() => isMounted && setIsLoading(false));
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const channels = [
+    { detail: "Order confirmations, shipping updates, and win-back campaigns need an email provider (for example Resend, SendGrid, or Brevo).", icon: <Mail className="h-5 w-5" />, name: "Email", status: "Not connected" },
+    { detail: "OTP and delivery alerts need an SMS provider (for example MSG91 or Twilio).", icon: <Smartphone className="h-5 w-5" />, name: "SMS", status: "Not connected" },
+    { detail: "Use the WhatsApp Leads module to build broadcast audiences from your group members.", icon: <MessageCircle className="h-5 w-5" />, name: "WhatsApp", status: "Leads ready" }
+  ];
+
+  return (
+    <div className="grid gap-6">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {[
+          { label: "Customers to reach", value: audience.customers },
+          { label: "WhatsApp leads", value: audience.leads },
+          { label: "WhatsApp groups", value: audience.leadGroups },
+          { label: "Active coupon codes", value: audience.coupons }
+        ].map((stat) => (
+          <div className="rounded-card border border-black/10 bg-white p-5 shadow-card" key={stat.label}>
+            <p className="text-xs font-black uppercase tracking-[0.08em] text-slate">{stat.label}</p>
+            <p className="mt-2 text-3xl font-extrabold text-ink">{isLoading ? "-" : stat.value.toLocaleString("en-IN")}</p>
+          </div>
+        ))}
+      </div>
+      <AdminCard
+        action={<Badge tone="success">Live audience data</Badge>}
+        description="Audience numbers above come from the live database. Connect a messaging provider to start sending automated campaigns."
+        title="Messaging channels"
+      >
+        <div className="grid gap-3">
+          {channels.map((channel) => (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-black/10 p-4" key={channel.name}>
+              <div className="flex items-center gap-3">
+                <div className="grid h-10 w-10 place-items-center rounded-md bg-ink text-white">{channel.icon}</div>
+                <div>
+                  <p className="font-black text-ink">{channel.name}</p>
+                  <p className="mt-1 max-w-xl text-xs font-semibold text-slate">{channel.detail}</p>
+                </div>
+              </div>
+              <Badge tone={channel.status === "Not connected" ? "neutral" : "success"}>{channel.status}</Badge>
+            </div>
+          ))}
+        </div>
+      </AdminCard>
+    </div>
+  );
 }
 
 function DemoMarketingAutomationClient() {

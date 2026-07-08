@@ -106,6 +106,41 @@ function writeLocalOrders(orders: CheckoutOrder[]) {
   window.dispatchEvent(new CustomEvent("fitsupplement:orders", { detail: orders }));
 }
 
+export function persistOrderToServer(order: CheckoutOrder) {
+  if (typeof fetch === "undefined") {
+    return;
+  }
+
+  void fetch("/api/orders", {
+    body: JSON.stringify({
+      couponCode: order.couponCode,
+      discountAmount: order.discountAmount,
+      items: order.items.map((item) => ({
+        productName: item.productName,
+        quantity: item.quantity,
+        sku: item.sku,
+        total: item.total,
+        unitPrice: item.unitPrice
+      })),
+      orderNumber: order.orderNumber,
+      payment: {
+        method: order.payment.method,
+        provider: order.payment.provider,
+        providerOrderId: order.payment.providerOrderId,
+        status: order.payment.status,
+        transactionId: order.payment.transactionId
+      },
+      shippingAddress: order.shippingAddress,
+      shippingAmount: order.shippingAmount,
+      subtotal: order.subtotal,
+      taxAmount: order.taxAmount,
+      totalAmount: order.totalAmount
+    }),
+    headers: { "Content-Type": "application/json" },
+    method: "POST"
+  }).catch(() => undefined);
+}
+
 export async function createMockCheckoutOrder(input: PlaceOrderInput) {
   const createdAt = new Date().toISOString();
   const orderNumber = `FS-${Math.floor(100000 + Math.random() * 900000)}`;
@@ -156,6 +191,7 @@ export async function createMockCheckoutOrder(input: PlaceOrderInput) {
   };
 
   writeLocalOrders([order, ...readLocalOrders()]);
+  persistOrderToServer(order);
   return order;
 }
 
@@ -238,7 +274,13 @@ export function updateLocalOrderPayment(
   });
 
   writeLocalOrders(nextOrders);
-  return nextOrders.find((order) => order.orderNumber === orderNumber);
+  const updatedOrder = nextOrders.find((order) => order.orderNumber === orderNumber);
+
+  if (updatedOrder && (input.status === "paid" || input.status === "confirmed")) {
+    persistOrderToServer(updatedOrder);
+  }
+
+  return updatedOrder;
 }
 
 export function getLocalOrderByNumber(orderNumber: string) {

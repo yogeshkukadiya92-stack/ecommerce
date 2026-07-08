@@ -1,7 +1,7 @@
 "use client";
 
 import { BarChart3, Download, FileSpreadsheet, Loader2, SearchX } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   buildAnalyticsReport,
   databaseOptimizationNotes,
@@ -12,7 +12,6 @@ import type { ReportDateRange } from "@/types/reports";
 import { Badge } from "@/components/ui/Badge";
 import { AdminCard } from "./AdminCard";
 import { AdminTable } from "./AdminTable";
-import { LiveAdminEmptyState } from "./LiveAdminEmptyState";
 
 const tabs = [
   "Sales",
@@ -34,17 +33,110 @@ const formatRs = (value: number) => `Rs ${Math.round(value).toLocaleString("en-I
 
 export function AnalyticsDashboardClient() {
   if (!showDemoData) {
-    return (
-      <LiveAdminEmptyState
-        actionHref="/admin/settings"
-        actionLabel="Configure reporting"
-        title="Analytics will populate from live store activity"
-        description="Sample revenue, customer, product, coupon, and search reports are hidden. After launch, connect reporting queries to MongoDB or your analytics provider."
-      />
-    );
+    return <LiveAnalyticsDashboardClient />;
   }
 
   return <DemoAnalyticsDashboardClient />;
+}
+
+type LiveAnalytics = {
+  activeProductCount: number;
+  averageOrderValue: number;
+  couponCount: number;
+  customerCount: number;
+  lowStockCount: number;
+  orderCount: number;
+  ordersByStatus: Record<string, number>;
+  productCount: number;
+  revenue: number;
+  revenueLast30Days: number;
+  reviewCount: number;
+  topProducts: Array<{ name: string; quantity: number; revenue: number; sku: string }>;
+  unitsInStock: number;
+};
+
+function LiveAnalyticsDashboardClient() {
+  const [analytics, setAnalytics] = useState<LiveAnalytics | null>(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let isMounted = true;
+
+    fetch("/api/admin/analytics")
+      .then((response) => response.json())
+      .then((result: { data?: LiveAnalytics }) => {
+        if (isMounted && result.data) {
+          setAnalytics(result.data);
+        }
+      })
+      .catch(() => isMounted && setError("Unable to load analytics from the database."));
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  if (error) {
+    return <p className="rounded-md bg-coral/10 p-4 text-sm font-bold text-coral" role="alert">{error}</p>;
+  }
+
+  if (!analytics) {
+    return <p className="rounded-md bg-mist p-4 text-sm font-semibold text-slate">Loading live analytics...</p>;
+  }
+
+  const statCards = [
+    { label: "Total revenue", value: formatRs(analytics.revenue) },
+    { label: "Revenue (30 days)", value: formatRs(analytics.revenueLast30Days) },
+    { label: "Orders", value: analytics.orderCount.toLocaleString("en-IN") },
+    { label: "Average order value", value: formatRs(analytics.averageOrderValue) },
+    { label: "Customers", value: analytics.customerCount.toLocaleString("en-IN") },
+    { label: "Active products", value: `${analytics.activeProductCount} / ${analytics.productCount}` },
+    { label: "Units in stock", value: analytics.unitsInStock.toLocaleString("en-IN") },
+    { label: "Low stock SKUs", value: analytics.lowStockCount.toLocaleString("en-IN") }
+  ];
+
+  return (
+    <div className="grid gap-6">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {statCards.map((stat) => (
+          <div className="rounded-card border border-black/10 bg-white p-5 shadow-card" key={stat.label}>
+            <p className="text-xs font-black uppercase tracking-[0.08em] text-slate">{stat.label}</p>
+            <p className="mt-2 text-2xl font-extrabold text-ink">{stat.value}</p>
+          </div>
+        ))}
+      </div>
+      <div className="grid gap-6 xl:grid-cols-2">
+        <AdminCard action={<Badge tone="success">Live</Badge>} description="Orders grouped by fulfilment status." title="Orders by status">
+          {Object.keys(analytics.ordersByStatus).length === 0 ? (
+            <p className="rounded-md bg-mist p-4 text-sm font-semibold text-slate">No orders yet.</p>
+          ) : (
+            <AdminTable
+              columns={["Status", "Orders"]}
+              rows={Object.entries(analytics.ordersByStatus).map(([status, count]) => [
+                <Badge key="status" tone={status === "DELIVERED" ? "success" : "neutral"}>{status}</Badge>,
+                count
+              ])}
+            />
+          )}
+        </AdminCard>
+        <AdminCard action={<Badge tone="success">Live</Badge>} description="Best sellers by recorded revenue." title="Top products">
+          {analytics.topProducts.length === 0 ? (
+            <p className="rounded-md bg-mist p-4 text-sm font-semibold text-slate">No product sales recorded yet.</p>
+          ) : (
+            <AdminTable
+              columns={["Product", "SKU", "Units", "Revenue"]}
+              rows={analytics.topProducts.map((product) => [
+                <span className="font-black text-ink" key="name">{product.name}</span>,
+                product.sku,
+                product.quantity,
+                formatRs(product.revenue)
+              ])}
+            />
+          )}
+        </AdminCard>
+      </div>
+    </div>
+  );
 }
 
 function DemoAnalyticsDashboardClient() {

@@ -1,7 +1,7 @@
 "use client";
 
 import { MessageSquareReply, Search, ShieldCheck, Star } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { productQuestions, productReviews } from "@/mock/engagement";
 import { writeAdminAuditLog } from "@/lib/admin/auditLog";
 import { showDemoData } from "@/lib/admin/liveData";
@@ -15,21 +15,133 @@ import type { ProductQuestionThread, ProductReview, QuestionModerationStatus, Re
 import { Badge } from "@/components/ui/Badge";
 import { AdminCard } from "./AdminCard";
 import { AdminTable } from "./AdminTable";
-import { LiveAdminEmptyState } from "./LiveAdminEmptyState";
 
 export function ReviewsModerationClient() {
   if (!showDemoData) {
-    return (
-      <LiveAdminEmptyState
-        actionHref="/admin/settings"
-        actionLabel="Configure reviews"
-        title="Review moderation is waiting for live feedback"
-        description="Sample product reviews and Q&A threads are hidden. Live customer reviews can be connected to this moderation workflow after launch."
-      />
-    );
+    return <LiveReviewsModerationClient />;
   }
 
   return <DemoReviewsModerationClient />;
+}
+
+type LiveReview = {
+  body: string;
+  createdAt: string;
+  customerEmail: string;
+  customerName: string;
+  id: string;
+  isVerifiedPurchase: boolean;
+  productName: string;
+  rating: number;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  title: string;
+};
+
+function LiveReviewsModerationClient() {
+  const { session } = useAdminSession();
+  const [reviews, setReviews] = useState<LiveReview[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let isMounted = true;
+
+    fetch("/api/admin/reviews")
+      .then((response) => response.json())
+      .then((result: { data?: LiveReview[] }) => {
+        if (isMounted) {
+          setReviews(Array.isArray(result.data) ? result.data : []);
+        }
+      })
+      .catch(() => isMounted && setError("Unable to load reviews from the database."))
+      .finally(() => isMounted && setIsLoading(false));
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  async function moderate(review: LiveReview, status: LiveReview["status"]) {
+    try {
+      const response = await fetch("/api/admin/reviews", {
+        body: JSON.stringify({ id: review.id, status }),
+        headers: { "Content-Type": "application/json" },
+        method: "PATCH"
+      });
+      const result = (await response.json().catch(() => ({}))) as { message?: string };
+
+      if (!response.ok) {
+        setError(result.message ?? "Unable to update review.");
+        return;
+      }
+
+      setReviews((current) => current.map((item) => (item.id === review.id ? { ...item, status } : item)));
+      setMessage(result.message ?? "Review updated.");
+      setError("");
+      writeAdminAuditLog(session, {
+        action: "admin.review.moderate",
+        entityId: review.id,
+        entityType: "Review",
+        metadata: { status }
+      });
+    } catch {
+      setError("Unable to update review.");
+    }
+  }
+
+  const pendingCount = reviews.filter((review) => review.status === "PENDING").length;
+
+  return (
+    <div className="grid gap-6">
+      <AdminCard
+        action={<Badge tone="success">MongoDB live reviews</Badge>}
+        description="Customer reviews from the storefront. Approve to publish or reject to hide."
+        title={`Reviews (${reviews.length}${pendingCount ? `, ${pendingCount} pending` : ""})`}
+      >
+        {error ? <p className="mb-4 rounded-md bg-coral/10 p-3 text-sm font-bold text-coral" role="alert">{error}</p> : null}
+        {message ? <p className="mb-4 rounded-md bg-mint p-3 text-sm font-bold text-forest" role="status">{message}</p> : null}
+        {isLoading ? (
+          <p className="rounded-md bg-mist p-4 text-sm font-semibold text-slate">Loading reviews...</p>
+        ) : reviews.length === 0 ? (
+          <p className="rounded-md bg-mist p-4 text-sm font-semibold text-slate">
+            No reviews yet. Customer reviews submitted on product pages will appear here for moderation.
+          </p>
+        ) : (
+          <div className="grid gap-4">
+            {reviews.map((review) => (
+              <div className="rounded-card border border-black/10 bg-white p-4" key={review.id}>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="font-black text-ink">
+                      {review.title}
+                      <span className="ml-2 inline-flex items-center gap-1 text-sm font-bold text-slate">
+                        <Star className="h-4 w-4 text-forest" /> {review.rating}/5
+                      </span>
+                    </p>
+                    <p className="mt-1 text-xs font-semibold text-slate">
+                      {review.productName} | {review.customerName} ({review.customerEmail}) | {new Date(review.createdAt).toLocaleDateString("en-IN", { dateStyle: "medium" })}
+                      {review.isVerifiedPurchase ? " | Verified purchase" : ""}
+                    </p>
+                  </div>
+                  <Badge tone={review.status === "APPROVED" ? "success" : review.status === "REJECTED" ? "sale" : "neutral"}>{review.status}</Badge>
+                </div>
+                <p className="mt-3 text-sm leading-6 text-graphite">{review.body}</p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <button className="admin-action" disabled={review.status === "APPROVED"} onClick={() => void moderate(review, "APPROVED")} type="button">
+                    <ShieldCheck className="h-4 w-4" /> Approve
+                  </button>
+                  <button className="admin-action text-coral" disabled={review.status === "REJECTED"} onClick={() => void moderate(review, "REJECTED")} type="button">
+                    Reject
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </AdminCard>
+    </div>
+  );
 }
 
 function DemoReviewsModerationClient() {

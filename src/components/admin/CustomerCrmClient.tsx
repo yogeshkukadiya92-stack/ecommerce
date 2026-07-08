@@ -2,7 +2,7 @@
 
 import { Download, FileText, MessageSquarePlus, Users } from "lucide-react";
 import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { customers } from "@/mock/customers";
 import { orders } from "@/mock/orders";
 import { productReviews } from "@/mock/engagement";
@@ -15,21 +15,133 @@ import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { Badge } from "@/components/ui/Badge";
 import { AdminCard } from "./AdminCard";
 import { AdminTable } from "./AdminTable";
-import { LiveAdminEmptyState } from "./LiveAdminEmptyState";
 
 export function CustomerCrmClient() {
   if (!showDemoData) {
-    return (
-      <LiveAdminEmptyState
-        actionHref="/admin/settings"
-        actionLabel="Configure CRM source"
-        title="Customer CRM is ready for live customers"
-        description="Demo customer profiles, wishlists, reviews, and order history are hidden on the live admin panel. Connect your production customer source before using CRM workflows."
-      />
-    );
+    return <LiveCustomerCrmClient />;
   }
 
   return <DemoCustomerCrmClient />;
+}
+
+type LiveCustomerRow = {
+  createdAt: string;
+  email: string;
+  id: string;
+  name: string;
+  orderCount: number;
+  phone: string;
+  totalSpent: number;
+};
+
+type LiveRegisteredUser = {
+  createdAt: string;
+  email: string;
+  status: string;
+};
+
+function LiveCustomerCrmClient() {
+  const [customerRows, setCustomerRows] = useState<LiveCustomerRow[]>([]);
+  const [registeredUsers, setRegisteredUsers] = useState<LiveRegisteredUser[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [query, setQuery] = useState("");
+
+  useEffect(() => {
+    let isMounted = true;
+
+    fetch("/api/admin/customers")
+      .then((response) => response.json())
+      .then((result: { data?: { customers?: LiveCustomerRow[]; registeredUsers?: LiveRegisteredUser[] } }) => {
+        if (!isMounted) return;
+        setCustomerRows(result.data?.customers ?? []);
+        setRegisteredUsers(result.data?.registeredUsers ?? []);
+      })
+      .catch(() => isMounted && setError("Unable to load customers from the database."))
+      .finally(() => isMounted && setIsLoading(false));
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const filteredCustomers = customerRows.filter(
+    (customer) =>
+      !query.trim() ||
+      customer.name.toLowerCase().includes(query.trim().toLowerCase()) ||
+      customer.email.toLowerCase().includes(query.trim().toLowerCase()) ||
+      customer.phone.includes(query.trim())
+  );
+
+  return (
+    <div className="grid gap-6">
+      <div className="grid gap-4 md:grid-cols-3">
+        {[
+          { label: "Customers with orders", value: customerRows.length },
+          { label: "Registered accounts", value: registeredUsers.length + customerRows.length },
+          { label: "Lifetime revenue", value: `Rs ${customerRows.reduce((total, customer) => total + customer.totalSpent, 0).toLocaleString("en-IN")}` }
+        ].map((stat) => (
+          <div className="rounded-card border border-black/10 bg-white p-5 shadow-card" key={stat.label}>
+            <p className="text-xs font-black uppercase tracking-[0.08em] text-slate">{stat.label}</p>
+            <p className="mt-2 text-3xl font-extrabold text-ink">{typeof stat.value === "number" ? stat.value.toLocaleString("en-IN") : stat.value}</p>
+          </div>
+        ))}
+      </div>
+      <AdminCard
+        action={<Badge tone="success">MongoDB live CRM</Badge>}
+        description="Customers are created automatically when checkout records an order."
+        title={`Customers (${customerRows.length})`}
+      >
+        <div className="mb-4 md:w-1/2">
+          <label className="block">
+            <span className="mb-2 block text-sm font-semibold text-ink">Search</span>
+            <input
+              className="focus-ring h-11 w-full rounded-md border border-black/10 bg-white px-3 text-sm text-ink placeholder:text-slate"
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Name, email, or phone"
+              value={query}
+            />
+          </label>
+        </div>
+        {error ? <p className="mb-4 rounded-md bg-coral/10 p-3 text-sm font-bold text-coral" role="alert">{error}</p> : null}
+        {isLoading ? (
+          <p className="rounded-md bg-mist p-4 text-sm font-semibold text-slate">Loading customers...</p>
+        ) : filteredCustomers.length === 0 ? (
+          <p className="rounded-md bg-mist p-4 text-sm font-semibold text-slate">
+            {customerRows.length === 0
+              ? "No customers yet. Customers appear automatically after their first checkout order."
+              : "No customers match this search."}
+          </p>
+        ) : (
+          <AdminTable
+            columns={["Customer", "Email", "Phone", "Orders", "Total spent", "Since"]}
+            rows={filteredCustomers.map((customer) => [
+              <span className="font-black text-ink" key="name">{customer.name}</span>,
+              customer.email,
+              customer.phone,
+              customer.orderCount,
+              `Rs ${customer.totalSpent.toLocaleString("en-IN")}`,
+              new Date(customer.createdAt).toLocaleDateString("en-IN", { dateStyle: "medium" })
+            ])}
+          />
+        )}
+      </AdminCard>
+      <AdminCard description="Storefront accounts that have signed up but not ordered yet." title={`Registered accounts without orders (${registeredUsers.length})`}>
+        {registeredUsers.length === 0 ? (
+          <p className="rounded-md bg-mist p-4 text-sm font-semibold text-slate">No signed-up accounts without orders.</p>
+        ) : (
+          <AdminTable
+            columns={["Email", "Status", "Signed up"]}
+            rows={registeredUsers.map((user) => [
+              <span className="font-bold text-ink" key="email">{user.email}</span>,
+              <Badge key="status" tone={user.status === "ACTIVE" ? "success" : "neutral"}>{user.status}</Badge>,
+              new Date(user.createdAt).toLocaleDateString("en-IN", { dateStyle: "medium" })
+            ])}
+          />
+        )}
+      </AdminCard>
+    </div>
+  );
 }
 
 function DemoCustomerCrmClient() {
