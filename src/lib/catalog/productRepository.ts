@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db/prisma";
 
-export async function listActiveProducts(query?: string | null) {
+export async function listProducts(query?: string | null, options?: { activeOnly?: boolean }) {
   const products = await prisma.product.findMany({
     include: {
       brand: true,
@@ -10,7 +10,7 @@ export async function listActiveProducts(query?: string | null) {
       variants: true
     },
     orderBy: { createdAt: "desc" },
-    where: { status: "ACTIVE" }
+    where: options?.activeOnly ? { status: "ACTIVE" } : undefined
   });
   const normalizedQuery = query?.trim().toLowerCase();
 
@@ -31,4 +31,8 @@ export async function listActiveProducts(query?: string | null) {
       .toLowerCase()
       .includes(normalizedQuery)
   );
+}
+
+export async function listActiveProducts(query?: string | null) {
+  return listProducts(query, { activeOnly: true });
 }

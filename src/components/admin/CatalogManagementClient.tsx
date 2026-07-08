@@ -147,6 +147,32 @@ type LiveProductForm = {
   weightInGrams: number;
 };
 
+type LiveCatalogProduct = {
+  allergens: string[];
+  brand: { name: string };
+  categories: Array<{ name: string }>;
+  description: string;
+  goalTags: string[];
+  id: string;
+  images: Array<{ altText: string; url: string }>;
+  ingredients: string[];
+  name: string;
+  shortDescription: string;
+  slug: string;
+  status: "DRAFT" | "ACTIVE" | "ARCHIVED";
+  usageInstructions: string;
+  variants: Array<{
+    id: string;
+    mrp: number;
+    sellingPrice: number;
+    size?: string | null;
+    sku: string;
+    stock: number;
+    weightInGrams: number;
+  }>;
+  warningText: string;
+};
+
 const liveInitialProduct: LiveProductForm = {
   allergens: "",
   brandName: "",
@@ -323,6 +349,10 @@ function LiveCatalogManagementClient() {
   const [savedTemplates, setSavedTemplates] = useState<SavedProductTemplate[]>([]);
   const [showAdvancedDetails, setShowAdvancedDetails] = useState(false);
   const [isSkuManual, setIsSkuManual] = useState(false);
+  const [catalogProducts, setCatalogProducts] = useState<LiveCatalogProduct[]>([]);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(false);
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
+  const [deletingProductId, setDeletingProductId] = useState<string | null>(null);
   const missingRequiredFields = useMemo(() => getMissingLiveProductFields(form), [form]);
   const canSaveProduct = missingRequiredFields.length === 0 && !isSaving;
   const selectedSavedTemplate = savedTemplates.find((template) => template.label === selectedTemplate) ?? null;
@@ -347,6 +377,29 @@ function LiveCatalogManagementClient() {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    void loadCatalogProducts();
+  }, []);
+
+  async function loadCatalogProducts() {
+    setIsLoadingProducts(true);
+
+    try {
+      const response = await fetch("/api/admin/products");
+      const result = (await response.json().catch(() => ({}))) as { data?: LiveCatalogProduct[]; message?: string };
+
+      if (!response.ok) {
+        throw new Error(result.message ?? "Unable to load catalog products.");
+      }
+
+      setCatalogProducts(result.data ?? []);
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : "Unable to load catalog products.");
+    } finally {
+      setIsLoadingProducts(false);
+    }
+  }
 
   function updateForm<K extends keyof LiveProductForm>(key: K, value: LiveProductForm[K]) {
     setForm((current) => {
@@ -490,10 +543,10 @@ function LiveCatalogManagementClient() {
 
     try {
       const payload = buildLiveProductPayload(form);
-      const response = await fetch("/api/admin/products", {
+      const response = await fetch(editingProductId ? `/api/admin/products/${editingProductId}` : "/api/admin/products", {
         body: JSON.stringify(payload),
         headers: { "Content-Type": "application/json" },
-        method: "POST"
+        method: editingProductId ? "PATCH" : "POST"
       });
       const result = (await response.json().catch(() => ({}))) as { message?: string };
 
@@ -503,16 +556,18 @@ function LiveCatalogManagementClient() {
       }
 
       writeAdminAuditLog(session, {
-        action: "admin.product.create",
+        action: editingProductId ? "admin.product.update" : "admin.product.create",
         entityId: form.slug,
         entityType: "Product",
         metadata: { sku: payload.sku, status: payload.status }
       });
-      setMessage(result.message ?? "Product created successfully.");
+      setMessage(result.message ?? (editingProductId ? "Product updated successfully." : "Product created successfully."));
       setForm(liveInitialProduct);
       setSelectedTemplate("");
       setShowAdvancedDetails(false);
       setIsSkuManual(false);
+      setEditingProductId(null);
+      await loadCatalogProducts();
     } catch {
       setError("Unable to connect to catalog API.");
     } finally {
@@ -525,8 +580,78 @@ function LiveCatalogManagementClient() {
     setSelectedTemplate("");
     setShowAdvancedDetails(false);
     setIsSkuManual(false);
+    setEditingProductId(null);
     setError("");
     setMessage("");
+  }
+
+  function loadProductForEdit(product: LiveCatalogProduct) {
+    const primaryVariant = product.variants[0];
+    setEditingProductId(product.id);
+    setIsSkuManual(true);
+    setShowAdvancedDetails(true);
+    setSelectedTemplate("");
+    setForm({
+      allergens: product.allergens.join(", "),
+      brandName: product.brand.name,
+      categoryName: product.categories[0]?.name ?? "",
+      description: product.description,
+      goalTags: product.goalTags.join(", "),
+      imageUrl: product.images[0]?.url ?? "",
+      ingredients: product.ingredients.join(", "),
+      mrp: Number(primaryVariant?.mrp ?? 0),
+      name: product.name,
+      sellingPrice: Number(primaryVariant?.sellingPrice ?? 0),
+      shortDescription: product.shortDescription,
+      size: primaryVariant?.size ?? "",
+      sku: primaryVariant?.sku ?? "",
+      slug: product.slug,
+      status: product.status === "ACTIVE" ? "ACTIVE" : "DRAFT",
+      stock: primaryVariant?.stock ?? 0,
+      usageInstructions: product.usageInstructions,
+      warningText: product.warningText,
+      weightInGrams: primaryVariant?.weightInGrams ?? 0
+    });
+    setMessage(`Editing ${product.name}. Update the fields and save.`);
+    setError("");
+  }
+
+  async function deleteProduct(product: LiveCatalogProduct) {
+    if (!window.confirm(`Delete "${product.name}" from the catalog?`)) {
+      return;
+    }
+
+    setDeletingProductId(product.id);
+    setError("");
+
+    try {
+      const response = await fetch(`/api/admin/products/${product.id}`, {
+        method: "DELETE"
+      });
+      const result = (await response.json().catch(() => ({}))) as { message?: string };
+
+      if (!response.ok) {
+        setError(result.message ?? "Unable to delete product.");
+        return;
+      }
+
+      writeAdminAuditLog(session, {
+        action: "admin.product.delete",
+        entityId: product.slug,
+        entityType: "Product"
+      });
+      setCatalogProducts((current) => current.filter((item) => item.id !== product.id));
+
+      if (editingProductId === product.id) {
+        resetForm();
+      }
+
+      setMessage(result.message ?? "Product deleted successfully.");
+    } catch {
+      setError("Unable to connect to catalog API.");
+    } finally {
+      setDeletingProductId(null);
+    }
   }
 
   return (
@@ -534,7 +659,7 @@ function LiveCatalogManagementClient() {
       <AdminCard
         action={<Badge tone="success">MongoDB live catalog</Badge>}
         description="Add production products directly to the live catalog. Use a template, review the fields, then publish when ready."
-        title="Add product"
+        title={editingProductId ? "Edit product" : "Add product"}
       >
       <div className="mb-4 rounded-md border border-forest/20 bg-mint/60 p-4 text-sm text-ink">
           <p className="font-bold text-forest">Quick add mode</p>
@@ -638,7 +763,7 @@ function LiveCatalogManagementClient() {
         {message ? <p className="mt-4 rounded-md bg-mint p-3 text-sm font-bold text-forest" role="status">{message}</p> : null}
         <div className="mt-5 flex flex-wrap justify-end gap-3">
           <button className="admin-action" onClick={resetForm} type="button">
-            Reset
+            {editingProductId ? "Cancel edit" : "Reset"}
           </button>
           {selectedSavedTemplate ? (
             <button className="admin-action text-coral" onClick={() => void deleteTemplate()} type="button">
@@ -649,9 +774,49 @@ function LiveCatalogManagementClient() {
             <Save className="h-4 w-4" /> {isSavingTemplate ? "Saving template..." : "Save as template"}
           </button>
           <button className="admin-action bg-ink text-white disabled:cursor-not-allowed disabled:opacity-60" disabled={!canSaveProduct} onClick={saveProduct} type="button">
-            <Plus className="h-4 w-4" /> {isSaving ? "Saving..." : "Add product"}
+            <Plus className="h-4 w-4" /> {isSaving ? "Saving..." : editingProductId ? "Update product" : "Add product"}
           </button>
         </div>
+      </AdminCard>
+
+      <AdminCard
+        description="All live catalog items, including draft products, are shown here. You can load a product into the form for editing or delete it directly."
+        title="Product list"
+      >
+        <AdminTable
+          columns={["Image", "Product", "Brand", "Category", "SKU", "Price", "Stock", "Status", "Actions"]}
+          emptyText={isLoadingProducts ? "Loading products..." : "No catalog products found yet."}
+          rows={catalogProducts.map((product) => {
+            const primaryVariant = product.variants[0];
+            return [
+              product.images[0] ? (
+                <Image alt={product.images[0].altText} className="h-12 w-12 rounded-md object-cover" height={80} key="image" src={product.images[0].url} width={80} />
+              ) : (
+                <div className="grid h-12 w-12 place-items-center rounded-md bg-mist text-xs font-bold text-slate" key="image">No image</div>
+              ),
+              <div key="product">
+                <p className="font-black text-ink">{product.name}</p>
+                <p className="mt-1 text-xs text-slate">{product.slug}</p>
+              </div>,
+              product.brand.name,
+              product.categories[0]?.name ?? "-",
+              primaryVariant?.sku ?? "-",
+              primaryVariant ? `Rs ${Number(primaryVariant.sellingPrice).toLocaleString("en-IN")}` : "-",
+              primaryVariant?.stock ?? 0,
+              <Badge key="status" tone={product.status === "ACTIVE" ? "success" : "neutral"}>
+                {product.status === "ACTIVE" ? "Active" : product.status === "DRAFT" ? "Draft" : "Archived"}
+              </Badge>,
+              <div className="flex gap-2" key="actions">
+                <button className="rounded-md border border-black/10 px-2 py-1 text-xs font-black" onClick={() => loadProductForEdit(product)} type="button">
+                  Edit
+                </button>
+                <button className="rounded-md border border-coral/30 px-2 py-1 text-xs font-black text-coral disabled:opacity-60" disabled={deletingProductId === product.id} onClick={() => void deleteProduct(product)} type="button">
+                  {deletingProductId === product.id ? "Deleting..." : "Delete"}
+                </button>
+              </div>
+            ];
+          })}
+        />
       </AdminCard>
     </div>
   );

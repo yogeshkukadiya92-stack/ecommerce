@@ -1,10 +1,9 @@
 import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { listProducts } from "@/lib/catalog/productRepository";
 import { prisma } from "@/lib/db/prisma";
 
-const productInputSchema = z.object({
+const productUpdateSchema = z.object({
   allergens: z.string().optional(),
   brandName: z.string().min(2),
   categoryName: z.string().min(2),
@@ -31,105 +30,115 @@ const productInputSchema = z.object({
   weightInGrams: z.number().int().positive()
 });
 
-export async function GET(request: Request) {
-  const url = new URL(request.url);
-  const products = await listProducts(url.searchParams.get("q"));
-
-  return NextResponse.json({
-    data: products,
-    meta: {
-      source: "database",
-      total: products.length
-    }
-  });
-}
-
-export async function POST(request: Request) {
+export async function PATCH(request: Request, context: { params: Promise<{ productId: string }> }) {
   try {
-    const input = productInputSchema.parse(await request.json());
-    const slug = input.slug.trim().toLowerCase();
-    const sku = input.sku.trim().toUpperCase();
-    const existingProduct = await prisma.product.findUnique({ where: { slug } });
-    const existingVariant = await prisma.productVariant.findUnique({ where: { sku } });
+    const { productId } = await context.params;
+    const input = productUpdateSchema.parse(await request.json());
+    const existingProduct = await prisma.product.findUnique({
+      include: {
+        images: { orderBy: { position: "asc" } },
+        variants: true
+      },
+      where: { id: productId }
+    });
 
-    if (existingProduct || existingVariant) {
+    if (!existingProduct || existingProduct.variants.length === 0) {
+      return NextResponse.json({ message: "Product not found." }, { status: 404 });
+    }
+
+    const conflictingProduct = await prisma.product.findUnique({ where: { slug: input.slug.trim().toLowerCase() } });
+    const conflictingVariant = await prisma.productVariant.findUnique({ where: { sku: input.sku.trim().toUpperCase() } });
+
+    if ((conflictingProduct && conflictingProduct.id !== productId) || (conflictingVariant && conflictingVariant.productId !== productId)) {
       return NextResponse.json({ message: "Product slug or SKU already exists." }, { status: 409 });
     }
 
     const brand = await getOrCreateBrand(input.brandName);
     const category = await getOrCreateCategory(input.categoryName);
+    const slug = input.slug.trim().toLowerCase();
+    const sku = input.sku.trim().toUpperCase();
     const discountPercent = Math.max(0, Math.round(((input.mrp - input.sellingPrice) / input.mrp) * 100));
+    const primaryImage = existingProduct.images[0];
+    const primaryVariant = existingProduct.variants[0];
 
-    const product = await prisma.product.create({
+    const product = await prisma.product.update({
       data: {
         allergens: splitList(input.allergens),
         brandId: brand.id,
         categoryIds: [category.id],
-        collectionIds: [],
         description: input.description.trim(),
         goalTags: splitList(input.goalTags),
-        images: input.imageUrl
-          ? {
-              create: {
-                altText: input.name.trim(),
-                isPrimary: true,
-                position: 1,
-                url: input.imageUrl
-              }
-            }
-          : undefined,
         ingredients: splitList(input.ingredients),
-        labelImageUrls: [],
         name: input.name.trim(),
-        nutritionFacts: [],
         shortDescription: input.shortDescription.trim(),
         slug,
         status: input.status,
         usageInstructions: input.usageInstructions?.trim() || "Use as directed on the product label.",
-        variants: {
-          create: {
-            currency: "INR",
-            discountPercent,
-            isActive: input.status === "ACTIVE",
-            mrp: input.mrp,
-            sellingPrice: input.sellingPrice,
-            size: input.size?.trim() || undefined,
-            sku,
-            stock: input.stock,
-            weightInGrams: input.weightInGrams
-          }
-        },
         warningText:
           input.warningText?.trim() ||
-          "This product is not intended to diagnose, treat, cure, or prevent any disease. Not for medicinal use.",
-        wishlistIds: []
+          "This product is not intended to diagnose, treat, cure, or prevent any disease. Not for medicinal use."
       },
       include: {
         brand: true,
         categories: true,
         images: true,
         variants: true
-      }
-    });
-
-    await prisma.category.update({
-      data: {
-        productIds: {
-          push: product.id
-        }
       },
       where: {
-        id: category.id
+        id: productId
       }
     });
 
-    return NextResponse.json(
-      {
-        message: "Product created successfully.",
-        product
+    await prisma.productVariant.update({
+      data: {
+        discountPercent,
+        isActive: input.status === "ACTIVE",
+        mrp: input.mrp,
+        sellingPrice: input.sellingPrice,
+        size: input.size?.trim() || undefined,
+        sku,
+        stock: input.stock,
+        weightInGrams: input.weightInGrams
       },
-      { status: 201 }
-    );
+      where: {
+        id: primaryVariant.id
+      }
+    });
+
+    if (input.imageUrl?.trim()) {
+      if (primaryImage) {
+        await prisma.productImage.update({
+          data: {
+            altText: input.name.trim(),
+            url: input.imageUrl.trim()
+          },
+          where: {
+            id: primaryImage.id
+          }
+        });
+      } else {
+        await prisma.productImage.create({
+          data: {
+            altText: input.name.trim(),
+            isPrimary: true,
+            position: 1,
+            productId,
+            url: input.imageUrl.trim()
+          }
+        });
+      }
+    } else if (primaryImage) {
+      await prisma.productImage.delete({
+        where: {
+          id: primaryImage.id
+        }
+      });
+    }
+
+    return NextResponse.json({
+      message: "Product updated successfully.",
+      product
+    });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
       return NextResponse.json({ message: "Product slug or SKU already exists." }, { status: 409 });
@@ -139,19 +148,34 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Enter valid product details." }, { status: 400 });
     }
 
-    console.error("Catalog product create failed", error);
+    return NextResponse.json({ message: "Unable to update product right now." }, { status: 500 });
+  }
+}
 
-    if (isMongoAuthenticationError(error)) {
-      return NextResponse.json(
-        {
-          message:
-            "MongoDB login failed. Update Railway DATABASE_URL to use the current MongoDB service username and password, then redeploy."
-        },
-        { status: 503 }
-      );
+export async function DELETE(_request: Request, context: { params: Promise<{ productId: string }> }) {
+  try {
+    const { productId } = await context.params;
+    const existingProduct = await prisma.product.findUnique({
+      where: {
+        id: productId
+      }
+    });
+
+    if (!existingProduct) {
+      return NextResponse.json({ message: "Product not found." }, { status: 404 });
     }
 
-    return NextResponse.json({ message: "Unable to create product. Check catalog database setup and try again." }, { status: 500 });
+    await prisma.product.delete({
+      where: {
+        id: productId
+      }
+    });
+
+    return NextResponse.json({
+      message: "Product deleted successfully."
+    });
+  } catch {
+    return NextResponse.json({ message: "Unable to delete product right now." }, { status: 500 });
   }
 }
 
@@ -201,10 +225,4 @@ function slugify(value: string) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
-}
-
-function isMongoAuthenticationError(error: unknown) {
-  const message = error instanceof Error ? error.message : String(error);
-
-  return message.includes("AuthenticationFailed") || message.includes("SCRAM failure") || message.includes("storedKey mismatch");
 }
