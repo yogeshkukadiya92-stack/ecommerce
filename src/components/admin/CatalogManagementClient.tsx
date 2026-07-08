@@ -731,7 +731,7 @@ function LiveCatalogManagementClient() {
             <option value="ACTIVE">Active</option>
           </SelectField>
           <div className="md:col-span-2">
-            <ImageUploadField helperText="Optional, but recommended before publishing active products." label="Product image" onChange={(value) => updateForm("imageUrl", value)} value={form.imageUrl} />
+            <ImageUploadField compact helperText="Optional, but recommended before publishing active products." label="Product image" onChange={(value) => updateForm("imageUrl", value)} value={form.imageUrl} />
           </div>
         </div>
         <div className="mt-5 border-t border-black/10 pt-5">

@@ -68,11 +68,13 @@ export function ImageUploadButton({
 }
 
 export function ImageUploadField({
+  compact = false,
   helperText,
   label,
   onChange,
   value
 }: {
+  compact?: boolean;
   helperText?: string;
   label: string;
   onChange: (value: string) => void;
@@ -108,7 +110,9 @@ export function ImageUploadField({
       <div className="grid gap-3 rounded-md border border-dashed border-black/20 bg-mist p-3">
         <div
           aria-label={`${label} preview`}
-          className="aspect-[16/9] rounded-md border border-black/10 bg-white bg-contain bg-center bg-no-repeat"
+          className={`rounded-md border border-black/10 bg-white bg-contain bg-center bg-no-repeat ${
+            compact ? "h-40" : "aspect-[16/9]"
+          }`}
           role="img"
           style={value ? { backgroundImage: `url(${value})` } : undefined}
         >
