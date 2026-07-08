@@ -309,6 +309,7 @@ function LiveCatalogManagementClient() {
   const [isSavingTemplate, setIsSavingTemplate] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [savedTemplates, setSavedTemplates] = useState<SavedProductTemplate[]>([]);
+  const [showAdvancedDetails, setShowAdvancedDetails] = useState(false);
   const missingRequiredFields = useMemo(() => getMissingLiveProductFields(form), [form]);
   const canSaveProduct = missingRequiredFields.length === 0 && !isSaving;
   const selectedSavedTemplate = savedTemplates.find((template) => template.label === selectedTemplate) ?? null;
@@ -447,8 +448,9 @@ function LiveCatalogManagementClient() {
     setMessage("");
 
     try {
+      const payload = buildLiveProductPayload(form);
       const response = await fetch("/api/admin/products", {
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
         headers: { "Content-Type": "application/json" },
         method: "POST"
       });
@@ -463,11 +465,12 @@ function LiveCatalogManagementClient() {
         action: "admin.product.create",
         entityId: form.slug,
         entityType: "Product",
-        metadata: { sku: form.sku, status: form.status }
+        metadata: { sku: payload.sku, status: payload.status }
       });
       setMessage(result.message ?? "Product created successfully.");
       setForm(liveInitialProduct);
       setSelectedTemplate("");
+      setShowAdvancedDetails(false);
     } catch {
       setError("Unable to connect to catalog API.");
     } finally {
@@ -478,6 +481,7 @@ function LiveCatalogManagementClient() {
   function resetForm() {
     setForm(liveInitialProduct);
     setSelectedTemplate("");
+    setShowAdvancedDetails(false);
     setError("");
     setMessage("");
   }
@@ -489,6 +493,12 @@ function LiveCatalogManagementClient() {
         description="Add production products directly to the live catalog. Use a template, review the fields, then publish when ready."
         title="Add product"
       >
+        <div className="mb-4 rounded-md border border-forest/20 bg-mint/60 p-4 text-sm text-ink">
+          <p className="font-bold text-forest">Quick add mode</p>
+          <p className="mt-1">
+            Only the main product fields are needed now. Description, short description, usage, and warning text can be left to auto-fill or edited later in advanced details.
+          </p>
+        </div>
         <div className="mb-5 grid gap-4 rounded-md border border-black/10 bg-mist p-4 md:grid-cols-2 xl:grid-cols-4">
           <SelectField label="Product template" onChange={applyTemplate} value={selectedTemplate}>
             <option value="">Select product type</option>
@@ -536,7 +546,7 @@ function LiveCatalogManagementClient() {
         </div>
         <div className="grid gap-4 md:grid-cols-2">
           <Input label="Product name" onChange={(event) => updateForm("name", event.target.value)} required value={form.name} />
-          <Input helperText="Lowercase letters, numbers, and hyphens only." label="Slug" onChange={(event) => updateForm("slug", slugFromName(event.target.value))} required value={form.slug} />
+          <Input helperText="Auto-created from product name. You can still edit it." label="Slug" onChange={(event) => updateForm("slug", slugFromName(event.target.value))} required value={form.slug} />
           <Input label="SKU" onChange={(event) => updateForm("sku", event.target.value)} required value={form.sku} />
           <Input label="MRP" min={1} onChange={(event) => updateForm("mrp", Number(event.target.value))} required type="number" value={form.mrp} />
           <Input label="Selling price" min={1} onChange={(event) => updateForm("sellingPrice", Number(event.target.value))} required type="number" value={form.sellingPrice} />
@@ -549,13 +559,26 @@ function LiveCatalogManagementClient() {
           <div className="md:col-span-2">
             <ImageUploadField helperText="Optional, but recommended before publishing active products." label="Product image" onChange={(value) => updateForm("imageUrl", value)} value={form.imageUrl} />
           </div>
-          <Input className="md:col-span-2" label="Short description" onChange={(event) => updateForm("shortDescription", event.target.value)} required value={form.shortDescription} />
-          <Textarea label="Description" onChange={(value) => updateForm("description", value)} value={form.description} />
-          <Textarea label="Ingredients" onChange={(value) => updateForm("ingredients", value)} value={form.ingredients} />
-          <Textarea label="Allergens" onChange={(value) => updateForm("allergens", value)} value={form.allergens} />
-          <Textarea label="Goal tags" onChange={(value) => updateForm("goalTags", value)} value={form.goalTags} />
-          <Textarea label="Usage instructions" onChange={(value) => updateForm("usageInstructions", value)} value={form.usageInstructions} />
-          <Textarea label="Warning text" onChange={(value) => updateForm("warningText", value)} value={form.warningText} />
+        </div>
+        <div className="mt-5 border-t border-black/10 pt-5">
+          <button
+            className="focus-ring rounded-md border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-ink"
+            onClick={() => setShowAdvancedDetails((current) => !current)}
+            type="button"
+          >
+            {showAdvancedDetails ? "Hide advanced details" : "Show advanced details"}
+          </button>
+          {showAdvancedDetails ? (
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <Input className="md:col-span-2" helperText="If left empty, a short summary will be created automatically." label="Short description" onChange={(event) => updateForm("shortDescription", event.target.value)} value={form.shortDescription} />
+              <Textarea helperText="If left empty, a standard product description will be created automatically." label="Description" onChange={(value) => updateForm("description", value)} value={form.description} />
+              <Textarea helperText="Optional. Comma separated." label="Ingredients" onChange={(value) => updateForm("ingredients", value)} value={form.ingredients} />
+              <Textarea helperText="Optional. Comma separated." label="Allergens" onChange={(value) => updateForm("allergens", value)} value={form.allergens} />
+              <Textarea helperText="Optional. Comma separated." label="Goal tags" onChange={(value) => updateForm("goalTags", value)} value={form.goalTags} />
+              <Textarea helperText="Optional. A default usage line will be used if blank." label="Usage instructions" onChange={(value) => updateForm("usageInstructions", value)} value={form.usageInstructions} />
+              <Textarea helperText="Optional. Standard compliance text is already available by default." label="Warning text" onChange={(value) => updateForm("warningText", value)} value={form.warningText} />
+            </div>
+          ) : null}
         </div>
         {missingRequiredFields.length > 0 ? (
           <p className="mt-4 rounded-md border border-black/10 bg-white p-3 text-sm font-semibold text-slate">
@@ -1116,11 +1139,22 @@ function SelectField({
   );
 }
 
-function Textarea({ label, onChange, value }: { label: string; onChange: (value: string) => void; value: string }) {
+function Textarea({
+  helperText,
+  label,
+  onChange,
+  value
+}: {
+  helperText?: string;
+  label: string;
+  onChange: (value: string) => void;
+  value: string;
+}) {
   return (
     <label className="block md:col-span-2">
       <span className="mb-2 block text-sm font-semibold text-ink">{label}</span>
       <textarea className="focus-ring min-h-28 w-full rounded-md border border-black/10 bg-white p-3 text-sm text-ink" onChange={(event) => onChange(event.target.value)} value={value} />
+      {helperText ? <span className="mt-2 block text-xs text-slate">{helperText}</span> : null}
     </label>
   );
 }
@@ -1194,8 +1228,28 @@ function getMissingLiveProductFields(form: LiveProductForm) {
   if (form.mrp <= 0) missing.push("MRP");
   if (form.sellingPrice <= 0) missing.push("selling price");
   if (form.weightInGrams <= 0) missing.push("weight");
-  if (form.shortDescription.trim().length < 8) missing.push("short description");
-  if (form.description.trim().length < 10) missing.push("description");
 
   return missing;
+}
+
+function buildLiveProductPayload(form: LiveProductForm): LiveProductForm {
+  const cleanName = form.name.trim();
+  const cleanCategory = form.categoryName.trim();
+  const cleanGoals = form.goalTags.trim();
+  const shortDescription =
+    form.shortDescription.trim() ||
+    `${cleanName} for ${cleanGoals || cleanCategory || "daily supplement routines"}.`;
+  const description =
+    form.description.trim() ||
+    `${cleanName} is designed for ${cleanGoals || cleanCategory || "daily nutrition support"} with clear pricing, size, and stock information.`;
+
+  return {
+    ...form,
+    description,
+    shortDescription,
+    usageInstructions: form.usageInstructions.trim() || "Use as directed on the product label.",
+    warningText:
+      form.warningText.trim() ||
+      "This product is not intended to diagnose, treat, cure, or prevent any disease. Not for medicinal use."
+  };
 }
