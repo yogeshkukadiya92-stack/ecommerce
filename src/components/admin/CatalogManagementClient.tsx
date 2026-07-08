@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { AlertTriangle, Download, FileUp, Plus, Save, Trash2 } from "lucide-react";
 import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { brands } from "@/mock/brands";
 import { categories } from "@/mock/categories";
 import { storefrontProducts } from "@/mock/storefront";
@@ -294,15 +294,45 @@ const usagePresets = [
   "Use as directed on the product label."
 ];
 
+type SavedProductTemplate = {
+  data: LiveProductForm;
+  id: string;
+  label: string;
+};
+
 function LiveCatalogManagementClient() {
   const { session } = useAdminSession();
   const [form, setForm] = useState<LiveProductForm>(liveInitialProduct);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [isSavingTemplate, setIsSavingTemplate] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState("");
+  const [savedTemplates, setSavedTemplates] = useState<SavedProductTemplate[]>([]);
   const missingRequiredFields = useMemo(() => getMissingLiveProductFields(form), [form]);
   const canSaveProduct = missingRequiredFields.length === 0 && !isSaving;
+  const selectedSavedTemplate = savedTemplates.find((template) => template.label === selectedTemplate) ?? null;
+
+  useEffect(() => {
+    let isMounted = true;
+
+    fetch("/api/admin/product-templates")
+      .then((response) => response.json())
+      .then((result: { data?: Array<{ data: Partial<LiveProductForm>; id: string; label: string }> }) => {
+        if (isMounted && Array.isArray(result.data)) {
+          setSavedTemplates(result.data.map((template) => ({
+            data: { ...liveInitialProduct, ...template.data },
+            id: template.id,
+            label: template.label
+          })));
+        }
+      })
+      .catch(() => undefined);
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   function updateForm<K extends keyof LiveProductForm>(key: K, value: LiveProductForm[K]) {
     setForm((current) => ({
@@ -314,9 +344,11 @@ function LiveCatalogManagementClient() {
   }
 
   function applyTemplate(templateLabel: string) {
-    const template = liveProductTemplates.find((item) => item.label === templateLabel);
+    const savedTemplate = savedTemplates.find((item) => item.label === templateLabel);
+    const builtInTemplate = liveProductTemplates.find((item) => item.label === templateLabel);
+    const templateForm = savedTemplate?.data ?? builtInTemplate?.value;
 
-    if (!template) {
+    if (!templateForm) {
       setSelectedTemplate("");
       return;
     }
@@ -324,11 +356,84 @@ function LiveCatalogManagementClient() {
     const skuSuffix = Date.now().toString().slice(-5);
     setSelectedTemplate(templateLabel);
     setForm({
-      ...template.value,
-      sku: `${template.value.sku}-${skuSuffix}`
+      ...templateForm,
+      sku: templateForm.sku ? `${templateForm.sku}-${skuSuffix}` : ""
     });
     setError("");
-    setMessage(`${template.label} template selected. Review price and stock, then add product.`);
+    setMessage(`${templateLabel} template selected. Review price and stock, then add product.`);
+  }
+
+  async function saveTemplate() {
+    const label = window.prompt("Template name (existing name updates that template):", selectedTemplate || form.name)?.trim();
+
+    if (!label) {
+      return;
+    }
+
+    setIsSavingTemplate(true);
+    setError("");
+
+    try {
+      const response = await fetch("/api/admin/product-templates", {
+        body: JSON.stringify({ data: form, label }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST"
+      });
+      const result = (await response.json().catch(() => ({}))) as {
+        message?: string;
+        template?: { data: Partial<LiveProductForm>; id: string; label: string };
+      };
+
+      if (!response.ok || !result.template) {
+        setError(result.message ?? "Unable to save template.");
+        return;
+      }
+
+      const template: SavedProductTemplate = {
+        data: { ...liveInitialProduct, ...result.template.data },
+        id: result.template.id,
+        label: result.template.label
+      };
+      setSavedTemplates((current) => [...current.filter((item) => item.id !== template.id), template].sort((a, b) => a.label.localeCompare(b.label)));
+      setSelectedTemplate(template.label);
+      setMessage(result.message ?? "Template saved.");
+      writeAdminAuditLog(session, {
+        action: "admin.product.template.save",
+        entityId: template.label,
+        entityType: "ProductTemplate"
+      });
+    } catch {
+      setError("Unable to connect to template API.");
+    } finally {
+      setIsSavingTemplate(false);
+    }
+  }
+
+  async function deleteTemplate() {
+    if (!selectedSavedTemplate || !window.confirm(`Delete saved template "${selectedSavedTemplate.label}"?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/admin/product-templates/${selectedSavedTemplate.id}`, { method: "DELETE" });
+
+      if (!response.ok) {
+        const result = (await response.json().catch(() => ({}))) as { message?: string };
+        setError(result.message ?? "Unable to delete template.");
+        return;
+      }
+
+      setSavedTemplates((current) => current.filter((item) => item.id !== selectedSavedTemplate.id));
+      setSelectedTemplate("");
+      setMessage(`Template "${selectedSavedTemplate.label}" deleted.`);
+      writeAdminAuditLog(session, {
+        action: "admin.product.template.delete",
+        entityId: selectedSavedTemplate.label,
+        entityType: "ProductTemplate"
+      });
+    } catch {
+      setError("Unable to connect to template API.");
+    }
   }
 
   async function saveProduct() {
@@ -387,9 +492,18 @@ function LiveCatalogManagementClient() {
         <div className="mb-5 grid gap-4 rounded-md border border-black/10 bg-mist p-4 md:grid-cols-2 xl:grid-cols-4">
           <SelectField label="Product template" onChange={applyTemplate} value={selectedTemplate}>
             <option value="">Select product type</option>
-            {liveProductTemplates.map((template) => (
-              <option key={template.label} value={template.label}>{template.label}</option>
-            ))}
+            {savedTemplates.length > 0 ? (
+              <optgroup label="My saved templates">
+                {savedTemplates.map((template) => (
+                  <option key={template.id} value={template.label}>{template.label}</option>
+                ))}
+              </optgroup>
+            ) : null}
+            <optgroup label="Standard templates">
+              {liveProductTemplates.map((template) => (
+                <option key={template.label} value={template.label}>{template.label}</option>
+              ))}
+            </optgroup>
           </SelectField>
           <SelectField label="Brand" onChange={(value) => updateForm("brandName", value)} value={form.brandName}>
             <option value="">Select brand</option>
@@ -453,6 +567,14 @@ function LiveCatalogManagementClient() {
         <div className="mt-5 flex flex-wrap justify-end gap-3">
           <button className="admin-action" onClick={resetForm} type="button">
             Reset
+          </button>
+          {selectedSavedTemplate ? (
+            <button className="admin-action text-coral" onClick={() => void deleteTemplate()} type="button">
+              <Trash2 className="h-4 w-4" /> Delete template
+            </button>
+          ) : null}
+          <button className="admin-action disabled:cursor-not-allowed disabled:opacity-60" disabled={isSavingTemplate} onClick={() => void saveTemplate()} type="button">
+            <Save className="h-4 w-4" /> {isSavingTemplate ? "Saving template..." : "Save as template"}
           </button>
           <button className="admin-action bg-ink text-white disabled:cursor-not-allowed disabled:opacity-60" disabled={!canSaveProduct} onClick={saveProduct} type="button">
             <Plus className="h-4 w-4" /> {isSaving ? "Saving..." : "Add product"}
