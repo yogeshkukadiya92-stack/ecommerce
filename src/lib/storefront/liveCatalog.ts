@@ -46,13 +46,13 @@ function toStorefrontProduct(product: Awaited<ReturnType<typeof listActiveProduc
 
 export async function getLiveStorefrontProducts(query?: string | null) {
   const products = await loadLiveProducts(query);
-  return products.length > 0 ? products : filterFallbackProducts(query);
+  return products ?? filterFallbackProducts(query);
 }
 
 export async function getLiveStorefrontProductsByBrand(slug: string) {
   const products = await loadLiveProducts();
 
-  if (products.length === 0) {
+  if (!products) {
     return getProductsByBrand(slug);
   }
 
@@ -61,13 +61,13 @@ export async function getLiveStorefrontProductsByBrand(slug: string) {
 
 export async function getLiveStorefrontProductsByCategory(slug: string) {
   const products = await loadLiveProducts();
-  return products.length > 0 ? products.filter((product) => product.merchandising.categorySlug === slug) : getProductsByCategory(slug);
+  return products ? products.filter((product) => product.merchandising.categorySlug === slug) : getProductsByCategory(slug);
 }
 
 export async function getLiveStorefrontProductsByCollection(slug: string) {
   const products = await loadLiveProducts();
 
-  if (products.length === 0) {
+  if (!products) {
     return getProductsByCollection(slug);
   }
 
@@ -102,7 +102,7 @@ export async function getLiveStorefrontProductBySlug(slug: string) {
     const products = await listProducts(undefined, { activeOnly: true });
     const product = products.find((item) => item.slug === slug);
 
-    return product ? toStorefrontProduct(product) : getProductBySlug(slug) ?? null;
+    return product ? toStorefrontProduct(product) : null;
   } catch (error) {
     logLiveCatalogError(error);
     return getProductBySlug(slug) ?? null;
@@ -117,6 +117,10 @@ export async function getLiveRelatedProducts(product: StorefrontProduct) {
       (candidate.merchandising.categorySlug === product.merchandising.categorySlug ||
         candidate.goalTags.some((goal) => product.goalTags.includes(goal)))
   );
+}
+
+export function canUseLiveStorefrontCatalog() {
+  return canUseLiveCatalog();
 }
 
 export function buildLiveProductDetailContent(): ProductDetailContent {
@@ -155,7 +159,7 @@ export function buildLiveProductDetailContent(): ProductDetailContent {
 
 async function loadLiveProducts(query?: string | null) {
   if (!canUseLiveCatalog()) {
-    return [];
+    return null;
   }
 
   try {
@@ -163,7 +167,7 @@ async function loadLiveProducts(query?: string | null) {
     return products.map(toStorefrontProduct);
   } catch (error) {
     logLiveCatalogError(error);
-    return [];
+    return null;
   }
 }
 

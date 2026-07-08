@@ -5,8 +5,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { ProductListingShell } from "@/components/storefront/ProductListingShell";
 import {
   collectionDefinitions,
-  getCollectionBySlug,
-  getProductsByCollection
+  getCollectionBySlug
 } from "@/mock/storefront";
 import { breadcrumbSchema, buildSeoMetadata, collectionSchema } from "@/lib/seo/seo";
 import { getLiveStorefrontProductsByCollection } from "@/lib/storefront/liveCatalog";
@@ -59,7 +58,7 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
         ])}
       />
       <ProductListingShell
-        baseProducts={liveProducts.length > 0 ? liveProducts : getProductsByCollection(slug)}
+        baseProducts={liveProducts}
         breadcrumbs={[
           { href: "/", label: "Home" },
           { href: "/products", label: "Products" },

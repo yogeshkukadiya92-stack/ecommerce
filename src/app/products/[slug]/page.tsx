@@ -7,6 +7,7 @@ import { storefrontProducts } from "@/mock/storefront";
 import { breadcrumbSchema, buildSeoMetadata, faqSchema, productSchema } from "@/lib/seo/seo";
 import {
   buildLiveProductDetailContent,
+  canUseLiveStorefrontCatalog,
   getLiveRelatedProducts,
   getLiveStorefrontProductBySlug,
   getLiveStorefrontProducts
@@ -25,7 +26,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: ProductDetailPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const product = (await getLiveStorefrontProductBySlug(slug)) ?? getProductBySlug(slug);
+  const product = (await getLiveStorefrontProductBySlug(slug)) ?? (!canUseLiveStorefrontCatalog() ? getProductBySlug(slug) : null);
 
   if (!product) {
     return {
@@ -44,7 +45,7 @@ export async function generateMetadata({ params }: ProductDetailPageProps): Prom
 export default async function ProductDetailPage({ params }: ProductDetailPageProps) {
   const { slug } = await params;
   const liveProduct = await getLiveStorefrontProductBySlug(slug);
-  const product = liveProduct ?? getProductBySlug(slug);
+  const product = liveProduct ?? (!canUseLiveStorefrontCatalog() ? getProductBySlug(slug) : null);
 
   if (!product) {
     notFound();

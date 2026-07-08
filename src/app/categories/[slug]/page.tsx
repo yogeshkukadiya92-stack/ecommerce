@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { ProductListingShell } from "@/components/storefront/ProductListingShell";
-import { getCategoryBySlug, getProductsByCategory } from "@/mock/storefront";
+import { getCategoryBySlug } from "@/mock/storefront";
 import { breadcrumbSchema, buildSeoMetadata, collectionSchema } from "@/lib/seo/seo";
 import { getLiveStorefrontProductsByCategory } from "@/lib/storefront/liveCatalog";
 
@@ -57,7 +57,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         ])}
       />
       <ProductListingShell
-        baseProducts={liveProducts.length > 0 ? liveProducts : getProductsByCategory(slug)}
+        baseProducts={liveProducts}
         breadcrumbs={[
           { href: "/", label: "Home" },
           { href: "/products", label: "Products" },
