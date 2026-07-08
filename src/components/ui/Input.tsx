@@ -21,8 +21,8 @@ export function Input({ className, error, helperText, label, id, ...props }: Inp
         aria-invalid={error ? true : undefined}
         id={inputId}
         className={cn(
-          "focus-ring h-11 w-full rounded-md border bg-white px-3 text-sm text-ink placeholder:text-slate",
-          error ? "border-coral" : "border-black/10",
+          "focus-ring h-11 w-full rounded-md border bg-white px-3 text-sm font-semibold text-ink shadow-sm transition placeholder:font-medium placeholder:text-slate hover:border-forest/40 disabled:cursor-not-allowed disabled:bg-cloud disabled:text-slate",
+          error ? "border-coral bg-coral/5" : "border-black/10",
           className
         )}
         {...props}

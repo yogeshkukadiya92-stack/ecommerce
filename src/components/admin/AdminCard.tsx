@@ -15,7 +15,7 @@ export function AdminCard({
   title?: string;
 }) {
   return (
-    <section className={cn("min-w-0 rounded-card border border-black/10 bg-white p-5 shadow-sm transition-shadow hover:shadow-card", className)}>
+    <section className={cn("min-w-0 rounded-card border border-black/10 bg-white p-5 shadow-sm transition hover:border-forest/15 hover:shadow-card", className)}>
       {title || description || action ? (
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>

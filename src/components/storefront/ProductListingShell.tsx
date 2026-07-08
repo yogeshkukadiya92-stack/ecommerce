@@ -175,11 +175,12 @@ export function ProductListingShell({
       <Breadcrumbs items={breadcrumbs} />
       <div className="mt-5 grid gap-5 rounded-card border border-black/10 bg-white p-5 shadow-sm lg:grid-cols-[1fr_auto] lg:items-end lg:p-6">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">{title}</h1>
+          <p className="text-xs font-black uppercase tracking-[0.14em] text-forest">Verified catalog</p>
+          <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">{title}</h1>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-slate">{description}</p>
           <div className="mt-4 flex flex-wrap gap-2">
             {["Authentic products", "Batch verified", "Secure checkout", "Fast delivery", "Easy returns"].map((item) => (
-              <span className="rounded-md bg-mist px-3 py-2 text-xs font-extrabold text-forest" key={item}>
+              <span className="rounded-md border border-forest/10 bg-mint/70 px-3 py-2 text-xs font-extrabold text-forest" key={item}>
                 {item}
               </span>
             ))}
@@ -188,7 +189,7 @@ export function ProductListingShell({
         <form className="relative" onSubmit={handleSearchSubmit}>
           <input
             aria-label="Search products"
-            className="focus-ring h-12 w-full rounded-md border border-black/10 bg-mist px-4 text-sm font-semibold text-ink placeholder:text-slate lg:w-96"
+            className="focus-ring h-12 w-full rounded-md border border-black/10 bg-mist px-4 text-sm font-semibold text-ink shadow-sm transition placeholder:text-slate hover:border-forest/30 lg:w-96"
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search whey, creatine, vegan..."
             value={query}
@@ -196,7 +197,7 @@ export function ProductListingShell({
           <div className="mt-2 flex flex-wrap gap-2">
             {suggestions.map((suggestion) => (
               <button
-                className="rounded-md border border-black/10 bg-white px-2 py-1 text-xs font-bold text-slate hover:text-ink"
+                className="focus-ring rounded-md border border-black/10 bg-white px-2 py-1 text-xs font-bold text-slate transition hover:border-forest/30 hover:text-ink"
                 key={suggestion}
                 onClick={() => {
                   setQuery(suggestion);
@@ -213,7 +214,7 @@ export function ProductListingShell({
               <span className="py-1 text-xs font-black uppercase tracking-[0.12em] text-slate">Recent</span>
               {recentSearches.map((recent) => (
                 <button
-                  className="rounded-md bg-mint px-2 py-1 text-xs font-bold text-forest"
+                  className="focus-ring rounded-md border border-forest/10 bg-mint px-2 py-1 text-xs font-bold text-forest"
                   key={recent}
                   onClick={() => {
                     setQuery(recent);
@@ -263,7 +264,7 @@ export function ProductListingShell({
         <section>
           <div className="mb-4 flex flex-col justify-between gap-3 rounded-card border border-black/10 bg-white p-3 shadow-sm sm:flex-row sm:items-center">
             <p className="text-sm font-bold text-slate">
-              {filteredProducts.length} product{filteredProducts.length === 1 ? "" : "s"}
+              Showing <span className="text-ink">{filteredProducts.length}</span> product{filteredProducts.length === 1 ? "" : "s"}
               {isPending ? " updating..." : ""}
             </p>
             <div className="hidden items-center gap-3 lg:flex">
@@ -295,7 +296,7 @@ export function ProductListingShell({
               {visibleProducts.length < filteredProducts.length ? (
                 <div className="mt-6 flex justify-center">
                   <button
-                    className="focus-ring h-12 rounded-md border border-black/10 bg-white px-5 text-sm font-semibold text-ink shadow-sm hover:border-forest"
+                    className="focus-ring h-12 rounded-md border border-black/10 bg-white px-5 text-sm font-semibold text-ink shadow-sm transition hover:-translate-y-0.5 hover:border-forest hover:shadow-card"
                     onClick={() => setVisibleCount((current) => current + 12)}
                     type="button"
                   >
@@ -305,29 +306,31 @@ export function ProductListingShell({
               ) : null}
             </>
           ) : (
-          <div className="grid gap-6">
+            <div className="grid gap-6">
               <EmptyState
                 action={
-                  <div className="flex flex-wrap justify-center gap-2">
-                    <Button href="/products" variant="dark">
-                      Reset to all products
-                    </Button>
-                    <Button href="/collections/best-sellers" variant="secondary">
-                      Browse best sellers
-                    </Button>
-                  </div>
+                  baseProducts.length === 0 ? null : (
+                    <div className="flex flex-wrap justify-center gap-2">
+                      <Button href="/products" variant="dark">
+                        Reset to all products
+                      </Button>
+                      <Button href="/collections/best-sellers" variant="secondary">
+                        Browse best sellers
+                      </Button>
+                    </div>
+                  )
                 }
-                description="Try a broader search, clear filters, or shop recommended protein, creatine, and wellness picks below."
-                title="No products found"
+                description={baseProducts.length === 0 ? "Your live catalog is empty. Add products from the admin catalog and they will appear here automatically." : "Try a broader search, clear filters, or shop recommended protein, creatine, and wellness picks below."}
+                title={baseProducts.length === 0 ? "No live products yet" : "No products found"}
               />
-              <div>
+              {baseProducts.length > 0 ? <div>
                 <h2 className="mb-4 text-xl font-extrabold tracking-tight text-ink">Recommended instead</h2>
                 <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
                   {recommendations.slice(0, 3).map((product) => (
                     <ProductCard key={product.id} product={product} />
                   ))}
                 </div>
-              </div>
+              </div> : null}
             </div>
           )}
         </section>

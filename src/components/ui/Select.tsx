@@ -11,7 +11,7 @@ export function Select({ children, className, label, ...props }: SelectProps) {
       {label ? <span className="mb-2 block text-sm font-semibold text-ink">{label}</span> : null}
       <select
         className={cn(
-          "focus-ring h-11 w-full rounded-md border border-black/10 bg-white px-3 text-sm font-semibold text-ink",
+          "focus-ring h-11 w-full rounded-md border border-black/10 bg-white px-3 text-sm font-semibold text-ink shadow-sm transition hover:border-forest/40 disabled:cursor-not-allowed disabled:bg-cloud disabled:text-slate",
           className
         )}
         {...props}

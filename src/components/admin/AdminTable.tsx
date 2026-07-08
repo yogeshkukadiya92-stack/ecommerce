@@ -16,7 +16,7 @@ export function AdminTable({
           <thead className="bg-mist text-xs font-black uppercase tracking-[0.12em] text-slate">
             <tr>
               {columns.map((column) => (
-                <th key={column} className="px-4 py-3">
+                <th key={column} className="whitespace-nowrap px-4 py-3">
                   {column}
                 </th>
               ))}
@@ -26,7 +26,7 @@ export function AdminTable({
             {rows.length > 0 ? rows.map((row, rowIndex) => (
               <tr key={rowIndex} className="bg-white transition-colors hover:bg-mist/70">
                 {row.map((cell, cellIndex) => (
-                  <td key={cellIndex} className="px-4 py-4 align-middle text-graphite">
+                  <td key={cellIndex} className="px-4 py-4 align-middle text-graphite first:font-semibold">
                     {cell}
                   </td>
                 ))}

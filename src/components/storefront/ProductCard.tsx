@@ -50,7 +50,7 @@ export function ProductCard({ product }: { product: ProductCardProduct }) {
   }
 
   return (
-    <article className="group flex h-full min-w-0 flex-col rounded-card border border-black/10 bg-white p-2 shadow-sm transition hover:-translate-y-1 hover:border-forest/30 hover:shadow-card">
+    <article className="group flex h-full min-w-0 flex-col rounded-card border border-black/10 bg-white p-2 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-forest/30 hover:shadow-card">
       <div className="relative overflow-hidden rounded-md bg-mist">
         {image ? (
           <Image
@@ -63,17 +63,17 @@ export function ProductCard({ product }: { product: ProductCardProduct }) {
             width={420}
           />
         ) : (
-          <div className="aspect-square" />
+          <div className="grid aspect-square place-items-center text-xs font-black uppercase tracking-[0.12em] text-slate">No image</div>
         )}
         <button
-          className="focus-ring absolute right-3 top-3 rounded-md bg-white/95 p-2 text-slate shadow-sm hover:text-coral"
+          className="focus-ring absolute right-3 top-3 rounded-md border border-black/10 bg-white/95 p-2 text-slate shadow-sm backdrop-blur transition hover:text-coral"
           type="button"
         >
           <Heart className="h-4 w-4" />
           <span className="sr-only">Add to wishlist</span>
         </button>
         <button
-          className="focus-ring absolute bottom-3 right-3 rounded-md bg-white/95 p-2 text-slate shadow-sm hover:text-forest"
+          className="focus-ring absolute bottom-3 right-3 rounded-md border border-black/10 bg-white/95 p-2 text-slate shadow-sm backdrop-blur transition hover:text-forest"
           onClick={() => setIsCompared((current) => !current)}
           type="button"
         >
@@ -87,7 +87,7 @@ export function ProductCard({ product }: { product: ProductCardProduct }) {
         ) : null}
       </div>
       <div className="flex min-w-0 flex-1 flex-col p-2.5">
-        <div className="mt-2 flex flex-wrap gap-1">
+        <div className="mt-2 flex min-h-8 flex-wrap gap-1">
           {product.goalTags.slice(0, 2).map((tag) => (
             <Badge key={tag} tone="success">
               {tag}
@@ -112,12 +112,12 @@ export function ProductCard({ product }: { product: ProductCardProduct }) {
           <RatingStars rating={merchandising?.rating ?? 4.7} reviewCount={merchandising?.reviewCount ?? 128} />
         </div>
         {variant ? (
-          <div className="mt-3 rounded-md border border-black/10 bg-white px-3 py-2">
+          <div className="mt-3 rounded-md border border-black/10 bg-white px-3 py-2 shadow-[inset_0_1px_0_rgba(17,19,21,0.03)]">
             <PriceDisplay mrp={variant.mrp} sellingPrice={variant.sellingPrice} />
           </div>
         ) : null}
         {merchandising ? (
-          <div className="mt-3 grid gap-2 rounded-md bg-mist p-3 text-xs font-semibold text-slate">
+          <div className="mt-3 grid gap-2 rounded-md border border-black/5 bg-mist p-3 text-xs font-semibold text-slate">
             <div className="flex items-center justify-between gap-2">
               <span>Per serving</span>
               <span className="font-extrabold text-ink">Rs {merchandising.pricePerServing}</span>
@@ -146,11 +146,12 @@ export function ProductCard({ product }: { product: ProductCardProduct }) {
         </div>
         {isCompared ? <p className="mt-2 text-xs font-bold text-forest">Added to compare</p> : null}
         <button
-          className="focus-ring mt-auto flex h-11 w-full items-center justify-center gap-2 rounded-md bg-ink text-sm font-semibold text-white shadow-sm transition hover:bg-forest"
+          className="focus-ring mt-auto flex h-11 w-full items-center justify-center gap-2 rounded-md bg-ink text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-forest hover:shadow-card active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={!variant || variant.stock <= 0}
           onClick={handleQuickAdd}
           type="button"
         >
-          <ShoppingCart className="h-4 w-4" /> Add to cart
+          <ShoppingCart className="h-4 w-4" /> {variant && variant.stock > 0 ? "Add to cart" : "Out of stock"}
         </button>
         {message ? <p aria-live="polite" className="mt-2 text-center text-xs font-bold text-forest">{message}</p> : null}
       </div>

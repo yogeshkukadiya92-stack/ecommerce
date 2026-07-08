@@ -451,7 +451,7 @@ export function CheckoutClient() {
             <div className="grid gap-3 sm:grid-cols-2">
               {deliveryMethods.map((method) => (
                 <button
-                  className={`focus-ring rounded-md border p-4 text-left ${deliveryMethod === method.value ? "border-forest bg-mint" : "border-black/10 bg-white"}`}
+                  className={`focus-ring rounded-md border p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-forest/30 ${deliveryMethod === method.value ? "border-forest bg-mint text-forest shadow-card" : "border-black/10 bg-white text-ink"}`}
                   key={method.value}
                   onClick={() => setDeliveryMethod(method.value)}
                   type="button"
@@ -467,7 +467,7 @@ export function CheckoutClient() {
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
               {paymentMethods.map((method) => (
                 <button
-                  className={`focus-ring rounded-md border px-3 py-3 text-sm font-black ${paymentMethod === method.value ? "border-forest bg-mint text-forest" : "border-black/10 bg-white text-ink"}`}
+                  className={`focus-ring rounded-md border px-3 py-3 text-sm font-black shadow-sm transition hover:-translate-y-0.5 hover:border-forest/30 ${paymentMethod === method.value ? "border-forest bg-mint text-forest shadow-card" : "border-black/10 bg-white text-ink"}`}
                   key={method.value}
                   onClick={() => setPaymentMethod(method.value)}
                   type="button"
@@ -477,11 +477,11 @@ export function CheckoutClient() {
               ))}
             </div>
             {paymentMethod === "cod" ? (
-              <p className="mt-3 rounded-md bg-mist p-3 text-xs font-bold text-slate">
+              <p className="mt-3 rounded-md border border-black/10 bg-mist p-3 text-xs font-bold text-slate">
                 COD orders may require phone confirmation before dispatch.
               </p>
             ) : (
-              <p className="mt-3 rounded-md bg-mist p-3 text-xs font-bold text-slate">
+              <p className="mt-3 rounded-md border border-forest/10 bg-mint/60 p-3 text-xs font-bold text-forest">
                 Online payments open Razorpay Checkout. Secret keys stay on the server and payment signatures are verified before the order is marked paid.
               </p>
             )}
@@ -490,12 +490,12 @@ export function CheckoutClient() {
           <Panel title="Coupon">
             <div className="grid grid-cols-[1fr_auto] gap-2">
               <input
-                className="focus-ring h-11 rounded-md border border-black/10 px-3 text-sm font-semibold uppercase"
+                className="focus-ring h-11 rounded-md border border-black/10 px-3 text-sm font-semibold uppercase shadow-sm transition hover:border-forest/40"
                 onChange={(event) => setCouponInput(event.target.value)}
                 placeholder="FIT300"
                 value={couponInput}
               />
-              <button className="focus-ring rounded-md bg-ink px-4 text-sm font-black text-white" onClick={handleApplyCoupon} type="button">
+              <button className="focus-ring rounded-md bg-ink px-4 text-sm font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-forest" onClick={handleApplyCoupon} type="button">
                 Apply
               </button>
             </div>
@@ -513,7 +513,7 @@ export function CheckoutClient() {
                 type="number"
                 value={loyaltyPointsToRedeem}
               />
-              <button className="focus-ring h-11 rounded-md bg-ink px-4 text-sm font-black text-white" onClick={() => setLoyaltyPointsToRedeem(100)} type="button">
+              <button className="focus-ring h-11 rounded-md bg-ink px-4 text-sm font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-forest" onClick={() => setLoyaltyPointsToRedeem(100)} type="button">
                 Redeem 100
               </button>
             </div>

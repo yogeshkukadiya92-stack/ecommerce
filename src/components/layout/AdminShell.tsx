@@ -54,10 +54,13 @@ export function AdminShell({
   return (
     <div className="min-h-screen bg-mist">
       <div className="grid min-h-screen w-full lg:grid-cols-[280px_1fr]">
-        <aside className="hidden border-r border-white/10 bg-ink p-5 text-white lg:block">
+        <aside className="hidden border-r border-white/10 bg-ink p-5 text-white shadow-[12px_0_40px_rgba(17,19,21,0.08)] lg:block">
           <Link href="/admin" className="flex items-center gap-3 text-lg font-extrabold tracking-tight">
-            <span className="grid h-10 w-10 place-items-center rounded-md bg-lime text-sm font-black text-ink">FS</span>
-            <span>FitSupplement</span>
+            <span className="grid h-10 w-10 place-items-center rounded-md bg-lime text-sm font-black text-ink shadow-sm">FS</span>
+            <span>
+              FitSupplement
+              <span className="block text-[10px] font-black uppercase tracking-[0.16em] text-white/45">Admin suite</span>
+            </span>
           </Link>
           <div className="mt-5 rounded-card border border-white/10 bg-white/10 p-4 text-xs leading-5 text-white/70">
             <p className="font-black uppercase tracking-[0.1em] text-lime">{liveDataModeLabel()}</p>
@@ -86,7 +89,7 @@ export function AdminShell({
                   Admin
                 </Link>
               </div>
-              <div className="hidden h-10 min-w-0 max-w-md flex-1 items-center gap-2 rounded-md border border-black/10 bg-mist px-3 md:flex">
+              <div className="hidden h-10 min-w-0 max-w-md flex-1 items-center gap-2 rounded-md border border-black/10 bg-mist px-3 shadow-inner md:flex">
                 <Search className="h-4 w-4 text-slate" />
                 <span className="text-sm font-medium text-slate">Search orders, SKUs, customers</span>
               </div>
@@ -99,7 +102,7 @@ export function AdminShell({
                 </span>
                 <Link
                   aria-label="Open storefront website"
-                  className="focus-ring inline-flex items-center gap-2 rounded-md border border-black/10 bg-white px-3 py-2 text-xs font-black text-ink"
+                  className="focus-ring inline-flex items-center gap-2 rounded-md border border-black/10 bg-white px-3 py-2 text-xs font-black text-ink shadow-sm transition hover:-translate-y-0.5 hover:border-forest"
                   href="/"
                   target="_blank"
                   rel="noreferrer"
@@ -107,17 +110,17 @@ export function AdminShell({
                   <ExternalLink className="h-4 w-4" />
                   <span className="hidden sm:inline">Website</span>
                 </Link>
-                <button className="focus-ring rounded-md border border-black/10 bg-white p-2 text-slate transition hover:text-ink" type="button">
+                <button className="focus-ring rounded-md border border-black/10 bg-white p-2 text-slate shadow-sm transition hover:-translate-y-0.5 hover:text-ink" type="button">
                   <Bell className="h-4 w-4" />
                 </button>
-                <button className="focus-ring inline-flex items-center gap-2 rounded-md bg-ink px-3 py-2 text-xs font-black text-white" onClick={handleLogout} type="button">
+                <button className="focus-ring inline-flex items-center gap-2 rounded-md bg-ink px-3 py-2 text-xs font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-forest" onClick={handleLogout} type="button">
                   <LogOut className="h-4 w-4" /> Logout
                 </button>
               </div>
             </div>
             <nav className="flex gap-2 overflow-x-auto border-t border-black/10 px-4 py-2 lg:hidden">
               {ADMIN_NAVIGATION.map((item) => (
-                <Link className="shrink-0 rounded-md bg-mist px-3 py-2 text-xs font-black text-ink" href={item.href} key={item.href}>
+                <Link className={`shrink-0 rounded-md border px-3 py-2 text-xs font-black transition ${pathname === item.href ? "border-forest bg-mint text-forest" : "border-black/10 bg-mist text-ink"}`} href={item.href} key={item.href}>
                   {item.label}
                 </Link>
               ))}
@@ -129,20 +132,20 @@ export function AdminShell({
                 <p className="text-xs font-black uppercase tracking-[0.14em] text-forest">
                   Admin control center
                 </p>
-                <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-ink">{title}</h1>
+                <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">{title}</h1>
               </div>
               <div className="flex flex-wrap gap-2">
                 <Link
                   href="/"
                   target="_blank"
                   rel="noreferrer"
-                  className="focus-ring inline-flex items-center gap-2 rounded-md bg-forest px-4 py-2 text-sm font-semibold text-white shadow-sm"
+                  className="focus-ring inline-flex items-center gap-2 rounded-md bg-forest px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-ink hover:shadow-card"
                 >
                   <ExternalLink className="h-4 w-4" /> Open website
                 </Link>
                 <Link
                   href="/api/admin/overview"
-                  className="focus-ring rounded-md border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-ink shadow-sm"
+                  className="focus-ring rounded-md border border-black/10 bg-white px-4 py-2 text-sm font-semibold text-ink shadow-sm transition hover:-translate-y-0.5 hover:border-forest hover:shadow-card"
                 >
                   API overview
                 </Link>

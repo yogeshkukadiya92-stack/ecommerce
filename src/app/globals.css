@@ -9,6 +9,9 @@
   --color-foreground: #111315;
   --color-muted: #647077;
   --color-border: #dfe5e2;
+  --color-surface: #ffffff;
+  --color-surface-soft: #f9fbfa;
+  --color-ring: #113a31;
   --radius-card: 8px;
 }
 
@@ -22,7 +25,9 @@ html {
 
 body {
   margin: 0;
-  background: var(--color-background);
+  background:
+    radial-gradient(circle at top left, rgba(184, 242, 75, 0.12), transparent 28rem),
+    linear-gradient(180deg, #fbfcfb 0%, var(--color-background) 32rem);
   color: var(--color-foreground);
   font-family: var(--font-sans);
   font-size: 16px;
@@ -72,6 +77,13 @@ img {
   max-width: 100%;
 }
 
+button,
+select,
+input,
+textarea {
+  border-radius: 8px;
+}
+
 ::selection {
   background: #b8f24b;
   color: #111315;
@@ -87,11 +99,15 @@ img {
   }
 
   .admin-action {
-    @apply focus-ring inline-flex items-center gap-2 rounded-md border border-black/10 bg-white px-3 py-2 text-xs font-black text-ink shadow-sm hover:border-forest;
+    @apply focus-ring inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-black/10 bg-white px-3 py-2 text-xs font-black text-ink shadow-sm transition hover:-translate-y-0.5 hover:border-forest hover:shadow-card disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60;
   }
 
   .skip-link {
     @apply fixed left-4 top-4 z-[100] -translate-y-20 rounded-md bg-ink px-4 py-3 text-sm font-black text-white shadow-card transition focus-visible:translate-y-0;
+  }
+
+  .premium-surface {
+    @apply rounded-card border border-black/10 bg-white shadow-sm;
   }
 }
 

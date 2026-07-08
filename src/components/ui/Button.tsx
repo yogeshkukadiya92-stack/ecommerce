@@ -20,14 +20,14 @@ export function Button({
   return (
     <Link
       className={cn(
-        "focus-ring inline-flex items-center justify-center rounded-md font-semibold transition",
+        "focus-ring inline-flex items-center justify-center rounded-md font-semibold shadow-sm transition hover:-translate-y-0.5 active:translate-y-0",
         size === "sm" && "min-h-9 px-3 py-2 text-xs",
         size === "md" && "min-h-11 px-5 py-3 text-sm",
         size === "lg" && "min-h-12 px-6 py-3 text-base",
-        variant === "primary" && "bg-lime text-ink hover:bg-mint",
-        variant === "secondary" && "border border-black/10 bg-white text-ink hover:border-ink",
-        variant === "ghost" && "bg-transparent text-ink hover:bg-black/5",
-        variant === "dark" && "bg-ink text-white hover:bg-forest",
+        variant === "primary" && "bg-lime text-ink hover:bg-mint hover:shadow-card",
+        variant === "secondary" && "border border-black/10 bg-white text-ink hover:border-forest hover:shadow-card",
+        variant === "ghost" && "bg-transparent text-ink shadow-none hover:bg-black/5",
+        variant === "dark" && "bg-ink text-white hover:bg-forest hover:shadow-card",
         className
       )}
       {...props}
