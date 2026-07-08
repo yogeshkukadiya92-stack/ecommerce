@@ -296,6 +296,8 @@ const liveProductTemplates: Array<{ label: string; value: LiveProductForm }> = [
 
 const brandPresets = ["NutraForge", "PureLift", "VitalStack", "FitSupplement", "Optimum Nutrition", "MuscleBlaze", "GNC"];
 const categoryPresets = ["Protein Powders", "Performance", "Vitamins & Wellness", "Mass Gainers", "Fitness Accessories", "Weight Management"];
+const newBrandOption = "__new_brand__";
+const newCategoryOption = "__new_category__";
 const sizePresets = ["250 g", "500 g", "1 kg", "2 kg", "3 kg", "30 servings", "60 tablets", "90 tablets", "Shaker"];
 const goalPresets = [
   "Muscle support, Post-workout, Protein",
@@ -353,9 +355,19 @@ function LiveCatalogManagementClient() {
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [deletingProductId, setDeletingProductId] = useState<string | null>(null);
+  const [isAddingBrand, setIsAddingBrand] = useState(false);
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
   const missingRequiredFields = useMemo(() => getMissingLiveProductFields(form), [form]);
   const canSaveProduct = missingRequiredFields.length === 0 && !isSaving;
   const selectedSavedTemplate = savedTemplates.find((template) => template.label === selectedTemplate) ?? null;
+  const brandOptions = useMemo(
+    () => uniqueOptions([...brandPresets, ...catalogProducts.map((product) => product.brand.name)]),
+    [catalogProducts]
+  );
+  const categoryOptions = useMemo(
+    () => uniqueOptions([...categoryPresets, ...catalogProducts.flatMap((product) => product.categories.map((category) => category.name))]),
+    [catalogProducts]
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -437,6 +449,28 @@ function LiveCatalogManagementClient() {
     setError("");
   }
 
+  function selectBrand(value: string) {
+    if (value === newBrandOption) {
+      setIsAddingBrand(true);
+      updateForm("brandName", "");
+      return;
+    }
+
+    setIsAddingBrand(false);
+    updateForm("brandName", value);
+  }
+
+  function selectCategory(value: string) {
+    if (value === newCategoryOption) {
+      setIsAddingCategory(true);
+      updateForm("categoryName", "");
+      return;
+    }
+
+    setIsAddingCategory(false);
+    updateForm("categoryName", value);
+  }
+
   function applyTemplate(templateLabel: string) {
     const savedTemplate = savedTemplates.find((item) => item.label === templateLabel);
     const builtInTemplate = liveProductTemplates.find((item) => item.label === templateLabel);
@@ -454,6 +488,8 @@ function LiveCatalogManagementClient() {
       ...templateForm,
       sku: templateForm.sku ? `${templateForm.sku}-${skuSuffix}` : ""
     });
+    setIsAddingBrand(false);
+    setIsAddingCategory(false);
     setError("");
     setMessage(`${templateLabel} template selected. Review price and stock, then add product.`);
   }
@@ -566,6 +602,8 @@ function LiveCatalogManagementClient() {
       setSelectedTemplate("");
       setShowAdvancedDetails(false);
       setIsSkuManual(false);
+      setIsAddingBrand(false);
+      setIsAddingCategory(false);
       setEditingProductId(null);
       await loadCatalogProducts();
     } catch {
@@ -580,6 +618,8 @@ function LiveCatalogManagementClient() {
     setSelectedTemplate("");
     setShowAdvancedDetails(false);
     setIsSkuManual(false);
+    setIsAddingBrand(false);
+    setIsAddingCategory(false);
     setEditingProductId(null);
     setError("");
     setMessage("");
@@ -591,6 +631,8 @@ function LiveCatalogManagementClient() {
     setIsSkuManual(true);
     setShowAdvancedDetails(true);
     setSelectedTemplate("");
+    setIsAddingBrand(false);
+    setIsAddingCategory(false);
     setForm({
       allergens: product.allergens.join(", "),
       brandName: product.brand.name,
@@ -686,14 +728,39 @@ function LiveCatalogManagementClient() {
               ))}
             </optgroup>
           </SelectField>
-          <SelectField label="Brand" onChange={(value) => updateForm("brandName", value)} value={form.brandName}>
-            <option value="">Select brand</option>
-            {brandPresets.map((brand) => <option key={brand} value={brand}>{brand}</option>)}
-          </SelectField>
-          <SelectField label="Category" onChange={(value) => updateForm("categoryName", value)} value={form.categoryName}>
-            <option value="">Select category</option>
-            {categoryPresets.map((category) => <option key={category} value={category}>{category}</option>)}
-          </SelectField>
+          <div className="grid gap-2">
+            <SelectField label="Brand" onChange={selectBrand} value={isAddingBrand ? newBrandOption : form.brandName}>
+              <option value="">Select brand</option>
+              {brandOptions.map((brand) => <option key={brand} value={brand}>{brand}</option>)}
+              <option value={newBrandOption}>Add new brand</option>
+            </SelectField>
+            {isAddingBrand ? (
+              <Input
+                autoFocus
+                helperText="This brand will be created when you save the product."
+                label="New brand name"
+                onChange={(event) => updateForm("brandName", event.target.value)}
+                required
+                value={form.brandName}
+              />
+            ) : null}
+          </div>
+          <div className="grid gap-2">
+            <SelectField label="Category" onChange={selectCategory} value={isAddingCategory ? newCategoryOption : form.categoryName}>
+              <option value="">Select category</option>
+              {categoryOptions.map((category) => <option key={category} value={category}>{category}</option>)}
+              <option value={newCategoryOption}>Add new category</option>
+            </SelectField>
+            {isAddingCategory ? (
+              <Input
+                helperText="This category will be created when you save the product."
+                label="New category name"
+                onChange={(event) => updateForm("categoryName", event.target.value)}
+                required
+                value={form.categoryName}
+              />
+            ) : null}
+          </div>
           <SelectField label="Size" onChange={(value) => updateForm("size", value)} value={form.size}>
             <option value="">Select size</option>
             {sizePresets.map((size) => <option key={size} value={size}>{size}</option>)}
@@ -1447,6 +1514,25 @@ function skuFromNameAndSize(name: string, size: string) {
   }
 
   return normalizedSize ? `${normalizedName}-${normalizedSize}` : normalizedName;
+}
+
+function uniqueOptions(values: string[]) {
+  const seen = new Set<string>();
+  const options: string[] = [];
+
+  for (const value of values) {
+    const label = value.trim();
+    const key = label.toLowerCase();
+
+    if (!label || seen.has(key)) {
+      continue;
+    }
+
+    seen.add(key);
+    options.push(label);
+  }
+
+  return options;
 }
 
 function getMissingLiveProductFields(form: LiveProductForm) {
