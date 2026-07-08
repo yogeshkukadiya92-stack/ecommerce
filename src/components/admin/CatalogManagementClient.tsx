@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
 import { AdminCard } from "./AdminCard";
 import { AdminTable } from "./AdminTable";
+import { ImageUploadButton, ImageUploadField } from "./ImageUploadField";
 
 type AdminProductStatus = ProductStatus | "inactive";
 
@@ -427,11 +428,13 @@ function LiveCatalogManagementClient() {
           <Input label="Selling price" min={1} onChange={(event) => updateForm("sellingPrice", Number(event.target.value))} required type="number" value={form.sellingPrice} />
           <Input label="Opening stock" min={0} onChange={(event) => updateForm("stock", Number(event.target.value))} type="number" value={form.stock} />
           <Input label="Weight in grams" min={1} onChange={(event) => updateForm("weightInGrams", Number(event.target.value))} required type="number" value={form.weightInGrams} />
-          <Input helperText="Optional, but recommended before publishing active products." label="Image URL" onChange={(event) => updateForm("imageUrl", event.target.value)} value={form.imageUrl} />
           <SelectField label="Status" onChange={(value) => updateForm("status", value as LiveProductForm["status"])} value={form.status}>
             <option value="DRAFT">Draft</option>
             <option value="ACTIVE">Active</option>
           </SelectField>
+          <div className="md:col-span-2">
+            <ImageUploadField helperText="Optional, but recommended before publishing active products." label="Product image" onChange={(value) => updateForm("imageUrl", value)} value={form.imageUrl} />
+          </div>
           <Input className="md:col-span-2" label="Short description" onChange={(event) => updateForm("shortDescription", event.target.value)} required value={form.shortDescription} />
           <Textarea label="Description" onChange={(value) => updateForm("description", value)} value={form.description} />
           <Textarea label="Ingredients" onChange={(value) => updateForm("ingredients", value)} value={form.ingredients} />
@@ -766,10 +769,21 @@ function BasicInfoTab({
 }
 
 function MediaTab({ form, updateForm }: ProductTabProps) {
+  function appendImage(key: "productImages" | "labelImages", url: string) {
+    const current = form[key].trim();
+    updateForm(key, current ? `${current}, ${url}` : url);
+  }
+
   return (
     <div className="grid gap-4 md:grid-cols-2">
-      <Textarea label="Product images" onChange={(value) => updateForm("productImages", value)} value={form.productImages} />
-      <Textarea label="Label images" onChange={(value) => updateForm("labelImages", value)} value={form.labelImages} />
+      <div className="grid gap-3 md:col-span-2">
+        <Textarea label="Product images" onChange={(value) => updateForm("productImages", value)} value={form.productImages} />
+        <ImageUploadButton label="Upload product image" onUploaded={(url) => appendImage("productImages", url)} />
+      </div>
+      <div className="grid gap-3 md:col-span-2">
+        <Textarea label="Label images" onChange={(value) => updateForm("labelImages", value)} value={form.labelImages} />
+        <ImageUploadButton label="Upload label image" onUploaded={(url) => appendImage("labelImages", url)} />
+      </div>
       <Input label="Lab report URL" onChange={(event) => updateForm("labReportUrl", event.target.value)} value={form.labReportUrl} />
       <div className="rounded-md border border-dashed border-black/20 bg-mist p-4 text-sm font-semibold text-slate">
         Add product images, label images, and supporting documents before publishing.
@@ -860,7 +874,7 @@ function ComplianceTab({ form, updateForm }: ProductTabProps) {
       <Input label="FSSAI / license field" onChange={(event) => updateForm("fssaiLicense", event.target.value)} value={form.fssaiLicense} />
       <Input label="Manufacturer name" onChange={(event) => updateForm("manufacturerName", event.target.value)} value={form.manufacturerName} />
       <Input label="Marketer / importer name" onChange={(event) => updateForm("marketerImporterName", event.target.value)} value={form.marketerImporterName} />
-      <Input label="Nutrition label image" onChange={(event) => updateForm("nutritionLabelImage", event.target.value)} value={form.nutritionLabelImage} />
+      <ImageUploadField label="Nutrition label image" onChange={(value) => updateForm("nutritionLabelImage", value)} value={form.nutritionLabelImage} />
       <Textarea label="Ingredient declaration" onChange={(value) => updateForm("ingredients", value)} value={form.ingredients} />
       <Textarea label="Allergen declaration" onChange={(value) => updateForm("allergenInfo", value)} value={form.allergenInfo} />
       <Textarea label="Warning / disclaimer" onChange={(value) => updateForm("warningDisclaimer", value)} value={form.warningDisclaimer} />

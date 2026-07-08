@@ -10,7 +10,12 @@ const productInputSchema = z.object({
   categoryName: z.string().min(2),
   description: z.string().min(10),
   goalTags: z.string().optional(),
-  imageUrl: z.string().url().optional().or(z.literal("")),
+  imageUrl: z
+    .string()
+    .refine((value) => value === "" || value.startsWith("/") || z.string().url().safeParse(value).success, {
+      message: "Enter a valid image URL or upload an image."
+    })
+    .optional(),
   ingredients: z.string().optional(),
   mrp: z.number().positive(),
   name: z.string().min(3),

@@ -50,6 +50,7 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { HomepageSectionRenderer } from "@/components/cms/HomepageSectionRenderer";
 import { AdminCard } from "./AdminCard";
+import { ImageUploadField } from "./ImageUploadField";
 import { AdminTable } from "./AdminTable";
 import { LiveAdminEmptyState } from "./LiveAdminEmptyState";
 
@@ -2005,58 +2006,8 @@ function Textarea({
   );
 }
 
-function ImageUrlField({
-  label: imageLabel,
-  onChange,
-  value
-}: {
-  label: string;
-  onChange: (value: string) => void;
-  value: string;
-}) {
-  function handleFile(file?: File) {
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === "string") {
-        onChange(reader.result);
-      }
-    };
-    reader.readAsDataURL(file);
-  }
-
-  return (
-    <div className="grid gap-3">
-      <Input label={imageLabel} onChange={(event) => onChange(event.target.value)} placeholder="https://... or upload below" value={value} />
-      <div className="grid gap-3 rounded-md border border-dashed border-black/20 bg-mist p-3">
-        <div
-          aria-label={`${imageLabel} preview`}
-          className="aspect-[16/9] rounded-md border border-black/10 bg-white bg-cover bg-center"
-          role="img"
-          style={value ? { backgroundImage: `url(${value})` } : undefined}
-        >
-          {value ? null : <div className="grid h-full place-items-center text-xs font-bold text-slate">No image selected</div>}
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <label className="admin-action cursor-pointer">
-            <ImageIcon className="h-4 w-4" /> Upload image
-            <input
-              accept="image/*"
-              className="sr-only"
-              onChange={(event) => handleFile(event.target.files?.[0])}
-              type="file"
-            />
-          </label>
-          {value ? (
-            <button className="admin-action text-coral" onClick={() => onChange("")} type="button">
-              Clear
-            </button>
-          ) : null}
-        </div>
-      </div>
-    </div>
-  );
+function ImageUrlField(props: { label: string; onChange: (value: string) => void; value: string }) {
+  return <ImageUploadField {...props} />;
 }
 
 function buildStudioHealth(data: WebsiteStudioData) {

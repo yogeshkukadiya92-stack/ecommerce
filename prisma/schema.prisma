@@ -338,6 +338,15 @@ model ProductVariant {
   updatedAt         DateTime            @updatedAt
 }
 
+model MediaAsset {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  filename  String
+  mimeType  String
+  size      Int
+  data      Bytes
+  createdAt DateTime @default(now())
+}
+
 model ProductImage {
   id        String          @id @default(auto()) @map("_id") @db.ObjectId
   productId String          @db.ObjectId
