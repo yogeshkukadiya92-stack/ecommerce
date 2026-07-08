@@ -13,6 +13,8 @@ import {
 } from "@/lib/storefront/liveCatalog";
 import { getProductBySlug, getProductDetailContent, getProductsByIds, getRelatedProducts } from "@/mock/storefront";
 
+export const dynamic = "force-dynamic";
+
 type ProductDetailPageProps = {
   params: Promise<{ slug: string }>;
 };

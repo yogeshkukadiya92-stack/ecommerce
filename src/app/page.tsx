@@ -6,6 +6,8 @@ import { getPublishedHomepageSections, getWebsiteStudioData } from "@/lib/cms/cm
 import { buildSeoMetadata } from "@/lib/seo/seo";
 import { getLiveStorefrontProducts } from "@/lib/storefront/liveCatalog";
 
+export const dynamic = "force-dynamic";
+
 export function generateMetadata(): Metadata {
   const seo = getWebsiteStudioData().seo.find((entry) => entry.pageKey === "homepage");
 

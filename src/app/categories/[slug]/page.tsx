@@ -7,6 +7,8 @@ import { getCategoryBySlug, getProductsByCategory } from "@/mock/storefront";
 import { breadcrumbSchema, buildSeoMetadata, collectionSchema } from "@/lib/seo/seo";
 import { getLiveStorefrontProductsByCategory } from "@/lib/storefront/liveCatalog";
 
+export const dynamic = "force-dynamic";
+
 type CategoryPageProps = {
   params: Promise<{ slug: string }>;
 };

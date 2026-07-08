@@ -11,6 +11,8 @@ import {
 import { breadcrumbSchema, buildSeoMetadata, collectionSchema } from "@/lib/seo/seo";
 import { getLiveStorefrontProductsByCollection } from "@/lib/storefront/liveCatalog";
 
+export const dynamic = "force-dynamic";
+
 type CollectionPageProps = {
   params: Promise<{ slug: string }>;
 };

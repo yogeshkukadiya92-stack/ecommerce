@@ -5,6 +5,8 @@ import { ProductListingShell } from "@/components/storefront/ProductListingShell
 import { breadcrumbSchema, buildSeoMetadata, collectionSchema } from "@/lib/seo/seo";
 import { getLiveStorefrontProducts } from "@/lib/storefront/liveCatalog";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = buildSeoMetadata({
   canonicalPath: "/products",
   description:

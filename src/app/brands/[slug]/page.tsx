@@ -7,6 +7,8 @@ import { getBrandBySlug, getProductsByBrand } from "@/mock/storefront";
 import { breadcrumbSchema, buildSeoMetadata, collectionSchema } from "@/lib/seo/seo";
 import { getLiveStorefrontProductsByBrand } from "@/lib/storefront/liveCatalog";
 
+export const dynamic = "force-dynamic";
+
 type BrandPageProps = {
   params: Promise<{ slug: string }>;
 };

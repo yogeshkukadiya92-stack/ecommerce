@@ -1,4 +1,12 @@
-import type { ProductDetailContent, StorefrontProduct } from "@/mock/storefront";
+import {
+  getProductBySlug,
+  getProductsByBrand,
+  getProductsByCategory,
+  getProductsByCollection,
+  storefrontProducts,
+  type ProductDetailContent,
+  type StorefrontProduct
+} from "@/mock/storefront";
 import { listActiveProducts, listProducts } from "@/lib/catalog/productRepository";
 
 function toStorefrontProduct(product: Awaited<ReturnType<typeof listActiveProducts>>[number]): StorefrontProduct {
@@ -37,22 +45,31 @@ function toStorefrontProduct(product: Awaited<ReturnType<typeof listActiveProduc
 }
 
 export async function getLiveStorefrontProducts(query?: string | null) {
-  const products = await listActiveProducts(query);
-  return products.map(toStorefrontProduct);
+  const products = await loadLiveProducts(query);
+  return products.length > 0 ? products : filterFallbackProducts(query);
 }
 
 export async function getLiveStorefrontProductsByBrand(slug: string) {
-  const products = await getLiveStorefrontProducts();
-  return products.filter((product) => product.merchandising.brandName.toLowerCase().replace(/[^a-z0-9]+/g, "-") === slug);
+  const products = await loadLiveProducts();
+
+  if (products.length === 0) {
+    return getProductsByBrand(slug);
+  }
+
+  return products.filter((product) => toSlug(product.merchandising.brandName) === slug);
 }
 
 export async function getLiveStorefrontProductsByCategory(slug: string) {
-  const products = await getLiveStorefrontProducts();
-  return products.filter((product) => product.merchandising.categorySlug === slug);
+  const products = await loadLiveProducts();
+  return products.length > 0 ? products.filter((product) => product.merchandising.categorySlug === slug) : getProductsByCategory(slug);
 }
 
 export async function getLiveStorefrontProductsByCollection(slug: string) {
-  const products = await getLiveStorefrontProducts();
+  const products = await loadLiveProducts();
+
+  if (products.length === 0) {
+    return getProductsByCollection(slug);
+  }
 
   if (slug === "best-sellers") {
     return products.slice(0, 8);
@@ -77,10 +94,19 @@ export async function getLiveStorefrontProductsByCollection(slug: string) {
 }
 
 export async function getLiveStorefrontProductBySlug(slug: string) {
-  const products = await listProducts(undefined, { activeOnly: true });
-  const product = products.find((item) => item.slug === slug);
+  if (!canUseLiveCatalog()) {
+    return getProductBySlug(slug) ?? null;
+  }
 
-  return product ? toStorefrontProduct(product) : null;
+  try {
+    const products = await listProducts(undefined, { activeOnly: true });
+    const product = products.find((item) => item.slug === slug);
+
+    return product ? toStorefrontProduct(product) : getProductBySlug(slug) ?? null;
+  } catch (error) {
+    logLiveCatalogError(error);
+    return getProductBySlug(slug) ?? null;
+  }
 }
 
 export async function getLiveRelatedProducts(product: StorefrontProduct) {
@@ -125,6 +151,57 @@ export function buildLiveProductDetailContent(): ProductDetailContent {
     reviews: [],
     storageInstructions: "Store in a cool, dry place away from sunlight."
   };
+}
+
+async function loadLiveProducts(query?: string | null) {
+  if (!canUseLiveCatalog()) {
+    return [];
+  }
+
+  try {
+    const products = await listActiveProducts(query);
+    return products.map(toStorefrontProduct);
+  } catch (error) {
+    logLiveCatalogError(error);
+    return [];
+  }
+}
+
+function canUseLiveCatalog() {
+  const databaseUrl = process.env.DATABASE_URL;
+  return Boolean(databaseUrl && !databaseUrl.includes("localhost:27017"));
+}
+
+function filterFallbackProducts(query?: string | null) {
+  const normalizedQuery = query?.trim().toLowerCase();
+
+  if (!normalizedQuery) {
+    return storefrontProducts;
+  }
+
+  return storefrontProducts.filter((product) =>
+    [
+      product.name,
+      product.shortDescription,
+      product.description,
+      ...product.variants.map((variant) => variant.sku),
+      product.merchandising.brandName,
+      product.merchandising.categorySlug,
+      ...product.goalTags,
+      ...product.ingredients
+    ]
+      .join(" ")
+      .toLowerCase()
+      .includes(normalizedQuery)
+  );
+}
+
+function logLiveCatalogError(error: unknown) {
+  console.warn("Live storefront catalog unavailable; using fallback product data.", error);
+}
+
+function toSlug(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
 
 function deriveServingsCount(size: string, weightInGrams: number) {

@@ -5,6 +5,8 @@ import { ProductListingShell } from "@/components/storefront/ProductListingShell
 import { breadcrumbSchema, buildSeoMetadata } from "@/lib/seo/seo";
 import { getLiveStorefrontProducts } from "@/lib/storefront/liveCatalog";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = buildSeoMetadata({
   canonicalPath: "/search",
   description: "Search protein powders, creatine, vitamins, health supplements, and fitness accessories.",
