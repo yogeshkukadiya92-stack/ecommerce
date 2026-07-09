@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { AlertTriangle, CheckCircle2, PackageSearch, SearchX } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import {
   customers as demoCustomers,
   inventoryBatches as demoInventoryBatches,
@@ -17,10 +18,89 @@ import { AdminTable } from "./AdminTable";
 
 const formatRs = (value: number) => `Rs ${value.toLocaleString("en-IN")}`;
 
+type LiveDashboardOrder = {
+  createdAt: string;
+  customerEmail: string;
+  customerName: string;
+  customerPhone: string;
+  discountAmount: number;
+  id: string;
+  itemCount: number;
+  items: Array<{ id: string; productName: string; quantity: number; sku: string; totalAmount: number; unitPrice: number }>;
+  orderNumber: string;
+  paymentProvider: string;
+  paymentStatus: string;
+  shippingAmount: number;
+  status: string;
+  subtotal: number;
+  totalAmount: number;
+  trackingNumber: string | null;
+};
+
+type LiveDashboardCustomer = {
+  createdAt: string;
+  email: string;
+  id: string;
+  name: string;
+  orderCount: number;
+  phone: string;
+  totalSpent: number;
+};
+
 export function AdminDashboardClient() {
-  const orders = showDemoData ? demoOrders : [];
-  const customers = showDemoData ? demoCustomers : [];
-  const products = showDemoData ? demoProducts : [];
+  const [liveOrders, setLiveOrders] = useState<LiveDashboardOrder[]>([]);
+  const [liveCustomers, setLiveCustomers] = useState<LiveDashboardCustomer[]>([]);
+  const [isLiveLoading, setIsLiveLoading] = useState(!showDemoData);
+  const [liveError, setLiveError] = useState("");
+
+  useEffect(() => {
+    if (showDemoData) {
+      return;
+    }
+
+    let isMounted = true;
+
+    async function loadLiveDashboard() {
+      setIsLiveLoading(true);
+
+      try {
+        const [ordersResponse, customersResponse] = await Promise.all([
+          fetch("/api/admin/orders"),
+          fetch("/api/admin/customers")
+        ]);
+        const ordersResult = (await ordersResponse.json().catch(() => ({}))) as { data?: LiveDashboardOrder[] };
+        const customersResult = (await customersResponse.json().catch(() => ({}))) as {
+          data?: { customers?: LiveDashboardCustomer[] };
+        };
+
+        if (!isMounted) {
+          return;
+        }
+
+        setLiveOrders(Array.isArray(ordersResult.data) ? ordersResult.data : []);
+        setLiveCustomers(Array.isArray(customersResult.data?.customers) ? customersResult.data.customers : []);
+        setLiveError("");
+      } catch {
+        if (isMounted) {
+          setLiveError("Unable to load live dashboard orders.");
+        }
+      } finally {
+        if (isMounted) {
+          setIsLiveLoading(false);
+        }
+      }
+    }
+
+    void loadLiveDashboard();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const orders = showDemoData ? demoOrders : liveOrders;
+  const customers = showDemoData ? demoCustomers : liveCustomers;
+  const products = useMemo(() => (showDemoData ? demoProducts : []), []);
   const inventoryBatches = showDemoData ? demoInventoryBatches : [];
   const batches = showDemoData ? demoBatches : [];
   const todayRevenue = orders.reduce((total, order) => total + order.totalAmount, 0);
@@ -31,13 +111,46 @@ export function AdminDashboardClient() {
   const codPendingOrders = showDemoData ? 2 : 0;
   const returnRequests = showDemoData ? 1 : 0;
   const subscriptionRenewals = showDemoData ? 7 : 0;
-  const topSellingProducts = [...products]
-    .map((product) => ({
-      name: product.name,
-      revenue: product.variants.reduce((total, variant) => total + variant.sellingPrice * Math.max(1, Math.round(variant.stock / 20)), 0),
-      units: product.variants.reduce((total, variant) => total + Math.max(1, Math.round(variant.stock / 20)), 0)
-    }))
-    .sort((a, b) => b.revenue - a.revenue);
+  const topSellingProducts = useMemo(() => {
+    if (!showDemoData) {
+      const byProduct = new Map<string, { name: string; revenue: number; units: number }>();
+
+      liveOrders.forEach((order) => {
+        order.items.forEach((item) => {
+          const current = byProduct.get(item.productName) ?? { name: item.productName, revenue: 0, units: 0 };
+          byProduct.set(item.productName, {
+            ...current,
+            revenue: current.revenue + item.totalAmount,
+            units: current.units + item.quantity
+          });
+        });
+      });
+
+      return [...byProduct.values()].sort((a, b) => b.revenue - a.revenue);
+    }
+
+    return [...products]
+      .map((product) => ({
+        name: product.name,
+        revenue: product.variants.reduce((total, variant) => total + variant.sellingPrice * Math.max(1, Math.round(variant.stock / 20)), 0),
+        units: product.variants.reduce((total, variant) => total + Math.max(1, Math.round(variant.stock / 20)), 0)
+      }))
+      .sort((a, b) => b.revenue - a.revenue);
+  }, [liveOrders, products]);
+
+  const recentOrderRows = showDemoData
+    ? demoOrders.map((order) => [
+        <Link className="font-black text-forest" href="/admin/orders" key="order">{order.orderNumber}</Link>,
+        demoCustomers.find((customer) => customer.id === order.customerId)?.email ?? "Guest",
+        <Badge key="status" tone="success">{order.status}</Badge>,
+        formatRs(order.totalAmount)
+      ])
+    : liveOrders.map((order) => [
+        <Link className="font-black text-forest" href="/admin/orders" key="order">{order.orderNumber}</Link>,
+        order.customerEmail || order.customerName || "Guest",
+        <Badge key="status" tone="success">{order.status.toLowerCase()}</Badge>,
+        formatRs(order.totalAmount)
+      ]);
 
   return (
     <div className="grid gap-6">
@@ -71,6 +184,10 @@ export function AdminDashboardClient() {
         <StatCard label="No-result searches" value={showDemoData ? "12" : "0"} />
       </div>
 
+      {!showDemoData && liveError ? (
+        <p className="rounded-md bg-coral/10 p-3 text-sm font-bold text-coral" role="alert">{liveError}</p>
+      ) : null}
+
       {!showDemoData ? (
         <AdminCard title="Launch readiness" description="Demo records are hidden. Connect real catalog, order, and customer sources when you are ready to operate from this panel.">
           <div className="grid gap-3 md:grid-cols-3">
@@ -98,7 +215,7 @@ export function AdminDashboardClient() {
         <AdminCard title="Orders by status">
           <div className="grid gap-3">
             {["pending", "paid", "confirmed", "packed", "shipped", "delivered", "cancelled", "returned", "refunded"].map((status) => {
-              const count = orders.filter((order) => order.status === status).length;
+              const count = orders.filter((order) => order.status.toLowerCase() === status).length;
               const width = orders.length > 0 ? Math.max(8, Math.round((count / orders.length) * 100)) : 0;
 
               return (
@@ -130,13 +247,8 @@ export function AdminDashboardClient() {
         <AdminCard title="Recent orders">
           <AdminTable
             columns={["Order", "Customer", "Status", "Total"]}
-            emptyText="No live orders yet."
-            rows={orders.map((order) => [
-              <Link className="font-black text-forest" href="/admin/orders" key="order">{order.orderNumber}</Link>,
-              customers.find((customer) => customer.id === order.customerId)?.email ?? "Guest",
-              <Badge key="status" tone="success">{order.status}</Badge>,
-              formatRs(order.totalAmount)
-            ])}
+            emptyText={isLiveLoading ? "Loading live orders..." : "No live orders yet."}
+            rows={recentOrderRows}
           />
         </AdminCard>
       </div>
