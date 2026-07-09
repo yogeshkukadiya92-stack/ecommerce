@@ -50,7 +50,7 @@ export function CartSummaryCard({
           Earn {totals.loyaltyEarnedPoints} loyalty points on this order.
         </p>
         <p className="mt-3 rounded-md bg-mist px-3 py-2 text-xs font-bold text-slate">
-          Payments are encrypted. COD stays separate from online gateway flow.
+          Payments are encrypted and processed online through the secure gateway.
         </p>
       </div>
       {action ? <div className="mt-5">{action}</div> : null}

@@ -12,7 +12,6 @@ import { clearLocalCart } from "@/lib/cart/localCart";
 import { useCart } from "@/lib/cart/useCart";
 import { useCustomerSession } from "@/lib/auth/useCustomerSession";
 import {
-  createMockCheckoutOrder,
   createPendingCheckoutOrder,
   updateLocalOrderPayment
 } from "@/lib/orders/localOrders";
@@ -43,8 +42,7 @@ const paymentMethods: Array<{ label: string; value: PaymentMethod }> = [
   { label: "UPI", value: "upi" },
   { label: "Card", value: "card" },
   { label: "Net banking", value: "net_banking" },
-  { label: "Wallet", value: "wallet" },
-  { label: "COD", value: "cod" }
+  { label: "Wallet", value: "wallet" }
 ];
 
 type RazorpayCheckoutResponse = {
@@ -185,37 +183,12 @@ export function CheckoutClient() {
     }
 
     setIsPlacingOrder(true);
-    setNotice(paymentMethod === "cod" ? "Creating COD order..." : "Opening secure Razorpay checkout...");
+    setNotice("Opening secure Razorpay checkout...");
 
     try {
-      if (paymentMethod !== "cod") {
-        await handleRazorpayPayment();
-        return;
-      }
-
-      const order = await createMockCheckoutOrder({
-        address,
-        couponCode: totals.couponCode,
-        customerId: session?.customerId,
-        deliveryMethod,
-        items: enrichedItems,
-        paymentMethod,
-        totals: {
-          couponDiscount: totals.couponDiscount,
-          grandTotal: totals.grandTotal,
-          shipping: totals.shipping,
-          subtotal: totals.subtotal,
-          tax: totals.tax
-        }
-      });
-      clearLocalCart();
-      cart.clearCart();
-      router.push(`/checkout/success?order=${order.orderNumber}`);
+      await handleRazorpayPayment();
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Payment could not be started. Please try again.");
-      if (paymentMethod === "cod") {
-        router.push("/checkout/failure?reason=cod-order");
-      }
     } finally {
       setIsPlacingOrder(false);
     }
@@ -264,7 +237,7 @@ export function CheckoutClient() {
     await loadRazorpayCheckoutScript();
 
     if (!window.Razorpay) {
-      throw new Error("Razorpay checkout could not be loaded. Please retry or choose COD.");
+      throw new Error("Razorpay checkout could not be loaded. Please retry.");
     }
 
     const checkout = new window.Razorpay({
@@ -329,7 +302,7 @@ export function CheckoutClient() {
               status: "pending"
             }
           );
-          setNotice("Payment is still pending. You can retry Razorpay or choose COD.");
+          setNotice("Payment is still pending. You can retry Razorpay.");
           setIsPlacingOrder(false);
         }
       },
@@ -399,7 +372,7 @@ export function CheckoutClient() {
         <p className="text-xs font-black uppercase tracking-[0.14em] text-forest">Checkout</p>
         <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-ink">Secure checkout</h1>
         <div className="mt-4 flex flex-wrap gap-2 text-xs font-black text-forest">
-          {["Encrypted payment", "Address validation", "COD supported"].map((item) => (
+          {["Encrypted payment", "Address validation", "Online payment only"].map((item) => (
             <span className="rounded-md bg-mist px-3 py-2" key={item}>{item}</span>
           ))}
         </div>
@@ -464,7 +437,7 @@ export function CheckoutClient() {
           </Panel>
 
           <Panel title="4. Payment method">
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {paymentMethods.map((method) => (
                 <button
                   className={`focus-ring rounded-md border px-3 py-3 text-sm font-black shadow-sm transition hover:-translate-y-0.5 hover:border-forest/30 ${paymentMethod === method.value ? "border-forest bg-mint text-forest shadow-card" : "border-black/10 bg-white text-ink"}`}
@@ -476,15 +449,9 @@ export function CheckoutClient() {
                 </button>
               ))}
             </div>
-            {paymentMethod === "cod" ? (
-              <p className="mt-3 rounded-md border border-black/10 bg-mist p-3 text-xs font-bold text-slate">
-                COD orders may require phone confirmation before dispatch.
-              </p>
-            ) : (
-              <p className="mt-3 rounded-md border border-forest/10 bg-mint/60 p-3 text-xs font-bold text-forest">
-                Online payments open Razorpay Checkout. Secret keys stay on the server and payment signatures are verified before the order is marked paid.
-              </p>
-            )}
+            <p className="mt-3 rounded-md border border-forest/10 bg-mint/60 p-3 text-xs font-bold text-forest">
+              Online payments open Razorpay Checkout. Secret keys stay on the server and payment signatures are verified before the order is marked paid.
+            </p>
           </Panel>
 
           <Panel title="Coupon">
@@ -613,7 +580,7 @@ async function initializeRazorpayPayment(input: {
   };
 
   if (!response.ok || !data.keyId || !data.razorpayOrderId || !data.amount || !data.currency) {
-    throw new Error(data.message ?? "Razorpay payment could not be initialized. Please try COD or retry later.");
+    throw new Error(data.message ?? "Razorpay payment could not be initialized. Please retry later.");
   }
 
   return {

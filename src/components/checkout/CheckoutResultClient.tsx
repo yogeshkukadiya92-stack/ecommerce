@@ -85,7 +85,7 @@ function failureMessage(reason: string, orderNumber: string | null) {
   }
 
   if (reason.includes("cod")) {
-    return `COD order creation failed. Please review the address and try again.${suffix}`;
+    return `Order creation failed. Please review the address and try again.${suffix}`;
   }
 
   return `Failure reason: ${reason}. No successful payment was captured by the store.${suffix}`;

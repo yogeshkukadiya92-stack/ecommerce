@@ -215,7 +215,7 @@ function RenderedSection({
           <SectionTitle alignment={alignment} description={section.subtitle} title={section.title} />
           <div className="grid gap-3 md:grid-cols-4">
             <TrustBadge description="Every supplement is sourced for transparent, label-first shopping." icon={Award} title="Authentic products" />
-            <TrustBadge description="Encrypted checkout with online payment and COD options." icon={CreditCard} title="Secure payments" />
+            <TrustBadge description="Encrypted checkout with secure online payment options." icon={CreditCard} title="Secure payments" />
             <TrustBadge description="Pincode-aware delivery with courier tracking." icon={Truck} title="Fast delivery" />
             <TrustBadge description="Clear order support for returns, refunds, and replacements." icon={RotateCcw} title="Easy returns" />
           </div>
