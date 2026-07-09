@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { requireAdminPermission } from "@/lib/admin/apiAuth";
 import { prisma } from "@/lib/db/prisma";
 
 const couponInputSchema = z.object({
@@ -17,7 +18,13 @@ const couponInputSchema = z.object({
   value: z.number().min(0)
 });
 
-export async function GET() {
+export async function GET(request: Request) {
+  const auth = requireAdminPermission(request, "coupon:create");
+
+  if (auth.response) {
+    return auth.response;
+  }
+
   const coupons = await prisma.coupon.findMany({
     include: {
       orders: {
@@ -48,6 +55,12 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const auth = requireAdminPermission(request, "coupon:create");
+
+  if (auth.response) {
+    return auth.response;
+  }
+
   try {
     const input = couponInputSchema.parse(await request.json());
 

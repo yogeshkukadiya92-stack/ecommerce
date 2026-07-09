@@ -2,6 +2,8 @@
 
 import { Image as ImageIcon, Loader2 } from "lucide-react";
 import { useState } from "react";
+import { getCurrentAdminSession } from "@/lib/admin/adminAuth";
+import { adminJsonHeaders } from "@/lib/admin/adminApiClient";
 import { Input } from "@/components/ui/Input";
 
 export async function uploadImageFile(file: File) {
@@ -10,6 +12,7 @@ export async function uploadImageFile(file: File) {
 
   const response = await fetch("/api/admin/media", {
     body: formData,
+    headers: adminJsonHeaders(getCurrentAdminSession()),
     method: "POST"
   });
   const result = (await response.json().catch(() => ({}))) as { message?: string; url?: string };

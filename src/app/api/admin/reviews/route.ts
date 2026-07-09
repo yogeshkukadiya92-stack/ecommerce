@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { requireAdminPermission } from "@/lib/admin/apiAuth";
 import { prisma } from "@/lib/db/prisma";
 
-export async function GET() {
+export async function GET(request: Request) {
+  const auth = requireAdminPermission(request, "customers:read");
+
+  if (auth.response) {
+    return auth.response;
+  }
+
   const reviews = await prisma.review.findMany({
     include: {
       customer: {
@@ -47,6 +54,12 @@ const updateSchema = z.object({
 });
 
 export async function PATCH(request: Request) {
+  const auth = requireAdminPermission(request, "orders:write");
+
+  if (auth.response) {
+    return auth.response;
+  }
+
   try {
     const input = updateSchema.parse(await request.json());
     await prisma.review.update({

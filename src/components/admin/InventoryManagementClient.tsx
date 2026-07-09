@@ -18,6 +18,7 @@ import type {
   InventoryBatchRecord
 } from "@/types/inventory";
 import { writeAdminAuditLog } from "@/lib/admin/auditLog";
+import { adminJsonHeaders } from "@/lib/admin/adminApiClient";
 import { showDemoData } from "@/lib/admin/liveData";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { reserveStockByFefo } from "@/lib/inventory/fefo";
@@ -91,7 +92,7 @@ function LiveInventoryManagementClient() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/admin/inventory");
+      const response = await fetch("/api/admin/inventory", { headers: adminJsonHeaders(session) });
       const result = (await response.json().catch(() => ({}))) as { data?: LiveInventoryVariant[] };
       setVariants(Array.isArray(result.data) ? result.data : []);
       setError("");
@@ -117,7 +118,7 @@ function LiveInventoryManagementClient() {
     try {
       const response = await fetch("/api/admin/inventory", {
         body: JSON.stringify({ stock: nextStock, variantId: variant.id }),
-        headers: { "Content-Type": "application/json" },
+        headers: adminJsonHeaders(session, true),
         method: "PATCH"
       });
       const result = (await response.json().catch(() => ({}))) as { message?: string };

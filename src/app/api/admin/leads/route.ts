@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { requireAdminPermission } from "@/lib/admin/apiAuth";
 import { prisma } from "@/lib/db/prisma";
 
 const leadSchema = z.object({
@@ -11,7 +12,13 @@ const leadSchema = z.object({
   specialAttention: z.string().optional()
 });
 
-export async function GET() {
+export async function GET(request: Request) {
+  const auth = requireAdminPermission(request, "customers:read");
+
+  if (auth.response) {
+    return auth.response;
+  }
+
   const leads = await prisma.whatsAppLead.findMany({
     orderBy: [{ groupName: "asc" }, { name: "asc" }],
     take: 1000
@@ -30,6 +37,12 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const auth = requireAdminPermission(request, "customers:read");
+
+  if (auth.response) {
+    return auth.response;
+  }
+
   const body = await request.json().catch(() => null);
   const parsed = leadSchema.safeParse(body);
 

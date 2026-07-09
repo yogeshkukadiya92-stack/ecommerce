@@ -11,6 +11,7 @@ import { formatRs } from "@/lib/cart/cartPricing";
 import { showDemoData } from "@/lib/admin/liveData";
 import { getCrmRows, getCustomerProfile, getCustomerSegments } from "@/lib/engagement/engagementService";
 import { writeAdminAuditLog } from "@/lib/admin/auditLog";
+import { adminJsonHeaders } from "@/lib/admin/adminApiClient";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { Badge } from "@/components/ui/Badge";
 import { AdminCard } from "./AdminCard";
@@ -41,6 +42,7 @@ type LiveRegisteredUser = {
 };
 
 function LiveCustomerCrmClient() {
+  const { isReady, session } = useAdminSession();
   const [customerRows, setCustomerRows] = useState<LiveCustomerRow[]>([]);
   const [registeredUsers, setRegisteredUsers] = useState<LiveRegisteredUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -48,9 +50,13 @@ function LiveCustomerCrmClient() {
   const [query, setQuery] = useState("");
 
   useEffect(() => {
+    if (!isReady) {
+      return;
+    }
+
     let isMounted = true;
 
-    fetch("/api/admin/customers")
+    fetch("/api/admin/customers", { headers: adminJsonHeaders(session) })
       .then((response) => response.json())
       .then((result: { data?: { customers?: LiveCustomerRow[]; registeredUsers?: LiveRegisteredUser[] } }) => {
         if (!isMounted) return;
@@ -63,7 +69,7 @@ function LiveCustomerCrmClient() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [isReady, session]);
 
   const filteredCustomers = customerRows.filter(
     (customer) =>

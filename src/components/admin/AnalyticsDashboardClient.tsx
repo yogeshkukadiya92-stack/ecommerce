@@ -8,6 +8,8 @@ import {
   defaultReportRange
 } from "@/lib/reports/reportingService";
 import { showDemoData } from "@/lib/admin/liveData";
+import { adminJsonHeaders } from "@/lib/admin/adminApiClient";
+import { useAdminSession } from "@/lib/admin/useAdminSession";
 import type { ReportDateRange } from "@/types/reports";
 import { Badge } from "@/components/ui/Badge";
 import { AdminCard } from "./AdminCard";
@@ -56,13 +58,18 @@ type LiveAnalytics = {
 };
 
 function LiveAnalyticsDashboardClient() {
+  const { isReady, session } = useAdminSession();
   const [analytics, setAnalytics] = useState<LiveAnalytics | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    if (!isReady) {
+      return;
+    }
+
     let isMounted = true;
 
-    fetch("/api/admin/analytics")
+    fetch("/api/admin/analytics", { headers: adminJsonHeaders(session) })
       .then((response) => response.json())
       .then((result: { data?: LiveAnalytics }) => {
         if (isMounted && result.data) {
@@ -74,7 +81,7 @@ function LiveAnalyticsDashboardClient() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [isReady, session]);
 
   if (error) {
     return <p className="rounded-md bg-coral/10 p-4 text-sm font-bold text-coral" role="alert">{error}</p>;

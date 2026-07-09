@@ -1,7 +1,14 @@
 import { NextResponse } from "next/server";
+import { requireAdminPermission } from "@/lib/admin/apiAuth";
 import { prisma } from "@/lib/db/prisma";
 
-export async function GET() {
+export async function GET(request: Request) {
+  const auth = requireAdminPermission(request, "customers:read");
+
+  if (auth.response) {
+    return auth.response;
+  }
+
   const [customers, users] = await Promise.all([
     prisma.customer.findMany({
       include: {

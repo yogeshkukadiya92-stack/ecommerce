@@ -9,6 +9,7 @@ import {
 } from "@/mock/engagement";
 import { subscriptions } from "@/mock/promotions";
 import { formatRs } from "@/lib/cart/cartPricing";
+import { adminJsonHeaders } from "@/lib/admin/adminApiClient";
 import { getAutomationStats } from "@/lib/engagement/engagementService";
 import { writeAdminAuditLog } from "@/lib/admin/auditLog";
 import { showDemoData } from "@/lib/admin/liveData";
@@ -41,15 +42,20 @@ export function MarketingAutomationClient() {
 }
 
 function LiveMarketingAutomationClient() {
+  const { isReady, session } = useAdminSession();
   const [audience, setAudience] = useState({ coupons: 0, customers: 0, leadGroups: 0, leads: 0 });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (!isReady) {
+      return;
+    }
+
     let isMounted = true;
 
     Promise.all([
-      fetch("/api/admin/analytics").then((response) => response.json()).catch(() => ({})),
-      fetch("/api/admin/leads").then((response) => response.json()).catch(() => ({}))
+      fetch("/api/admin/analytics", { headers: adminJsonHeaders(session) }).then((response) => response.json()).catch(() => ({})),
+      fetch("/api/admin/leads", { headers: adminJsonHeaders(session) }).then((response) => response.json()).catch(() => ({}))
     ])
       .then(([analytics, leads]: [{ data?: { couponCount?: number; customerCount?: number } }, { meta?: { groups?: number; total?: number } }]) => {
         if (!isMounted) return;
@@ -65,7 +71,7 @@ function LiveMarketingAutomationClient() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [isReady, session]);
 
   const channels = [
     { detail: "Order confirmations, shipping updates, and win-back campaigns need an email provider (for example Resend, SendGrid, or Brevo).", icon: <Mail className="h-5 w-5" />, name: "Email", status: "Not connected" },

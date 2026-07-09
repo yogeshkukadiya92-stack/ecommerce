@@ -1,7 +1,14 @@
 import { NextResponse } from "next/server";
+import { requireAdminPermission } from "@/lib/admin/apiAuth";
 import { prisma } from "@/lib/db/prisma";
 
-export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const auth = requireAdminPermission(request, "catalog:write");
+
+  if (auth.response) {
+    return auth.response;
+  }
+
   const { id } = await params;
 
   if (!/^[a-f0-9]{24}$/i.test(id)) {

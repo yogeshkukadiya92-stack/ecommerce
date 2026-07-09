@@ -9,6 +9,7 @@ import { categories } from "@/mock/categories";
 import { storefrontProducts } from "@/mock/storefront";
 import type { AdminSession } from "@/types/admin";
 import type { ProductStatus } from "@/types";
+import { adminJsonHeaders } from "@/lib/admin/adminApiClient";
 import { writeAdminAuditLog } from "@/lib/admin/auditLog";
 import { showDemoData } from "@/lib/admin/liveData";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
@@ -365,7 +366,7 @@ type SavedProductTemplate = {
 };
 
 function LiveCatalogManagementClient() {
-  const { session } = useAdminSession();
+  const { isReady, session } = useAdminSession();
   const [form, setForm] = useState<LiveProductForm>(liveInitialProduct);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -394,9 +395,13 @@ function LiveCatalogManagementClient() {
   );
 
   useEffect(() => {
+    if (!isReady) {
+      return;
+    }
+
     let isMounted = true;
 
-    fetch("/api/admin/product-templates")
+    fetch("/api/admin/product-templates", { headers: adminJsonHeaders(session) })
       .then((response) => response.json())
       .then((result: { data?: Array<{ data: Partial<LiveProductForm>; id: string; label: string }> }) => {
         if (isMounted && Array.isArray(result.data)) {
@@ -412,17 +417,22 @@ function LiveCatalogManagementClient() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [isReady, session]);
 
   useEffect(() => {
+    if (!isReady) {
+      return;
+    }
+
     void loadCatalogProducts();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isReady, session]);
 
   async function loadCatalogProducts() {
     setIsLoadingProducts(true);
 
     try {
-      const response = await fetch("/api/admin/products");
+      const response = await fetch("/api/admin/products", { headers: adminJsonHeaders(session) });
       const result = (await response.json().catch(() => ({}))) as { data?: LiveCatalogProduct[]; message?: string };
 
       if (!response.ok) {
@@ -566,7 +576,7 @@ function LiveCatalogManagementClient() {
     try {
       const response = await fetch("/api/admin/product-templates", {
         body: JSON.stringify({ data: form, label }),
-        headers: { "Content-Type": "application/json" },
+        headers: adminJsonHeaders(session, true),
         method: "POST"
       });
       const result = (await response.json().catch(() => ({}))) as {
@@ -605,7 +615,10 @@ function LiveCatalogManagementClient() {
     }
 
     try {
-      const response = await fetch(`/api/admin/product-templates/${selectedSavedTemplate.id}`, { method: "DELETE" });
+      const response = await fetch(`/api/admin/product-templates/${selectedSavedTemplate.id}`, {
+        headers: adminJsonHeaders(session),
+        method: "DELETE"
+      });
 
       if (!response.ok) {
         const result = (await response.json().catch(() => ({}))) as { message?: string };
@@ -640,7 +653,7 @@ function LiveCatalogManagementClient() {
       const payload = buildLiveProductPayload(form);
       const response = await fetch(editingProductId ? `/api/admin/products/${editingProductId}` : "/api/admin/products", {
         body: JSON.stringify(payload),
-        headers: { "Content-Type": "application/json" },
+        headers: adminJsonHeaders(session, true),
         method: editingProductId ? "PATCH" : "POST"
       });
       const result = (await response.json().catch(() => ({}))) as { message?: string };
@@ -738,6 +751,7 @@ function LiveCatalogManagementClient() {
 
     try {
       const response = await fetch(`/api/admin/products/${product.id}`, {
+        headers: adminJsonHeaders(session),
         method: "DELETE"
       });
       const result = (await response.json().catch(() => ({}))) as { message?: string };

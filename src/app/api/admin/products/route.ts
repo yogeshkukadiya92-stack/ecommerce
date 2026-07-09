@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { requireAdminPermission } from "@/lib/admin/apiAuth";
 import { listProducts } from "@/lib/catalog/productRepository";
 import { prisma } from "@/lib/db/prisma";
 
@@ -51,6 +52,12 @@ const productInputSchema = z.object({
 });
 
 export async function GET(request: Request) {
+  const auth = requireAdminPermission(request, "catalog:read");
+
+  if (auth.response) {
+    return auth.response;
+  }
+
   const url = new URL(request.url);
   const products = await listProducts(url.searchParams.get("q"));
 
@@ -64,6 +71,12 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const auth = requireAdminPermission(request, "product:create");
+
+  if (auth.response) {
+    return auth.response;
+  }
+
   try {
     const input = productInputSchema.parse(await request.json());
     const slug = input.slug.trim().toLowerCase();

@@ -10,7 +10,9 @@ import {
   products as demoProducts
 } from "@/mock";
 import { batches as demoBatches } from "@/mock/inventory";
+import { adminJsonHeaders } from "@/lib/admin/adminApiClient";
 import { showDemoData } from "@/lib/admin/liveData";
+import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { Badge } from "@/components/ui/Badge";
 import { StatCard } from "@/components/ui/StatCard";
 import { AdminCard } from "./AdminCard";
@@ -48,13 +50,14 @@ type LiveDashboardCustomer = {
 };
 
 export function AdminDashboardClient() {
+  const { isReady, session } = useAdminSession();
   const [liveOrders, setLiveOrders] = useState<LiveDashboardOrder[]>([]);
   const [liveCustomers, setLiveCustomers] = useState<LiveDashboardCustomer[]>([]);
   const [isLiveLoading, setIsLiveLoading] = useState(!showDemoData);
   const [liveError, setLiveError] = useState("");
 
   useEffect(() => {
-    if (showDemoData) {
+    if (showDemoData || !isReady) {
       return;
     }
 
@@ -65,8 +68,8 @@ export function AdminDashboardClient() {
 
       try {
         const [ordersResponse, customersResponse] = await Promise.all([
-          fetch("/api/admin/orders"),
-          fetch("/api/admin/customers")
+          fetch("/api/admin/orders", { headers: adminJsonHeaders(session) }),
+          fetch("/api/admin/customers", { headers: adminJsonHeaders(session) })
         ]);
         const ordersResult = (await ordersResponse.json().catch(() => ({}))) as { data?: LiveDashboardOrder[] };
         const customersResult = (await customersResponse.json().catch(() => ({}))) as {
@@ -96,7 +99,7 @@ export function AdminDashboardClient() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [isReady, session]);
 
   const orders = showDemoData ? demoOrders : liveOrders;
   const customers = showDemoData ? demoCustomers : liveCustomers;
@@ -107,8 +110,14 @@ export function AdminDashboardClient() {
   const averageOrderValue = orders.length > 0 ? Math.round(todayRevenue / orders.length) : 0;
   const lowStockRows = inventoryBatches.filter((batch) => batch.availableStock <= batch.lowStockThreshold);
   const expiringSoonBatches = batches.filter((batch) => new Date(batch.expiryDate).getFullYear() <= 2027);
-  const pendingOrders = orders.filter((order) => ["pending", "confirmed"].includes(order.status)).length;
-  const codPendingOrders = showDemoData ? 2 : 0;
+  const pendingOrders = orders.filter((order) => ["pending", "confirmed"].includes(order.status.toLowerCase())).length;
+  const paymentPendingOrders = orders.filter((order) => {
+    if (!("paymentStatus" in order)) {
+    return order.payment?.status === "pending";
+    }
+
+    return order.paymentStatus.toLowerCase() === "pending";
+  }).length;
   const returnRequests = showDemoData ? 1 : 0;
   const subscriptionRenewals = showDemoData ? 7 : 0;
   const topSellingProducts = useMemo(() => {
@@ -178,7 +187,7 @@ export function AdminDashboardClient() {
         <StatCard label="Low stock products" value={lowStockRows.length} tone="coral" />
         <StatCard label="Expiring soon" value={expiringSoonBatches.length} tone="coral" />
         <StatCard label="Return requests" value={returnRequests} />
-        <StatCard label="COD pending" value={codPendingOrders} tone="coral" />
+        <StatCard label="Payment pending" value={paymentPendingOrders} tone="coral" />
         <StatCard label="Renewals" value={subscriptionRenewals} />
         <StatCard label="Top sellers" value={topSellingProducts.length} />
         <StatCard label="No-result searches" value={showDemoData ? "12" : "0"} />

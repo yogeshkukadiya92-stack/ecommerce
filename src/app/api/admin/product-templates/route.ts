@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { requireAdminPermission } from "@/lib/admin/apiAuth";
 import { prisma } from "@/lib/db/prisma";
 
 const templateInputSchema = z.object({
@@ -8,7 +9,13 @@ const templateInputSchema = z.object({
   label: z.string().trim().min(2).max(80)
 });
 
-export async function GET() {
+export async function GET(request: Request) {
+  const auth = requireAdminPermission(request, "catalog:read");
+
+  if (auth.response) {
+    return auth.response;
+  }
+
   const templates = await prisma.productTemplate.findMany({
     orderBy: {
       label: "asc"
@@ -25,6 +32,12 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const auth = requireAdminPermission(request, "catalog:write");
+
+  if (auth.response) {
+    return auth.response;
+  }
+
   try {
     const input = templateInputSchema.parse(await request.json());
     const data = input.data as Prisma.InputJsonValue;

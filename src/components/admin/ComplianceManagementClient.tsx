@@ -18,6 +18,7 @@ import type {
   ProductDelistRecord
 } from "@/types/compliance";
 import { writeAdminAuditLog } from "@/lib/admin/auditLog";
+import { adminJsonHeaders } from "@/lib/admin/adminApiClient";
 import { showDemoData } from "@/lib/admin/liveData";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import {
@@ -55,14 +56,19 @@ type LiveComplianceProduct = {
 };
 
 function LiveComplianceManagementClient() {
+  const { isReady, session } = useAdminSession();
   const [products, setProducts] = useState<LiveComplianceProduct[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    if (!isReady) {
+      return;
+    }
+
     let isMounted = true;
 
-    fetch("/api/admin/products")
+    fetch("/api/admin/products", { headers: adminJsonHeaders(session) })
       .then((response) => response.json())
       .then((result: { data?: LiveComplianceProduct[] }) => {
         if (isMounted) {
@@ -75,7 +81,7 @@ function LiveComplianceManagementClient() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [isReady, session]);
 
   function checklist(product: LiveComplianceProduct) {
     return {

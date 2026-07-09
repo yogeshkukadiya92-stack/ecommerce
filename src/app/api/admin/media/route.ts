@@ -1,10 +1,17 @@
 import { NextResponse } from "next/server";
+import { requireAdminPermission } from "@/lib/admin/apiAuth";
 import { prisma } from "@/lib/db/prisma";
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const allowedMimeTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/svg+xml", "image/avif"]);
 
 export async function POST(request: Request) {
+  const auth = requireAdminPermission(request, "catalog:write");
+
+  if (auth.response) {
+    return auth.response;
+  }
+
   try {
     const formData = await request.formData();
     const file = formData.get("file");

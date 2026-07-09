@@ -4,6 +4,7 @@ import { MessageSquareReply, Search, ShieldCheck, Star } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { productQuestions, productReviews } from "@/mock/engagement";
 import { writeAdminAuditLog } from "@/lib/admin/auditLog";
+import { adminJsonHeaders } from "@/lib/admin/adminApiClient";
 import { showDemoData } from "@/lib/admin/liveData";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import {
@@ -45,9 +46,13 @@ function LiveReviewsModerationClient() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    if (!session) {
+      return;
+    }
+
     let isMounted = true;
 
-    fetch("/api/admin/reviews")
+    fetch("/api/admin/reviews", { headers: adminJsonHeaders(session) })
       .then((response) => response.json())
       .then((result: { data?: LiveReview[] }) => {
         if (isMounted) {
@@ -60,13 +65,13 @@ function LiveReviewsModerationClient() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [session]);
 
   async function moderate(review: LiveReview, status: LiveReview["status"]) {
     try {
       const response = await fetch("/api/admin/reviews", {
         body: JSON.stringify({ id: review.id, status }),
-        headers: { "Content-Type": "application/json" },
+        headers: adminJsonHeaders(session, true),
         method: "PATCH"
       });
       const result = (await response.json().catch(() => ({}))) as { message?: string };

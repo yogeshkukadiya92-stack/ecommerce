@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { requireAdminPermission } from "@/lib/admin/apiAuth";
 import { prisma } from "@/lib/db/prisma";
 
-export async function GET() {
+export async function GET(request: Request) {
+  const auth = requireAdminPermission(request, "inventory:read");
+
+  if (auth.response) {
+    return auth.response;
+  }
+
   const variants = await prisma.productVariant.findMany({
     include: {
       product: {
@@ -43,6 +50,12 @@ const adjustSchema = z.object({
 });
 
 export async function PATCH(request: Request) {
+  const auth = requireAdminPermission(request, "stock:adjust");
+
+  if (auth.response) {
+    return auth.response;
+  }
+
   try {
     const input = adjustSchema.parse(await request.json());
     const variant = await prisma.productVariant.update({

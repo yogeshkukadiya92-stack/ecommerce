@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAdminPermission } from "@/lib/admin/apiAuth";
 import { prisma } from "@/lib/db/prisma";
 import type { CheckoutAddress } from "@/types/checkout";
 
@@ -21,7 +22,13 @@ function parseAddress(address: unknown): CheckoutAddress | null {
   };
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const auth = requireAdminPermission(request, "orders:read");
+
+  if (auth.response) {
+    return auth.response;
+  }
+
   const orders = await prisma.order.findMany({
     include: {
       customer: true,

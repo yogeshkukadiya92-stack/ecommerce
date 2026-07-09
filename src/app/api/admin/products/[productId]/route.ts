@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { requireAdminPermission } from "@/lib/admin/apiAuth";
 import { prisma } from "@/lib/db/prisma";
 
 const productVariantInputSchema = z.object({
@@ -50,6 +51,12 @@ const productUpdateSchema = z.object({
 });
 
 export async function PATCH(request: Request, context: { params: Promise<{ productId: string }> }) {
+  const auth = requireAdminPermission(request, "product:edit");
+
+  if (auth.response) {
+    return auth.response;
+  }
+
   try {
     const { productId } = await context.params;
     const input = productUpdateSchema.parse(await request.json());
@@ -233,7 +240,13 @@ export async function PATCH(request: Request, context: { params: Promise<{ produ
   }
 }
 
-export async function DELETE(_request: Request, context: { params: Promise<{ productId: string }> }) {
+export async function DELETE(request: Request, context: { params: Promise<{ productId: string }> }) {
+  const auth = requireAdminPermission(request, "product:delete");
+
+  if (auth.response) {
+    return auth.response;
+  }
+
   try {
     const { productId } = await context.params;
     const existingProduct = await prisma.product.findUnique({

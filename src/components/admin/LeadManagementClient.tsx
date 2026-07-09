@@ -3,6 +3,8 @@
 import { Download, Loader2, Plus, Search, UsersRound } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/Badge";
+import { adminJsonHeaders } from "@/lib/admin/adminApiClient";
+import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { Input } from "@/components/ui/Input";
 import { StatCard } from "@/components/ui/StatCard";
 import { AdminCard } from "./AdminCard";
@@ -29,6 +31,7 @@ type LeadResponse = {
 };
 
 export function LeadManagementClient() {
+  const { isReady, session } = useAdminSession();
   const [leads, setLeads] = useState<WhatsAppLead[]>([]);
   const [query, setQuery] = useState("");
   const [group, setGroup] = useState("all");
@@ -46,8 +49,13 @@ export function LeadManagementClient() {
   });
 
   useEffect(() => {
+    if (!isReady) {
+      return;
+    }
+
     void loadLeads();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isReady, session]);
 
   const groups = useMemo(() => [...new Set(leads.map((lead) => lead.groupName))].sort(), [leads]);
   const filteredLeads = useMemo(
@@ -68,7 +76,7 @@ export function LeadManagementClient() {
     setError("");
 
     try {
-      const response = await fetch("/api/admin/leads", { cache: "no-store" });
+      const response = await fetch("/api/admin/leads", { cache: "no-store", headers: adminJsonHeaders(session) });
       const result = (await response.json().catch(() => ({}))) as LeadResponse;
 
       if (!response.ok) {
@@ -92,7 +100,7 @@ export function LeadManagementClient() {
     try {
       const response = await fetch("/api/admin/leads", {
         body: JSON.stringify(draft),
-        headers: { "Content-Type": "application/json" },
+        headers: adminJsonHeaders(session, true),
         method: "POST"
       });
       const result = (await response.json().catch(() => ({}))) as LeadResponse;

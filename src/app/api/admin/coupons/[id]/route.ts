@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { requireAdminPermission } from "@/lib/admin/apiAuth";
 import { prisma } from "@/lib/db/prisma";
 
 const updateSchema = z.object({
@@ -7,6 +8,12 @@ const updateSchema = z.object({
 });
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const auth = requireAdminPermission(request, "coupon:create");
+
+  if (auth.response) {
+    return auth.response;
+  }
+
   const { id } = await params;
 
   if (!/^[a-f0-9]{24}$/i.test(id)) {
@@ -30,7 +37,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
 }
 
-export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const auth = requireAdminPermission(request, "coupon:create");
+
+  if (auth.response) {
+    return auth.response;
+  }
+
   const { id } = await params;
 
   if (!/^[a-f0-9]{24}$/i.test(id)) {

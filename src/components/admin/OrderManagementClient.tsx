@@ -27,6 +27,7 @@ import type {
   ReturnStatus
 } from "@/types/orderOps";
 import { writeAdminAuditLog } from "@/lib/admin/auditLog";
+import { adminJsonHeaders } from "@/lib/admin/adminApiClient";
 import { showDemoData } from "@/lib/admin/liveData";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import {
@@ -162,7 +163,7 @@ function LiveOrderManagementClient() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/admin/orders");
+      const response = await fetch("/api/admin/orders", { headers: adminJsonHeaders(session) });
       const result = (await response.json().catch(() => ({}))) as { data?: LiveOrder[] };
       setOrders(Array.isArray(result.data) ? result.data : []);
       setError("");
@@ -182,7 +183,7 @@ function LiveOrderManagementClient() {
     try {
       const response = await fetch(`/api/admin/orders/${order.id}`, {
         body: JSON.stringify({ status }),
-        headers: { "Content-Type": "application/json" },
+        headers: adminJsonHeaders(session, true),
         method: "PATCH"
       });
       const result = (await response.json().catch(() => ({}))) as { message?: string };

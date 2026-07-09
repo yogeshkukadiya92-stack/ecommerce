@@ -5,6 +5,7 @@ import { Gift, Percent, Plus, RefreshCw, Save, Ticket, Users } from "lucide-reac
 import { bundleDeals, couponRules, loyaltyPointEntries, promotionRules, referralRecords, subscriptions } from "@/mock/promotions";
 import type { CouponRule, CustomerSubscription } from "@/types/promotions";
 import { writeAdminAuditLog } from "@/lib/admin/auditLog";
+import { adminJsonHeaders } from "@/lib/admin/adminApiClient";
 import { showDemoData } from "@/lib/admin/liveData";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { formatRs } from "@/lib/cart/cartPricing";
@@ -60,7 +61,7 @@ function LiveCouponManagementClient() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/admin/coupons");
+      const response = await fetch("/api/admin/coupons", { headers: adminJsonHeaders(session) });
       const result = (await response.json().catch(() => ({}))) as { data?: LiveCoupon[] };
       setCoupons(Array.isArray(result.data) ? result.data : []);
       setError("");
@@ -90,7 +91,7 @@ function LiveCouponManagementClient() {
           usageLimit: draft.usageLimit > 0 ? draft.usageLimit : undefined,
           value: draft.type === "FREE_SHIPPING" ? 0 : draft.value
         }),
-        headers: { "Content-Type": "application/json" },
+        headers: adminJsonHeaders(session, true),
         method: "POST"
       });
       const result = (await response.json().catch(() => ({}))) as { message?: string };
@@ -119,7 +120,7 @@ function LiveCouponManagementClient() {
     try {
       const response = await fetch(`/api/admin/coupons/${coupon.id}`, {
         body: JSON.stringify({ isActive: !coupon.isActive }),
-        headers: { "Content-Type": "application/json" },
+        headers: adminJsonHeaders(session, true),
         method: "PATCH"
       });
       const result = (await response.json().catch(() => ({}))) as { message?: string };
@@ -142,7 +143,7 @@ function LiveCouponManagementClient() {
     }
 
     try {
-      const response = await fetch(`/api/admin/coupons/${coupon.id}`, { method: "DELETE" });
+      const response = await fetch(`/api/admin/coupons/${coupon.id}`, { headers: adminJsonHeaders(session), method: "DELETE" });
       const result = (await response.json().catch(() => ({}))) as { message?: string };
 
       if (!response.ok) {
