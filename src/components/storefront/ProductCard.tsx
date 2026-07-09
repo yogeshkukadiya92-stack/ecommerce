@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Beaker, GitCompare, Heart, ShieldCheck, ShoppingCart } from "lucide-react";
 import { useState } from "react";
 import type { Product } from "@/types";
@@ -18,6 +19,7 @@ function hasMerchandising(product: ProductCardProduct): product is StorefrontPro
 }
 
 export function ProductCard({ product }: { product: ProductCardProduct }) {
+  const router = useRouter();
   const [message, setMessage] = useState("");
   const variant = product.variants[0];
   const image = product.images[0];
@@ -25,7 +27,7 @@ export function ProductCard({ product }: { product: ProductCardProduct }) {
   const stockTone = variant?.stock && variant.stock > 15 ? "success" : "sale";
   const [isCompared, setIsCompared] = useState(false);
 
-  function handleQuickAdd() {
+  function handleQuickAdd(redirectToCheckout = false) {
     if (!variant) {
       return;
     }
@@ -46,6 +48,12 @@ export function ProductCard({ product }: { product: ProductCardProduct }) {
       variantId: variant.id,
       variantLabel: [variant.flavor, variant.size].filter(Boolean).join(" / ")
     });
+
+    if (redirectToCheckout) {
+      router.push("/checkout");
+      return;
+    }
+
     setMessage("Added to cart");
   }
 
@@ -145,14 +153,24 @@ export function ProductCard({ product }: { product: ProductCardProduct }) {
           ) : null}
         </div>
         {isCompared ? <p className="mt-2 text-xs font-bold text-forest">Added to compare</p> : null}
-        <button
-          className="focus-ring mt-auto flex h-11 w-full items-center justify-center gap-2 rounded-md bg-ink text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-forest hover:shadow-card active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
-          disabled={!variant || variant.stock <= 0}
-          onClick={handleQuickAdd}
-          type="button"
-        >
-          <ShoppingCart className="h-4 w-4" /> {variant && variant.stock > 0 ? "Add to cart" : "Out of stock"}
-        </button>
+        <div className="mt-auto grid gap-2 sm:grid-cols-2">
+          <button
+            className="focus-ring flex h-11 w-full items-center justify-center gap-2 rounded-md bg-ink text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-forest hover:shadow-card active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={!variant || variant.stock <= 0}
+            onClick={() => handleQuickAdd()}
+            type="button"
+          >
+            <ShoppingCart className="h-4 w-4" /> {variant && variant.stock > 0 ? "Add to cart" : "Out of stock"}
+          </button>
+          <button
+            className="focus-ring flex h-11 w-full items-center justify-center rounded-md bg-lime text-sm font-semibold text-ink shadow-sm transition hover:-translate-y-0.5 hover:bg-mint hover:shadow-card active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={!variant || variant.stock <= 0}
+            onClick={() => handleQuickAdd(true)}
+            type="button"
+          >
+            Buy now
+          </button>
+        </div>
         {message ? <p aria-live="polite" className="mt-2 text-center text-xs font-bold text-forest">{message}</p> : null}
       </div>
     </article>

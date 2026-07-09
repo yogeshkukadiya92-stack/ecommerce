@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Beaker,
   ChevronRight,
@@ -50,6 +51,7 @@ export function ProductDetailClient({
   recommendedStack,
   relatedProducts
 }: ProductDetailClientProps) {
+  const router = useRouter();
   const [selectedVariantId, setSelectedVariantId] = useState(product.variants[0]?.id ?? "");
   const [selectedGalleryIndex, setSelectedGalleryIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
@@ -150,6 +152,11 @@ export function ProductDetailClient({
         payload.subscriptionFrequency ? ` every ${payload.subscriptionFrequency}` : ""
       }`
     );
+  }
+
+  function handleBuyNow() {
+    addLocalCartItem(createCartPayload());
+    router.push("/checkout");
   }
 
   return (
@@ -342,7 +349,7 @@ export function ProductDetailClient({
             <button
               aria-label={`Buy ${product.name} ${selectedVariant.flavor} ${selectedVariant.size} now`}
               className="focus-ring h-12 rounded-md bg-lime text-sm font-semibold text-ink shadow-sm hover:bg-mint"
-              onClick={handleAddToCart}
+              onClick={handleBuyNow}
               type="button"
             >
               Buy now
@@ -502,7 +509,7 @@ export function ProductDetailClient({
           <button
             aria-label={`Buy ${product.name} ${selectedVariant.flavor} ${selectedVariant.size} now from sticky bar`}
             className="focus-ring h-12 rounded-md bg-lime text-sm font-semibold text-ink"
-            onClick={handleAddToCart}
+            onClick={handleBuyNow}
             type="button"
           >
             Buy now
