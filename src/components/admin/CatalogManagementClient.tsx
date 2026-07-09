@@ -146,6 +146,18 @@ type LiveProductForm = {
   usageInstructions: string;
   warningText: string;
   weightInGrams: number | "";
+  variants: LiveProductVariantForm[];
+};
+
+type LiveProductVariantForm = {
+  flavor: string;
+  id?: string;
+  mrp: number | "";
+  sellingPrice: number | "";
+  size: string;
+  sku: string;
+  stock: number | "";
+  weightInGrams: number | "";
 };
 
 type LiveCatalogProduct = {
@@ -163,6 +175,7 @@ type LiveCatalogProduct = {
   status: "DRAFT" | "ACTIVE" | "ARCHIVED";
   usageInstructions: string;
   variants: Array<{
+    flavor?: string | null;
     id: string;
     mrp: number;
     sellingPrice: number;
@@ -194,7 +207,8 @@ const liveInitialProduct: LiveProductForm = {
   stock: "",
   usageInstructions: "",
   warningText: "This product is not intended to diagnose, treat, cure, or prevent any disease. Not for medicinal use.",
-  weightInGrams: ""
+  weightInGrams: "",
+  variants: []
 };
 
 const liveProductTemplates: Array<{ label: string; value: LiveProductForm }> = [
@@ -220,7 +234,8 @@ const liveProductTemplates: Array<{ label: string; value: LiveProductForm }> = [
       stock: 0,
       usageInstructions: "Mix one scoop with 180-220 ml water or milk after training or as needed.",
       warningText: liveInitialProduct.warningText,
-      weightInGrams: 1000
+      weightInGrams: 1000,
+      variants: []
     }
   },
   {
@@ -245,7 +260,8 @@ const liveProductTemplates: Array<{ label: string; value: LiveProductForm }> = [
       stock: 0,
       usageInstructions: "Mix 3 g with water once daily. Use consistently as part of a training routine.",
       warningText: liveInitialProduct.warningText,
-      weightInGrams: 250
+      weightInGrams: 250,
+      variants: []
     }
   },
   {
@@ -270,7 +286,8 @@ const liveProductTemplates: Array<{ label: string; value: LiveProductForm }> = [
       stock: 0,
       usageInstructions: "Mix two scoops with 350 ml milk or water between meals.",
       warningText: liveInitialProduct.warningText,
-      weightInGrams: 3000
+      weightInGrams: 3000,
+      variants: []
     }
   },
   {
@@ -295,7 +312,8 @@ const liveProductTemplates: Array<{ label: string; value: LiveProductForm }> = [
       stock: 0,
       usageInstructions: "Take one tablet daily with a meal or as directed on the product label.",
       warningText: liveInitialProduct.warningText,
-      weightInGrams: 120
+      weightInGrams: 120,
+      variants: []
     }
   }
 ];
@@ -475,6 +493,41 @@ function LiveCatalogManagementClient() {
 
     setIsAddingCategory(false);
     updateForm("categoryName", value);
+  }
+
+  function addFlavorVariant() {
+    setForm((current) => ({
+      ...current,
+      variants: [
+        ...current.variants,
+        {
+          flavor: "",
+          mrp: current.mrp,
+          sellingPrice: current.sellingPrice,
+          size: current.size,
+          sku: skuFromNameAndSize(current.name, current.size || `flavor-${current.variants.length + 1}`),
+          stock: 0,
+          weightInGrams: current.weightInGrams
+        }
+      ]
+    }));
+  }
+
+  function updateFlavorVariant<K extends keyof LiveProductVariantForm>(index: number, key: K, value: LiveProductVariantForm[K]) {
+    setForm((current) => ({
+      ...current,
+      variants: current.variants.map((variant, variantIndex) =>
+        variantIndex === index ? { ...variant, [key]: value } : variant
+      )
+    }));
+    setError("");
+  }
+
+  function removeFlavorVariant(index: number) {
+    setForm((current) => ({
+      ...current,
+      variants: current.variants.filter((_, variantIndex) => variantIndex !== index)
+    }));
   }
 
   function applyTemplate(templateLabel: string) {
@@ -659,7 +712,17 @@ function LiveCatalogManagementClient() {
       stock: primaryVariant?.stock ?? 0,
       usageInstructions: product.usageInstructions,
       warningText: product.warningText,
-      weightInGrams: primaryVariant?.weightInGrams ?? 0
+      weightInGrams: primaryVariant?.weightInGrams ?? 0,
+      variants: product.variants.map((variant) => ({
+        flavor: variant.flavor ?? "",
+        id: variant.id,
+        mrp: Number(variant.mrp ?? 0),
+        sellingPrice: Number(variant.sellingPrice ?? 0),
+        size: variant.size ?? "",
+        sku: variant.sku,
+        stock: Number(variant.stock ?? 0),
+        weightInGrams: Number(variant.weightInGrams ?? 0)
+      }))
     });
     setMessage(`Editing ${product.name}. Update the fields and save.`);
     setError("");
@@ -814,6 +877,50 @@ function LiveCatalogManagementClient() {
               }}
               value={form.imageUrls.length > 0 ? form.imageUrls : form.imageUrl ? [form.imageUrl] : []}
             />
+          </div>
+          <div className="md:col-span-2">
+            <div className="rounded-md border border-black/10 bg-mist p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h3 className="text-sm font-extrabold text-ink">Flavor stock</h3>
+                  <p className="mt-1 text-xs font-semibold text-slate">
+                    Add each flavor as a separate SKU so stock and price can be managed independently.
+                  </p>
+                </div>
+                <button className="admin-action" onClick={addFlavorVariant} type="button">
+                  <Plus className="h-4 w-4" /> Add flavor
+                </button>
+              </div>
+              {form.variants.length > 0 ? (
+                <div className="mt-4 grid gap-3">
+                  {form.variants.map((variant, index) => (
+                    <div className="rounded-md border border-black/10 bg-white p-3 shadow-sm" key={variant.id ?? `${variant.sku}-${index}`}>
+                      <div className="mb-3 flex items-center justify-between gap-2">
+                        <p className="text-xs font-black uppercase tracking-[0.12em] text-forest">
+                          {index === 0 ? "Main variant" : `Flavor ${index + 1}`}
+                        </p>
+                        <button className="admin-action text-coral" onClick={() => removeFlavorVariant(index)} type="button">
+                          <Trash2 className="h-4 w-4" /> Remove
+                        </button>
+                      </div>
+                      <div className="grid gap-3 md:grid-cols-3">
+                        <Input label="Flavor" onChange={(event) => updateFlavorVariant(index, "flavor", event.target.value)} value={variant.flavor} />
+                        <Input label="SKU" onChange={(event) => updateFlavorVariant(index, "sku", event.target.value)} required value={variant.sku} />
+                        <Input label="Size" onChange={(event) => updateFlavorVariant(index, "size", event.target.value)} value={variant.size} />
+                        <Input label="MRP" min={1} onChange={(event) => updateFlavorVariant(index, "mrp", parseOptionalNumberInput(event.target.value))} required type="number" value={variant.mrp} />
+                        <Input label="Selling price" min={1} onChange={(event) => updateFlavorVariant(index, "sellingPrice", parseOptionalNumberInput(event.target.value))} required type="number" value={variant.sellingPrice} />
+                        <Input label="Stock" min={0} onChange={(event) => updateFlavorVariant(index, "stock", parseOptionalNumberInput(event.target.value))} type="number" value={variant.stock} />
+                        <Input label="Weight in grams" min={1} onChange={(event) => updateFlavorVariant(index, "weightInGrams", parseOptionalNumberInput(event.target.value))} required type="number" value={variant.weightInGrams} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-4 rounded-md border border-dashed border-black/20 bg-white p-3 text-xs font-bold text-slate">
+                  No extra flavors yet. The main SKU fields above will be used as the default variant.
+                </p>
+              )}
+            </div>
           </div>
         </div>
         <div className="mt-5 border-t border-black/10 pt-5">
@@ -1561,6 +1668,9 @@ function getMissingLiveProductFields(form: LiveProductForm) {
   if (!form.mrp || form.mrp <= 0) missing.push("MRP");
   if (!form.sellingPrice || form.sellingPrice <= 0) missing.push("selling price");
   if (!form.weightInGrams || form.weightInGrams <= 0) missing.push("weight");
+  if (form.variants.some((variant) => variant.sku.trim().length < 3)) missing.push("valid flavor SKU");
+  if (form.variants.some((variant) => !variant.mrp || variant.mrp <= 0 || !variant.sellingPrice || variant.sellingPrice <= 0)) missing.push("valid flavor price");
+  if (form.variants.some((variant) => !variant.weightInGrams || variant.weightInGrams <= 0)) missing.push("valid flavor weight");
 
   return missing;
 }
@@ -1570,6 +1680,7 @@ function buildLiveProductPayload(form: LiveProductForm): LiveProductForm {
   const cleanCategory = form.categoryName.trim();
   const cleanGoals = form.goalTags.trim();
   const imageUrls = uniqueOptions([...(form.imageUrls.length > 0 ? form.imageUrls : []), form.imageUrl]);
+  const variants = normalizeLiveVariants(form);
   const shortDescription =
     form.shortDescription.trim() ||
     `${cleanName} for ${cleanGoals || cleanCategory || "daily supplement routines"}.`;
@@ -1590,8 +1701,37 @@ function buildLiveProductPayload(form: LiveProductForm): LiveProductForm {
     warningText:
       form.warningText.trim() ||
       "This product is not intended to diagnose, treat, cure, or prevent any disease. Not for medicinal use.",
-    weightInGrams: Number(form.weightInGrams)
+    weightInGrams: Number(form.weightInGrams),
+    variants
   };
+}
+
+function normalizeLiveVariants(form: LiveProductForm): LiveProductVariantForm[] {
+  const sourceVariants =
+    form.variants.length > 0
+      ? form.variants
+      : [
+          {
+            flavor: "",
+            mrp: form.mrp,
+            sellingPrice: form.sellingPrice,
+            size: form.size,
+            sku: form.sku,
+            stock: form.stock,
+            weightInGrams: form.weightInGrams
+          }
+        ];
+
+  return sourceVariants.map((variant, index) => ({
+    flavor: variant.flavor.trim(),
+    id: variant.id,
+    mrp: Number(variant.mrp),
+    sellingPrice: Number(variant.sellingPrice),
+    size: variant.size.trim() || form.size.trim(),
+    sku: (variant.sku.trim() || `${form.sku}-${index + 1}`).toUpperCase(),
+    stock: variant.stock === "" ? 0 : Number(variant.stock),
+    weightInGrams: Number(variant.weightInGrams || form.weightInGrams)
+  }));
 }
 
 function parseOptionalNumberInput(value: string) {

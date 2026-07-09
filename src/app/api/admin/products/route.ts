@@ -4,6 +4,17 @@ import { z } from "zod";
 import { listProducts } from "@/lib/catalog/productRepository";
 import { prisma } from "@/lib/db/prisma";
 
+const productVariantInputSchema = z.object({
+  flavor: z.string().optional(),
+  id: z.string().optional(),
+  mrp: z.number().positive(),
+  sellingPrice: z.number().positive(),
+  size: z.string().optional(),
+  sku: z.string().min(3),
+  stock: z.number().int().min(0),
+  weightInGrams: z.number().int().positive()
+});
+
 const productInputSchema = z.object({
   allergens: z.string().optional(),
   brandName: z.string().min(2),
@@ -35,7 +46,8 @@ const productInputSchema = z.object({
   stock: z.number().int().min(0),
   usageInstructions: z.string().optional(),
   warningText: z.string().optional(),
-  weightInGrams: z.number().int().positive()
+  weightInGrams: z.number().int().positive(),
+  variants: z.array(productVariantInputSchema).optional()
 });
 
 export async function GET(request: Request) {
@@ -55,9 +67,15 @@ export async function POST(request: Request) {
   try {
     const input = productInputSchema.parse(await request.json());
     const slug = input.slug.trim().toLowerCase();
-    const sku = input.sku.trim().toUpperCase();
+    const variants = normalizeVariants(input);
+    const variantSkus = variants.map((variant) => variant.sku);
+
+    if (new Set(variantSkus).size !== variantSkus.length) {
+      return NextResponse.json({ message: "Every flavor needs a unique SKU." }, { status: 409 });
+    }
+
     const existingProduct = await prisma.product.findUnique({ where: { slug } });
-    const existingVariant = await prisma.productVariant.findUnique({ where: { sku } });
+    const existingVariant = await prisma.productVariant.findFirst({ where: { sku: { in: variantSkus } } });
 
     if (existingProduct || existingVariant) {
       return NextResponse.json({ message: "Product slug or SKU already exists." }, { status: 409 });
@@ -65,7 +83,6 @@ export async function POST(request: Request) {
 
     const brand = await getOrCreateBrand(input.brandName);
     const category = await getOrCreateCategory(input.categoryName);
-    const discountPercent = Math.max(0, Math.round(((input.mrp - input.sellingPrice) / input.mrp) * 100));
     const imageUrls = normalizeImageUrls(input.imageUrls, input.imageUrl);
 
     const product = await prisma.product.create({
@@ -95,17 +112,18 @@ export async function POST(request: Request) {
         status: input.status,
         usageInstructions: input.usageInstructions?.trim() || "Use as directed on the product label.",
         variants: {
-          create: {
+          create: variants.map((variant) => ({
             currency: "INR",
-            discountPercent,
+            discountPercent: getDiscountPercent(variant.mrp, variant.sellingPrice),
+            flavor: variant.flavor || undefined,
             isActive: input.status === "ACTIVE",
-            mrp: input.mrp,
-            sellingPrice: input.sellingPrice,
-            size: input.size?.trim() || undefined,
-            sku,
-            stock: input.stock,
-            weightInGrams: input.weightInGrams
-          }
+            mrp: variant.mrp,
+            sellingPrice: variant.sellingPrice,
+            size: variant.size || undefined,
+            sku: variant.sku,
+            stock: variant.stock,
+            weightInGrams: variant.weightInGrams
+          }))
         },
         warningText:
           input.warningText?.trim() ||
@@ -216,6 +234,36 @@ function normalizeImageUrls(imageUrls?: string[], imageUrl?: string) {
       seen.add(url);
       return true;
     });
+}
+
+function normalizeVariants(input: z.infer<typeof productInputSchema>) {
+  const variants = input.variants?.length
+    ? input.variants
+    : [
+        {
+          flavor: "",
+          mrp: input.mrp,
+          sellingPrice: input.sellingPrice,
+          size: input.size,
+          sku: input.sku,
+          stock: input.stock,
+          weightInGrams: input.weightInGrams
+        }
+      ];
+
+  return variants.map((variant) => ({
+    flavor: variant.flavor?.trim() ?? "",
+    mrp: variant.mrp,
+    sellingPrice: variant.sellingPrice,
+    size: variant.size?.trim() ?? "",
+    sku: variant.sku.trim().toUpperCase(),
+    stock: variant.stock,
+    weightInGrams: variant.weightInGrams
+  }));
+}
+
+function getDiscountPercent(mrp: number, sellingPrice: number) {
+  return Math.max(0, Math.round(((mrp - sellingPrice) / mrp) * 100));
 }
 
 function slugify(value: string) {

@@ -10,7 +10,9 @@ import {
 import { listActiveProducts, listProducts } from "@/lib/catalog/productRepository";
 
 function toStorefrontProduct(product: Awaited<ReturnType<typeof listActiveProducts>>[number]): StorefrontProduct {
-  const variant = product.variants[0];
+  const variants = product.variants.filter((variant) => variant.isActive);
+  const visibleVariants = variants.length > 0 ? variants : product.variants;
+  const variant = visibleVariants[0];
   const size = variant?.size ?? "";
   const servingsCount = deriveServingsCount(size, variant?.weightInGrams ?? 0);
   const proteinPerServing = extractProteinPerServing(product.nutritionFacts);
@@ -24,7 +26,7 @@ function toStorefrontProduct(product: Awaited<ReturnType<typeof listActiveProduc
       categorySlug: category?.slug ?? "supplements",
       collectionSlugs: [],
       dietaryType: "veg",
-      flavors: variant?.flavor ? [variant.flavor] : [],
+      flavors: uniqueValues(visibleVariants.map((item) => item.flavor).filter(Boolean)),
       isGlutenFree: !product.allergens.some((item) => item.toLowerCase().includes("gluten")),
       isLactoseFree: !product.allergens.some((item) => item.toLowerCase().includes("milk")),
       isNewArrival: Date.now() - product.createdAt.getTime() < 1000 * 60 * 60 * 24 * 30,
@@ -37,8 +39,9 @@ function toStorefrontProduct(product: Awaited<ReturnType<typeof listActiveProduc
       rating: 4.7,
       reviewCount: 128,
       servingsCount,
-      sizes: size ? [size] : []
+      sizes: uniqueValues(visibleVariants.map((item) => item.size).filter(Boolean))
     },
+    variants: visibleVariants,
     status: product.status.toLowerCase() as StorefrontProduct["status"],
     updatedAt: product.updatedAt.toISOString()
   } as unknown as StorefrontProduct;
@@ -206,6 +209,10 @@ function logLiveCatalogError(error: unknown) {
 
 function toSlug(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+}
+
+function uniqueValues<T>(values: T[]) {
+  return [...new Set(values)];
 }
 
 function deriveServingsCount(size: string, weightInGrams: number) {
