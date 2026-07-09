@@ -7,6 +7,7 @@ import { useState } from "react";
 import type { AdminSession } from "@/types/admin";
 import { adminRoles, persistAdminSession } from "@/lib/admin/adminAuth";
 import { Input } from "@/components/ui/Input";
+import { PasswordInput } from "./PasswordInput";
 
 type LoginResponse = {
   message?: string;
@@ -107,7 +108,7 @@ export function AdminLoginClient() {
           </p>
           <form autoComplete="off" className="mt-6 grid gap-4" onSubmit={handleLogin}>
             <Input autoComplete="off" label="Admin email" onChange={(event) => setEmail(event.target.value)} type="email" value={email} />
-            <Input autoComplete="new-password" label="Password" onChange={(event) => setPassword(event.target.value)} type="password" value={password} />
+            <PasswordInput autoComplete="current-password" label="Password" onChange={(event) => setPassword(event.target.value)} value={password} />
             {error ? <p className="rounded-md bg-coral/10 p-3 text-sm font-bold text-coral">{error}</p> : null}
             {message ? <p className="rounded-md bg-mint p-3 text-sm font-bold text-forest">{message}</p> : null}
             <button className="focus-ring h-12 rounded-md bg-ink text-sm font-semibold text-white disabled:opacity-60" disabled={isSubmitting} type="submit">
@@ -137,8 +138,8 @@ export function AdminLoginClient() {
             <form className="mt-6 grid gap-4" onSubmit={handleRecovery}>
               <Input label="Admin email to recover" onChange={(event) => setRecoveryEmail(event.target.value)} type="email" value={recoveryEmail} />
               <Input label="Owner email" onChange={(event) => setOwnerEmail(event.target.value)} type="email" value={ownerEmail} />
-              <Input label="Owner password" onChange={(event) => setOwnerPassword(event.target.value)} type="password" value={ownerPassword} />
-              <Input label="New admin password" onChange={(event) => setNewPassword(event.target.value)} type="password" value={newPassword} />
+              <PasswordInput autoComplete="current-password" label="Owner password" onChange={(event) => setOwnerPassword(event.target.value)} value={ownerPassword} />
+              <PasswordInput autoComplete="new-password" label="New admin password" onChange={(event) => setNewPassword(event.target.value)} value={newPassword} />
               {recoveryError ? <p className="rounded-md bg-coral/10 p-3 text-sm font-bold text-coral">{recoveryError}</p> : null}
               {recoveryMessage ? <p className="rounded-md bg-mint p-3 text-sm font-bold text-forest">{recoveryMessage}</p> : null}
               <button className="focus-ring h-12 rounded-md bg-forest text-sm font-semibold text-white disabled:opacity-60" disabled={isRecovering} type="submit">

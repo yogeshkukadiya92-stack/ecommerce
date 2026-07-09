@@ -6,6 +6,7 @@ import { persistAdminSession } from "@/lib/admin/adminAuth";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import type { AdminSession } from "@/types/admin";
 import { AdminCard } from "@/components/admin/AdminCard";
+import { PasswordInput } from "@/components/admin/PasswordInput";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 
@@ -224,22 +225,19 @@ export function AdminAccessSettingsClient() {
         title="Password"
       >
         <form className="grid gap-4 md:grid-cols-3" onSubmit={handlePasswordChange}>
-          <Input
+          <PasswordInput
             label="Current password"
             onChange={(event) => setChangeForm((current) => ({ ...current, currentPassword: event.target.value }))}
-            type="password"
             value={changeForm.currentPassword}
           />
-          <Input
+          <PasswordInput
             label="New password"
             onChange={(event) => setChangeForm((current) => ({ ...current, newPassword: event.target.value }))}
-            type="password"
             value={changeForm.newPassword}
           />
-          <Input
+          <PasswordInput
             label="Confirm new password"
             onChange={(event) => setChangeForm((current) => ({ ...current, confirmPassword: event.target.value }))}
-            type="password"
             value={changeForm.confirmPassword}
           />
           <div className="md:col-span-3 flex flex-wrap items-center gap-3">
@@ -269,10 +267,9 @@ export function AdminAccessSettingsClient() {
               type="email"
               value={createForm.email}
             />
-            <Input
+            <PasswordInput
               label="Temporary password"
               onChange={(event) => setCreateForm((current) => ({ ...current, password: event.target.value }))}
-              type="password"
               value={createForm.password}
             />
             <Select
