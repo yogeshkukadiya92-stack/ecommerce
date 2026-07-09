@@ -16,6 +16,13 @@ const productInputSchema = z.object({
       message: "Enter a valid image URL or upload an image."
     })
     .optional(),
+  imageUrls: z
+    .array(
+      z.string().refine((value) => value === "" || value.startsWith("/") || z.string().url().safeParse(value).success, {
+        message: "Enter valid image URLs or upload images."
+      })
+    )
+    .optional(),
   ingredients: z.string().optional(),
   mrp: z.number().positive(),
   name: z.string().min(3),
@@ -59,6 +66,7 @@ export async function POST(request: Request) {
     const brand = await getOrCreateBrand(input.brandName);
     const category = await getOrCreateCategory(input.categoryName);
     const discountPercent = Math.max(0, Math.round(((input.mrp - input.sellingPrice) / input.mrp) * 100));
+    const imageUrls = normalizeImageUrls(input.imageUrls, input.imageUrl);
 
     const product = await prisma.product.create({
       data: {
@@ -68,14 +76,14 @@ export async function POST(request: Request) {
         collectionIds: [],
         description: input.description.trim(),
         goalTags: splitList(input.goalTags),
-        images: input.imageUrl
+        images: imageUrls.length > 0
           ? {
-              create: {
+              create: imageUrls.map((url, index) => ({
                 altText: input.name.trim(),
-                isPrimary: true,
-                position: 1,
-                url: input.imageUrl
-              }
+                isPrimary: index === 0,
+                position: index + 1,
+                url
+              }))
             }
           : undefined,
         ingredients: splitList(input.ingredients),
@@ -193,6 +201,21 @@ function splitList(value?: string) {
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function normalizeImageUrls(imageUrls?: string[], imageUrl?: string) {
+  const seen = new Set<string>();
+
+  return [...(imageUrls ?? []), imageUrl ?? ""]
+    .map((url) => url.trim())
+    .filter((url) => {
+      if (!url || seen.has(url)) {
+        return false;
+      }
+
+      seen.add(url);
+      return true;
+    });
 }
 
 function slugify(value: string) {

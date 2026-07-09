@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
 import { AdminCard } from "./AdminCard";
 import { AdminTable } from "./AdminTable";
-import { ImageUploadButton, ImageUploadField } from "./ImageUploadField";
+import { ImageUploadButton, ImageUploadField, MultiImageUploadField } from "./ImageUploadField";
 
 type AdminProductStatus = ProductStatus | "inactive";
 
@@ -131,6 +131,7 @@ type LiveProductForm = {
   categoryName: string;
   description: string;
   goalTags: string;
+  imageUrls: string[];
   imageUrl: string;
   ingredients: string;
   mrp: number | "";
@@ -179,6 +180,7 @@ const liveInitialProduct: LiveProductForm = {
   categoryName: "",
   description: "",
   goalTags: "",
+  imageUrls: [],
   imageUrl: "",
   ingredients: "",
   mrp: "",
@@ -204,6 +206,7 @@ const liveProductTemplates: Array<{ label: string; value: LiveProductForm }> = [
       categoryName: "Protein Powders",
       description: "Premium whey protein powder for daily protein intake and post-workout nutrition routines.",
       goalTags: "Muscle support, Post-workout, Protein",
+      imageUrls: [],
       imageUrl: "",
       ingredients: "Whey protein concentrate, Cocoa powder, Digestive enzymes, Sweetener",
       mrp: 3499,
@@ -228,6 +231,7 @@ const liveProductTemplates: Array<{ label: string; value: LiveProductForm }> = [
       categoryName: "Performance",
       description: "Single-ingredient creatine monohydrate for strength training routines and everyday performance support.",
       goalTags: "Strength, Performance, Training",
+      imageUrls: [],
       imageUrl: "",
       ingredients: "Creatine monohydrate",
       mrp: 1499,
@@ -252,6 +256,7 @@ const liveProductTemplates: Array<{ label: string; value: LiveProductForm }> = [
       categoryName: "Protein Powders",
       description: "Calorie-dense mass gainer with protein, carbohydrates, and vitamins for structured bulking plans.",
       goalTags: "Weight gain, Bulking, Calories",
+      imageUrls: [],
       imageUrl: "",
       ingredients: "Maltodextrin, Whey protein, MCT powder, Vitamin blend",
       mrp: 4299,
@@ -276,6 +281,7 @@ const liveProductTemplates: Array<{ label: string; value: LiveProductForm }> = [
       categoryName: "Vitamins & Wellness",
       description: "Daily multivitamin tablets with essential vitamins and minerals for active lifestyles.",
       goalTags: "Daily wellness, Vitamins, Health support",
+      imageUrls: [],
       imageUrl: "",
       ingredients: "Vitamin blend, Mineral blend, Tablet excipients",
       mrp: 899,
@@ -639,6 +645,7 @@ function LiveCatalogManagementClient() {
       categoryName: product.categories[0]?.name ?? "",
       description: product.description,
       goalTags: product.goalTags.join(", "),
+      imageUrls: product.images.map((image) => image.url),
       imageUrl: product.images[0]?.url ?? "",
       ingredients: product.ingredients.join(", "),
       mrp: Number(primaryVariant?.mrp ?? 0),
@@ -798,7 +805,15 @@ function LiveCatalogManagementClient() {
             <option value="ACTIVE">Active</option>
           </SelectField>
           <div className="md:col-span-2">
-            <ImageUploadField compact helperText="Optional, but recommended before publishing active products." label="Product image" onChange={(value) => updateForm("imageUrl", value)} value={form.imageUrl} />
+            <MultiImageUploadField
+              helperText="Add multiple product photos. The first photo is used as the main website image."
+              label="Product photos"
+              onChange={(value) => {
+                updateForm("imageUrls", value);
+                updateForm("imageUrl", value[0] ?? "");
+              }}
+              value={form.imageUrls.length > 0 ? form.imageUrls : form.imageUrl ? [form.imageUrl] : []}
+            />
           </div>
         </div>
         <div className="mt-5 border-t border-black/10 pt-5">
@@ -1554,6 +1569,7 @@ function buildLiveProductPayload(form: LiveProductForm): LiveProductForm {
   const cleanName = form.name.trim();
   const cleanCategory = form.categoryName.trim();
   const cleanGoals = form.goalTags.trim();
+  const imageUrls = uniqueOptions([...(form.imageUrls.length > 0 ? form.imageUrls : []), form.imageUrl]);
   const shortDescription =
     form.shortDescription.trim() ||
     `${cleanName} for ${cleanGoals || cleanCategory || "daily supplement routines"}.`;
@@ -1564,6 +1580,8 @@ function buildLiveProductPayload(form: LiveProductForm): LiveProductForm {
   return {
     ...form,
     description,
+    imageUrl: imageUrls[0] ?? "",
+    imageUrls,
     mrp: Number(form.mrp),
     shortDescription,
     sellingPrice: Number(form.sellingPrice),

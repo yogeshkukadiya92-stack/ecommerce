@@ -144,3 +144,129 @@ export function ImageUploadField({
     </div>
   );
 }
+
+export function MultiImageUploadField({
+  helperText,
+  label,
+  onChange,
+  value
+}: {
+  helperText?: string;
+  label: string;
+  onChange: (value: string[]) => void;
+  value: string[];
+}) {
+  const [draftUrl, setDraftUrl] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+
+  function addUrl(url: string) {
+    const trimmedUrl = url.trim();
+
+    if (!trimmedUrl) {
+      return;
+    }
+
+    onChange([...value, trimmedUrl]);
+    setDraftUrl("");
+  }
+
+  async function handleFiles(files?: FileList | null) {
+    if (!files?.length) return;
+
+    setIsUploading(true);
+    setUploadError("");
+
+    try {
+      const uploadedUrls = await Promise.all(Array.from(files).map((file) => uploadImageFile(file)));
+      onChange([...value, ...uploadedUrls]);
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : "Unable to upload images right now.");
+    } finally {
+      setIsUploading(false);
+    }
+  }
+
+  function removeImage(index: number) {
+    onChange(value.filter((_, imageIndex) => imageIndex !== index));
+  }
+
+  function makePrimary(index: number) {
+    onChange([value[index], ...value.filter((_, imageIndex) => imageIndex !== index)].filter(Boolean));
+  }
+
+  return (
+    <div className="grid content-start gap-3">
+      <div>
+        <p className="mb-2 block text-sm font-semibold text-ink">{label}</p>
+        {helperText ? <p className="text-xs text-slate">{helperText}</p> : null}
+      </div>
+      <div className="rounded-md border border-dashed border-black/20 bg-mist p-3">
+        {value.length > 0 ? (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {value.map((url, index) => (
+              <div className="overflow-hidden rounded-md border border-black/10 bg-white shadow-sm" key={`${url}-${index}`}>
+                <div
+                  aria-label={`${label} ${index + 1}`}
+                  className="aspect-square bg-white bg-contain bg-center bg-no-repeat"
+                  role="img"
+                  style={{ backgroundImage: `url(${url})` }}
+                />
+                <div className="grid gap-2 p-2">
+                  <p className="truncate text-xs font-bold text-slate">{index === 0 ? "Main photo" : `Photo ${index + 1}`}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {index > 0 ? (
+                      <button className="admin-action px-2 py-1" onClick={() => makePrimary(index)} type="button">
+                        Make main
+                      </button>
+                    ) : null}
+                    <button className="admin-action px-2 py-1 text-coral" onClick={() => removeImage(index)} type="button">
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid h-32 place-items-center rounded-md border border-black/10 bg-white text-xs font-bold text-slate">
+            No product photos selected
+          </div>
+        )}
+        <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
+          <Input
+            onChange={(event) => setDraftUrl(event.target.value)}
+            placeholder="Paste image URL"
+            value={draftUrl}
+          />
+          <button className="admin-action" onClick={() => addUrl(draftUrl)} type="button">
+            Add URL
+          </button>
+        </div>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <label className={`admin-action cursor-pointer ${isUploading ? "pointer-events-none opacity-60" : ""}`}>
+            {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
+            {isUploading ? "Uploading..." : "Upload photos"}
+            <input
+              accept="image/*"
+              className="sr-only"
+              disabled={isUploading}
+              multiple
+              onChange={(event) => {
+                void handleFiles(event.target.files);
+                event.target.value = "";
+              }}
+              type="file"
+            />
+          </label>
+          {value.length > 0 ? (
+            <button className="admin-action text-coral" onClick={() => onChange([])} type="button">
+              Clear all
+            </button>
+          ) : null}
+        </div>
+        {uploadError ? <p className="mt-2 text-xs font-bold text-coral" role="alert">{uploadError}</p> : null}
+      </div>
+    </div>
+  );
+}

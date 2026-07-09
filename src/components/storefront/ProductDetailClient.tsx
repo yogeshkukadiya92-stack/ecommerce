@@ -65,12 +65,12 @@ export function ProductDetailClient({
 
   const galleryItems = useMemo(
     () => [
-      {
-        alt: product.images[0]?.altText ?? product.name,
-        label: "Product",
+      ...product.images.map((image, index) => ({
+        alt: image.altText || `${product.name} photo ${index + 1}`,
+        label: index === 0 ? "Main" : `Photo ${index + 1}`,
         type: "image" as const,
-        url: product.images[0]?.url
-      },
+        url: image.url
+      })),
       {
         alt: `${product.name} product label`,
         label: "Label",
