@@ -114,9 +114,11 @@ export function OrderManagementClient({ initialOrderNumber }: { initialOrderNumb
 }
 
 type LiveOrder = {
+  billingAddress: LiveOrderAddress | null;
   createdAt: string;
   customerEmail: string;
   customerName: string;
+  customerPhone: string;
   discountAmount: number;
   id: string;
   itemCount: number;
@@ -124,11 +126,24 @@ type LiveOrder = {
   orderNumber: string;
   paymentProvider: string;
   paymentStatus: string;
+  shippingAddress: LiveOrderAddress | null;
   shippingAmount: number;
   status: string;
   subtotal: number;
   totalAmount: number;
   trackingNumber: string | null;
+};
+
+type LiveOrderAddress = {
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  country: string;
+  email: string;
+  fullName: string;
+  phone: string;
+  pincode: string;
+  state: string;
 };
 
 const liveOrderStatuses = ["PENDING", "CONFIRMED", "PACKED", "SHIPPED", "DELIVERED", "CANCELLED", "REFUNDED"] as const;
@@ -196,7 +211,9 @@ function LiveOrderManagementClient() {
       !query.trim() ||
       order.orderNumber.toLowerCase().includes(query.trim().toLowerCase()) ||
       order.customerName.toLowerCase().includes(query.trim().toLowerCase()) ||
-      order.customerEmail.toLowerCase().includes(query.trim().toLowerCase());
+      order.customerEmail.toLowerCase().includes(query.trim().toLowerCase()) ||
+      order.customerPhone.includes(query.trim()) ||
+      Boolean(order.shippingAddress?.pincode.includes(query.trim()));
     const matchesStatus = statusFilter === "all" || order.status === statusFilter;
     return matchesQuery && matchesStatus;
   });
@@ -243,6 +260,7 @@ function LiveOrderManagementClient() {
               <span key="customer">
                 <span className="font-bold text-ink">{order.customerName}</span>
                 <span className="block text-xs text-slate">{order.customerEmail}</span>
+                {order.customerPhone ? <span className="block text-xs text-slate">{order.customerPhone}</span> : null}
               </span>,
               order.itemCount,
               `Rs ${order.totalAmount.toLocaleString("en-IN")}`,
@@ -271,7 +289,16 @@ function LiveOrderManagementClient() {
               .filter((order) => order.id === expandedOrderId)
               .map((order) => (
                 <div key={order.id}>
-                  <p className="font-black text-ink">{order.orderNumber} items</p>
+                  <div className="grid gap-3 md:grid-cols-3">
+                    <LiveInfoBlock label="Customer" value={order.customerName} helper={order.customerEmail} />
+                    <LiveInfoBlock label="Phone" value={order.customerPhone || order.shippingAddress?.phone || "Not provided"} helper={order.paymentStatus} />
+                    <LiveInfoBlock label="Pincode" value={order.shippingAddress?.pincode || "Not provided"} helper={order.shippingAddress?.city} />
+                  </div>
+                  <div className="mt-3 grid gap-3 md:grid-cols-2">
+                    <LiveAddressBlock address={order.shippingAddress} label="Shipping address" />
+                    <LiveAddressBlock address={order.billingAddress} label="Billing address" />
+                  </div>
+                  <p className="mt-4 font-black text-ink">{order.orderNumber} items</p>
                   <ul className="mt-2 grid gap-2 text-sm font-semibold text-graphite">
                     {order.items.map((item) => (
                       <li className="flex flex-wrap justify-between gap-2 rounded-md bg-white p-3" key={item.id}>
@@ -289,6 +316,40 @@ function LiveOrderManagementClient() {
           </div>
         ) : null}
       </AdminCard>
+    </div>
+  );
+}
+
+function LiveInfoBlock({ helper, label: title, value }: { helper?: string; label: string; value: string }) {
+  return (
+    <div className="rounded-md bg-white p-3">
+      <p className="text-xs font-black uppercase tracking-[0.12em] text-slate">{title}</p>
+      <p className="mt-1 font-black text-ink">{value}</p>
+      {helper ? <p className="mt-1 text-xs text-slate">{helper}</p> : null}
+    </div>
+  );
+}
+
+function LiveAddressBlock({ address, label: title }: { address: LiveOrderAddress | null; label: string }) {
+  if (!address) {
+    return (
+      <div className="rounded-md border border-black/10 bg-white p-3 text-sm">
+        <p className="font-black text-ink">{title}</p>
+        <p className="mt-2 text-slate">No address recorded.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-md border border-black/10 bg-white p-3 text-sm">
+      <p className="font-black text-ink">{title}</p>
+      <p className="mt-2 font-semibold text-graphite">{address.fullName || "Customer"}</p>
+      <p className="mt-1 text-graphite">
+        {address.addressLine1}
+        {address.addressLine2 ? `, ${address.addressLine2}` : ""}, {address.city}, {address.state} {address.pincode}
+      </p>
+      <p className="mt-1 text-slate">{address.country}</p>
+      <p className="mt-1 text-slate">{address.phone}</p>
     </div>
   );
 }
