@@ -1,6 +1,13 @@
 import { prisma } from "@/lib/db/prisma";
 
-export async function listProducts(query?: string | null, options?: { activeOnly?: boolean }) {
+const DEFAULT_PRODUCT_LIMIT = 200;
+const MAX_PRODUCT_LIMIT = 500;
+
+export async function listProducts(
+  query?: string | null,
+  options?: { activeOnly?: boolean; limit?: number }
+) {
+  const limit = Math.min(Math.max(options?.limit ?? DEFAULT_PRODUCT_LIMIT, 1), MAX_PRODUCT_LIMIT);
   const products = await prisma.product.findMany({
     include: {
       brand: true,
@@ -10,6 +17,7 @@ export async function listProducts(query?: string | null, options?: { activeOnly
       variants: true
     },
     orderBy: { createdAt: "desc" },
+    take: limit,
     where: options?.activeOnly ? { status: "ACTIVE" } : undefined
   });
   const normalizedQuery = query?.trim().toLowerCase();

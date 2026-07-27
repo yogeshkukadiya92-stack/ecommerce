@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getLiveStorefrontProducts } from "@/lib/storefront/liveCatalog";
-import { products } from "@/mock";
 
 export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get("q");
@@ -28,6 +27,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const { products } = await import("@/mock/products");
     const normalizedQuery = query?.trim().toLowerCase();
     const data = normalizedQuery
       ? products.filter((product) =>

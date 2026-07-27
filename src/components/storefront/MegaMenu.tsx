@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
-import { categories, brands } from "@/mock";
+import { brands } from "@/mock/brands";
+import { categories } from "@/mock/categories";
 import type { CmsMenuItem } from "@/types/cms";
 
 export function MegaMenu({ items }: { items?: CmsMenuItem[] }) {

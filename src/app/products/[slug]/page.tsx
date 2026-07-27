@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { ProductDetailClient } from "@/components/storefront/ProductDetailClient";
-import { storefrontProducts } from "@/mock/storefront";
 import { breadcrumbSchema, buildSeoMetadata, faqSchema, productSchema } from "@/lib/seo/seo";
 import {
   buildLiveProductDetailContent,
@@ -12,7 +11,6 @@ import {
   getLiveStorefrontProductBySlug,
   getLiveStorefrontProducts
 } from "@/lib/storefront/liveCatalog";
-import { getProductBySlug, getProductDetailContent, getProductsByIds, getRelatedProducts } from "@/mock/storefront";
 
 export const dynamic = "force-dynamic";
 
@@ -20,13 +18,9 @@ type ProductDetailPageProps = {
   params: Promise<{ slug: string }>;
 };
 
-export function generateStaticParams() {
-  return storefrontProducts.map((product) => ({ slug: product.slug }));
-}
-
 export async function generateMetadata({ params }: ProductDetailPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const product = (await getLiveStorefrontProductBySlug(slug)) ?? (!canUseLiveStorefrontCatalog() ? getProductBySlug(slug) : null);
+  const product = await getLiveStorefrontProductBySlug(slug);
 
   if (!product) {
     return {
@@ -44,20 +38,62 @@ export async function generateMetadata({ params }: ProductDetailPageProps): Prom
 
 export default async function ProductDetailPage({ params }: ProductDetailPageProps) {
   const { slug } = await params;
-  const liveProduct = await getLiveStorefrontProductBySlug(slug);
-  const product = liveProduct ?? (!canUseLiveStorefrontCatalog() ? getProductBySlug(slug) : null);
+  const usesLiveCatalog = canUseLiveStorefrontCatalog();
+  const product = await getLiveStorefrontProductBySlug(slug);
 
   if (!product) {
     notFound();
   }
 
-  const detail = liveProduct ? buildLiveProductDetailContent() : getProductDetailContent(product.id);
+  if (!usesLiveCatalog) {
+    const { getProductDetailContent, getProductsByIds, getRelatedProducts } = await import("@/mock/storefront");
+    const detail = getProductDetailContent(product.id);
 
-  if (!detail) {
-    notFound();
+    if (!detail) {
+      notFound();
+    }
+
+    return renderProductPage({
+      compareProducts: getProductsByIds(detail.compareProductIds),
+      detail,
+      frequentlyBoughtTogether: getProductsByIds(detail.frequentlyBoughtTogetherIds),
+      product,
+      recommendedStack: getProductsByIds(detail.recommendedStackIds),
+      relatedProducts: getRelatedProducts(product)
+    });
   }
-  const relatedProducts = liveProduct ? await getLiveRelatedProducts(product) : getRelatedProducts(product);
-  const liveProducts = liveProduct ? await getLiveStorefrontProducts() : [];
+
+  const detail = buildLiveProductDetailContent();
+  const [relatedProducts, liveProducts] = await Promise.all([
+    getLiveRelatedProducts(product),
+    getLiveStorefrontProducts()
+  ]);
+
+  return renderProductPage({
+    compareProducts: liveProducts.filter((item) => detail.compareProductIds.includes(item.id)),
+    detail,
+    frequentlyBoughtTogether: liveProducts.filter((item) => detail.frequentlyBoughtTogetherIds.includes(item.id)),
+    product,
+    recommendedStack: liveProducts.filter((item) => detail.recommendedStackIds.includes(item.id)),
+    relatedProducts
+  });
+}
+
+function renderProductPage({
+  compareProducts,
+  detail,
+  frequentlyBoughtTogether,
+  product,
+  recommendedStack,
+  relatedProducts
+}: {
+  compareProducts: Parameters<typeof ProductDetailClient>[0]["compareProducts"];
+  detail: Parameters<typeof ProductDetailClient>[0]["detail"];
+  frequentlyBoughtTogether: Parameters<typeof ProductDetailClient>[0]["frequentlyBoughtTogether"];
+  product: Parameters<typeof ProductDetailClient>[0]["product"];
+  recommendedStack: Parameters<typeof ProductDetailClient>[0]["recommendedStack"];
+  relatedProducts: Parameters<typeof ProductDetailClient>[0]["relatedProducts"];
+}) {
 
   return (
     <SiteShell>
@@ -71,11 +107,11 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
         ])}
       />
       <ProductDetailClient
-        compareProducts={liveProduct ? liveProducts.filter((item) => detail.compareProductIds.includes(item.id)) : getProductsByIds(detail.compareProductIds)}
+        compareProducts={compareProducts}
         detail={detail}
-        frequentlyBoughtTogether={liveProduct ? liveProducts.filter((item) => detail.frequentlyBoughtTogetherIds.includes(item.id)) : getProductsByIds(detail.frequentlyBoughtTogetherIds)}
+        frequentlyBoughtTogether={frequentlyBoughtTogether}
         product={product}
-        recommendedStack={liveProduct ? liveProducts.filter((item) => detail.recommendedStackIds.includes(item.id)) : getProductsByIds(detail.recommendedStackIds)}
+        recommendedStack={recommendedStack}
         relatedProducts={relatedProducts}
       />
     </SiteShell>

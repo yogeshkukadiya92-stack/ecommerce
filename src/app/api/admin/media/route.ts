@@ -3,6 +3,7 @@ import { requireAdminPermission } from "@/lib/admin/apiAuth";
 import { prisma } from "@/lib/db/prisma";
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const MAX_REQUEST_BYTES = MAX_IMAGE_BYTES + 1024 * 1024;
 const allowedMimeTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/svg+xml", "image/avif"]);
 
 export async function POST(request: Request) {
@@ -13,6 +14,12 @@ export async function POST(request: Request) {
   }
 
   try {
+    const contentLength = Number(request.headers.get("content-length"));
+
+    if (Number.isFinite(contentLength) && contentLength > MAX_REQUEST_BYTES) {
+      return NextResponse.json({ message: "Image upload is too large." }, { status: 413 });
+    }
+
     const formData = await request.formData();
     const file = formData.get("file");
 
@@ -28,9 +35,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Image must be 5 MB or smaller." }, { status: 400 });
     }
 
+    const data = new Uint8Array(await file.arrayBuffer());
     const asset = await prisma.mediaAsset.create({
       data: {
-        data: Buffer.from(await file.arrayBuffer()),
+        data,
         filename: file.name || "upload",
         mimeType: file.type,
         size: file.size

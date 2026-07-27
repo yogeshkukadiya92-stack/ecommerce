@@ -1,4 +1,5 @@
-import { categories, brands } from "@/mock";
+import { brands } from "@/mock/brands";
+import { categories } from "@/mock/categories";
 import { Select } from "@/components/ui/Select";
 
 export function FilterSidebar() {

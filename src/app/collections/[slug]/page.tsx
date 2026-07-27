@@ -3,14 +3,15 @@ import { notFound } from "next/navigation";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { ProductListingShell } from "@/components/storefront/ProductListingShell";
-import {
-  collectionDefinitions,
-  getCollectionBySlug
-} from "@/mock/storefront";
+import { collectionDefinitions } from "@/constants/storefront";
 import { breadcrumbSchema, buildSeoMetadata, collectionSchema } from "@/lib/seo/seo";
 import { getLiveStorefrontProductsByCollection } from "@/lib/storefront/liveCatalog";
 
 export const dynamic = "force-dynamic";
+
+function getCollectionBySlug(slug: string) {
+  return collectionDefinitions.find((collection) => collection.slug === slug);
+}
 
 type CollectionPageProps = {
   params: Promise<{ slug: string }>;

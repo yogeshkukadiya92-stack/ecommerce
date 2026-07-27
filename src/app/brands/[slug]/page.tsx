@@ -3,11 +3,15 @@ import { notFound } from "next/navigation";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { ProductListingShell } from "@/components/storefront/ProductListingShell";
-import { getBrandBySlug } from "@/mock/storefront";
+import { brands } from "@/mock/brands";
 import { breadcrumbSchema, buildSeoMetadata, collectionSchema } from "@/lib/seo/seo";
 import { getLiveStorefrontProductsByBrand } from "@/lib/storefront/liveCatalog";
 
 export const dynamic = "force-dynamic";
+
+function getBrandBySlug(slug: string) {
+  return brands.find((brand) => brand.slug === slug);
+}
 
 type BrandPageProps = {
   params: Promise<{ slug: string }>;

@@ -3,8 +3,10 @@ import Image from "next/image";
 import Link from "next/link";
 import type { HomepageSection } from "@/types/cms";
 import { cn } from "@/lib/utils/cn";
-import { brands, categories, featuredProducts, goalCards, testimonials } from "@/mock";
-import { storefrontProducts, type StorefrontProduct } from "@/mock/storefront";
+import { brands } from "@/mock/brands";
+import { categories } from "@/mock/categories";
+import type { StorefrontProduct } from "@/mock/storefront";
+import { goalCards, testimonials } from "@/constants/storefront";
 import { bundleDeals } from "@/mock/promotions";
 import { getPublishedBlogPosts } from "@/lib/cms/cmsRepository";
 import { BrandCard } from "@/components/storefront/BrandCard";
@@ -24,7 +26,7 @@ export function HomepageSectionRenderer({
   products?: StorefrontProduct[];
   sections: HomepageSection[];
 }) {
-  const displayProducts = products?.length ? products : storefrontProducts;
+  const displayProducts = products ?? [];
 
   return (
     <>
@@ -94,7 +96,7 @@ function RenderedSection({
                 className="aspect-[4/3] w-full rounded-md object-cover"
                 height={640}
                 priority
-                src={section.desktopImageUrl ?? displayProducts[0]?.images[0]?.url ?? featuredProducts[0].images[0]?.url}
+                src={section.desktopImageUrl ?? displayProducts[0]?.images[0]?.url ?? "/og/fitsupplement-store.svg"}
                 width={840}
               />
               <div className="grid gap-2 px-1 pb-1 pt-3 sm:grid-cols-3">

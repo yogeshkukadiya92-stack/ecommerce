@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Menu, Search, ShoppingCart, Sparkles, User, X } from "lucide-react";
 import { useState } from "react";
-import { categories } from "@/mock";
+import { categories } from "@/mock/categories";
 import type { HeaderCmsConfig } from "@/types/cms";
 import { SearchBar } from "./SearchBar";
 

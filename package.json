@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "MALLOC_ARENA_MAX=2 node --max-old-space-size=256 --max-semi-space-size=8 node_modules/next/dist/bin/next start",
     "lint": "eslint .",
     "test": "tsx --test \"src/**/*.test.ts\"",
     "typecheck": "tsc --noEmit",

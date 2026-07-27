@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { brands } from "@/mock/brands";
 import { categories } from "@/mock/categories";
-import { collectionDefinitions } from "@/mock/storefront";
+import { collectionDefinitions } from "@/constants/storefront";
 import { getPublishedBlogPosts, getPublishedPolicyPages } from "@/lib/cms/cmsRepository";
 import { absoluteUrl } from "@/lib/seo/seo";
 import { getLiveStorefrontProducts } from "@/lib/storefront/liveCatalog";

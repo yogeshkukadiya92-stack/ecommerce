@@ -3,11 +3,15 @@ import { notFound } from "next/navigation";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { ProductListingShell } from "@/components/storefront/ProductListingShell";
-import { getCategoryBySlug } from "@/mock/storefront";
+import { categories } from "@/mock/categories";
 import { breadcrumbSchema, buildSeoMetadata, collectionSchema } from "@/lib/seo/seo";
 import { getLiveStorefrontProductsByCategory } from "@/lib/storefront/liveCatalog";
 
 export const dynamic = "force-dynamic";
+
+function getCategoryBySlug(slug: string) {
+  return categories.find((category) => category.slug === slug);
+}
 
 type CategoryPageProps = {
   params: Promise<{ slug: string }>;

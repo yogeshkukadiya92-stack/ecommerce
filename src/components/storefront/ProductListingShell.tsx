@@ -4,7 +4,7 @@ import { SlidersHorizontal, X } from "lucide-react";
 import { useDeferredValue, useEffect, useMemo, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { StorefrontProduct } from "@/mock/storefront";
-import { popularSearches } from "@/mock/storefront";
+import { popularSearches } from "@/constants/storefront";
 import {
   defaultFilters,
   filterProducts,
