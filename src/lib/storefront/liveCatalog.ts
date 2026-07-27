@@ -1,12 +1,4 @@
-import {
-  getProductBySlug,
-  getProductsByBrand,
-  getProductsByCategory,
-  getProductsByCollection,
-  storefrontProducts,
-  type ProductDetailContent,
-  type StorefrontProduct
-} from "@/mock/storefront";
+import type { ProductDetailContent, StorefrontProduct } from "@/mock/storefront";
 import { listActiveProducts, listProducts } from "@/lib/catalog/productRepository";
 
 function toStorefrontProduct(product: Awaited<ReturnType<typeof listActiveProducts>>[number]): StorefrontProduct {
@@ -49,13 +41,14 @@ function toStorefrontProduct(product: Awaited<ReturnType<typeof listActiveProduc
 
 export async function getLiveStorefrontProducts(query?: string | null) {
   const products = await loadLiveProducts(query);
-  return products ?? filterFallbackProducts(query);
+  return products ?? loadFallbackProducts(query);
 }
 
 export async function getLiveStorefrontProductsByBrand(slug: string) {
   const products = await loadLiveProducts();
 
   if (!products) {
+    const { getProductsByBrand } = await import("@/mock/storefront");
     return getProductsByBrand(slug);
   }
 
@@ -64,13 +57,20 @@ export async function getLiveStorefrontProductsByBrand(slug: string) {
 
 export async function getLiveStorefrontProductsByCategory(slug: string) {
   const products = await loadLiveProducts();
-  return products ? products.filter((product) => product.merchandising.categorySlug === slug) : getProductsByCategory(slug);
+
+  if (!products) {
+    const { getProductsByCategory } = await import("@/mock/storefront");
+    return getProductsByCategory(slug);
+  }
+
+  return products.filter((product) => product.merchandising.categorySlug === slug);
 }
 
 export async function getLiveStorefrontProductsByCollection(slug: string) {
   const products = await loadLiveProducts();
 
   if (!products) {
+    const { getProductsByCollection } = await import("@/mock/storefront");
     return getProductsByCollection(slug);
   }
 
@@ -98,6 +98,7 @@ export async function getLiveStorefrontProductsByCollection(slug: string) {
 
 export async function getLiveStorefrontProductBySlug(slug: string) {
   if (!canUseLiveCatalog()) {
+    const { getProductBySlug } = await import("@/mock/storefront");
     return getProductBySlug(slug) ?? null;
   }
 
@@ -108,6 +109,7 @@ export async function getLiveStorefrontProductBySlug(slug: string) {
     return product ? toStorefrontProduct(product) : null;
   } catch (error) {
     logLiveCatalogError(error);
+    const { getProductBySlug } = await import("@/mock/storefront");
     return getProductBySlug(slug) ?? null;
   }
 }
@@ -179,7 +181,8 @@ function canUseLiveCatalog() {
   return Boolean(databaseUrl && !databaseUrl.includes("localhost:27017"));
 }
 
-function filterFallbackProducts(query?: string | null) {
+async function loadFallbackProducts(query?: string | null) {
+  const { storefrontProducts } = await import("@/mock/storefront");
   const normalizedQuery = query?.trim().toLowerCase();
 
   if (!normalizedQuery) {

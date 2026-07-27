@@ -14,7 +14,9 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json({ message: "Image not found." }, { status: 404 });
   }
 
-  return new Response(Buffer.from(asset.data), {
+  // Prisma already returns Bytes as a Uint8Array. Passing it through avoids a
+  // second full-size allocation for every image response.
+  return new Response(asset.data, {
     headers: {
       "Cache-Control": "public, max-age=31536000, immutable",
       "Content-Length": String(asset.size),
